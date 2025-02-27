@@ -9,6 +9,7 @@ export interface ClientForm {
     administrative_area_level_1?: string;
     administrative_area_level_2?: string;
     country?: string;
+    billable_day?: number;
 }
 
 export interface PeopleForm {

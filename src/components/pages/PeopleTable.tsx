@@ -33,12 +33,12 @@ const header = [
 
 function filterPeople(people: People[], searchTerm: string): People[] {
   return people.filter(person => {
-      // Recorremos las propiedades de la persona
+
       return Object.keys(person).some(key => {
           const value = person[key as keyof People];
-          // Verificamos si el valor es de tipo string y si contiene el término de búsqueda
           return typeof value === 'string' && value.toLowerCase().includes(searchTerm.toLowerCase());
       });
+      
   });
 }
 

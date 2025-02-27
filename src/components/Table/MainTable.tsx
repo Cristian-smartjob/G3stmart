@@ -24,6 +24,7 @@ interface Props {
     page: number;
     onNext: () => void;
     onPrev: () => void;
+    isLoading?: boolean;
 }
 
 export default function MainTable({ 
@@ -43,7 +44,8 @@ export default function MainTable({
     onSelectPage,
     page,
     onNext,
-    onPrev
+    onPrev,
+    isLoading = false
 }: Props) {
 
  
@@ -58,6 +60,7 @@ export default function MainTable({
             addButtonConfig={addButtonConfig}
             rightContent={rightContent}
             bottomContent={bottomContent}
+            isLoading={isLoading}
           />
             <div>
             

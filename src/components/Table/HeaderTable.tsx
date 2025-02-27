@@ -9,17 +9,23 @@ interface Props {
     addButtonConfig?: ConfigButton;
     rightContent?: React.ReactNode;
     bottomContent?: React.ReactNode;
+    isLoading?: boolean;
 }
 
-export default function HeaderTable({  bottomContent, title, count, addButtonConfig = {showButton: false, label:"", onClick: () => {}}, rightContent }: Props) {
+export default function HeaderTable({  bottomContent, title, count, addButtonConfig = {showButton: false, label:"", onClick: () => {}}, isLoading = false, rightContent }: Props) {
 
  
     return (
         <div className="flex flex-col md:flex-row items-center justify-between space-y-3 md:space-y-0 md:space-x-4 p-4 border-b dark:border-gray-700">
         <div className="w-full ">
            <div className="flex items-center space-x-3">
-           <h5 className="dark:text-white font-semibold">{title}</h5>
-           <div className="text-gray-400 font-medium">{count} resultados</div>
+            <h5 className="dark:text-white font-semibold">{title}</h5>
+            <div className="text-gray-400 font-medium">{count} resultados</div>
+            {isLoading ? (
+               <div className="px-3 py-1 text-xs font-medium leading-none text-center text-blue-800 bg-blue-200 rounded-full animate-pulse dark:bg-blue-900 dark:text-blue-200">Guardando</div>
+
+            ) : null}
+           
            </div>
            {bottomContent !== undefined ? (
               <div className="mt-4">

@@ -18,7 +18,7 @@ function* addNewClient(action: {type: string; payload: ClientForm}){
 
         yield put(ReducerClient.createSuccessfull())
     }catch(e){
-        
+        console.log('error', e)
     }
 }
 
