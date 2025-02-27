@@ -1,0 +1,205 @@
+Table People {
+  id integer
+  name string
+  lastName string
+  phone string
+  email string
+  corporateEmail string
+  dni string
+  dniDocumentType string
+  roleId int
+  address string
+  sublocality string
+  locality string
+  administrative_area_level_1 string
+  administrative_area_level_2 string
+  country string
+  nationality string
+  birth timestamp
+  afpInstitutionId int
+  healthInstitutionId int
+  comercialManagerId int
+  hunterManagerId int
+  seniorityId int
+  createdAt timestamp
+  updatedAt timestamp
+}
+
+Table Client {
+  id integer
+  name string
+  main_contact_id int
+  currency_type_id int
+  createdAt timestamp
+  updatedAt timestamp
+}
+
+Table TechnicalsStacks {
+  id integer
+  name string
+  description string
+  createdAt timestamp
+  updatedAt timestamp
+}
+
+Table Seniority {
+  id integer
+  name string
+  description string
+  createdAt timestamp
+  updatedAt timestamp
+}
+
+Table Project {
+  id integer 
+  name string
+  description string
+  client_id int
+  createdAt timestamp
+  updatedAt timestamp
+}
+
+Table AssignedProjects {
+  id int
+  projectId int 
+  smarterId int
+  starDate timestamp
+  endDate timestamp
+  workLocationType string
+  management_level_1 integer
+  management_level_2 integer
+  management_level_3 integer
+  principalMeet timestamp
+  createdAt timestamp
+  updatedAt timestamp
+}
+
+Table Role {
+  id integer
+  name string
+  createdAt timestamp
+  updatedAt timestamp
+}
+
+Table TechnicalSkills {
+  id integer
+  smarterId integer
+  stackId integer
+  skillLevel integer
+  isPrincipalStack integer
+  createdAt timestamp
+  updatedAt timestamp 
+}
+
+Table SkillLevel {
+  id integer
+  name string
+  level int
+  createdAt timestamp
+  updatedAt timestamp 
+}
+
+Table AFPInstitution {
+  id integer
+  name string
+  createdAt timestamp
+  updatedAt timestamp
+}
+
+Table HealthInstitution {
+  id integer
+  name string
+  createdAt timestamp
+  updatedAt timestamp
+}
+
+Table PreInvoice {
+  id number
+  status string
+  total number
+  client_id number
+  oc_number number
+  hes_number number
+  oc_amount number
+  month timestamp
+  project_id number
+  createdAt timestamp
+  updatedAt timestamp
+}
+
+Table PreInvoiceDetail {
+  id number
+  smarter_id number
+  preinvoice_id number
+  fee number
+  billable_days number
+  leave_days number
+  total_days number
+  hh_consume nunmber
+  total_fee number
+  total_fee_clp number
+  createdAt timestamp
+  updatedAt timestamp
+}
+
+Table LeaveDays {
+  id number
+  start_date timestamp
+  end_date timestamp
+  reason string
+  createdAt timestamp
+  updatedAt timestamp
+}
+
+Table CurrencyType {
+  id number
+  name string
+  createdAt timestamp
+  updatedAt timestamp
+}
+
+Table CurrencyValues {
+  id number
+  from_currency_type number
+  to_currency_type number
+  value number
+  value_date timestamp
+  createdAt timestamp
+  updatedAt timestamp
+}
+
+Table SmarterPrice {
+  id number
+  gross_salary number
+  currency_type_id number
+  client_fee number
+  days_fee number
+  smarter_id number
+}
+
+Ref: SmarterPrice.currency_type_id > CurrencyType.id
+Ref: SmarterPrice.smarter_id > People.id
+Ref: Client.currency_type_id > CurrencyType.id
+Ref: CurrencyValues.to_currency_type > CurrencyType.id
+Ref: CurrencyValues.from_currency_type > CurrencyType.id
+Ref: PreInvoiceDetail.preinvoice_id > PreInvoice.id
+Ref: PreInvoice.project_id > Project.id
+Ref: PreInvoice.client_id > Client.id
+Ref: PreInvoiceDetail.smarter_id > People.id
+Ref: Client.main_contact_id > People.id
+Ref: Project.client_id > Client.id
+Ref: AssignedProjects.management_level_1 > People.id
+Ref: AssignedProjects.management_level_2 > People.id
+Ref: AssignedProjects.management_level_3 > People.id
+Ref: TechnicalSkills.skillLevel > SkillLevel.id
+Ref: TechnicalSkills.stackId > TechnicalsStacks.id
+Ref: TechnicalSkills.smarterId > People.id
+Ref: AssignedProjects.projectId > Project.id
+Ref: AssignedProjects.smarterId > People.id
+Ref: People.id > People.hunterManagerId
+Ref: People.id > People.comercialManagerId
+Ref: Seniority.id > People.seniorityId
+Ref: Role.id > People.roleId
+Ref: AFPInstitution.id > People.afpInstitutionId
+Ref: HealthInstitution.id > People.healthInstitutionId
+
