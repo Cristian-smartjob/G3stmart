@@ -1,6 +1,4 @@
 import { usePlacesWidget } from "react-google-autocomplete";
-import countries from "@/data/countries.json"
-const countryData = countries.data.map((item, index) => ({id: index, label: item.name}))
 
 interface Props {
    handleBlur: {
@@ -17,7 +15,7 @@ export default function PeopleContact({handleBlur, handleChange}: Props){
 
 
     const { ref } = usePlacesWidget({
-        apiKey: "", //TODO ADD API KEY
+        apiKey: process.env.NEXT_PUBLIC_API_GOOGLE_MAPS_KEY, 
         options: {
             types: ['address'], 
           },

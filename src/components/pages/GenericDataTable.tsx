@@ -11,6 +11,7 @@ import DataItemRow from "../Table/DataItemRow";
 import Tabbar from "../core/Tabbar";
 import { SidebarItem } from "@/interface/ui";
 import MainTable from "../Table/MainTable";
+import TableSkeleton from "../core/TableSkeleton";
 
 
 
@@ -31,7 +32,9 @@ export default function GenericDataTable({ title, type }: Props){
   ]
 
   const genericDataMap = useSelector<RootState, GenericDataMap>(state => state.data.list)
+  const genericIsLoadingDataMap = useSelector<RootState, {[key: string]: boolean}>(state => state.data.isLoadingData)
   const afpInstitutions = genericDataMap[type] || []
+  const isLoading = genericIsLoadingDataMap[type] || false
   const [currentPage, setCurrentPage] = useState(1)
 
   const dispatch = useAppDispatch()
@@ -67,6 +70,11 @@ export default function GenericDataTable({ title, type }: Props){
               }}
               >
               <>
+               <TableSkeleton
+                  isLoading={isLoading && afpInstitutions.length <= 0}
+                  size={2}
+                />
+
               {afpInstitutions.map(item => (
                   <DataItemRow key={item.id} item={item} />
               ))}

@@ -44,14 +44,13 @@ export default function AddContactForm() {
       <form className="lg:col-start-1 lg:row-start-1 "  onSubmit={formik.handleSubmit}>
           <div className="mx-auto max-w-lg lg:max-w-none">
 
-
-          <ContactPersonal 
-                    handleBlur={formik.handleBlur}
-                    handleChange={formik.handleChange}
-                    onSelectorField={(field, value) => {
-                      formik.setFieldValue(field, value)
-                    }}
-                  />
+              <ContactPersonal 
+                handleBlur={formik.handleBlur}
+                handleChange={formik.handleChange}
+                onSelectorField={(field, value) => {
+                  formik.setFieldValue(field, value)
+                }}
+              />
 
               {errors !== null ? (
                  <div className='mt-4'>

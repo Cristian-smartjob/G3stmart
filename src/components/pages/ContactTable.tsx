@@ -14,6 +14,7 @@ import ContactItemRow from "../Table/ContactItemRow";
 import AddContactForm from "../dialogForm/AddContactForm";
 import ContactTableHeader from "../Table/ContactTableHeader";
 import MainTable from "../Table/MainTable";
+import TableSkeleton from "../core/TableSkeleton";
 
 
 const header = [
@@ -36,9 +37,9 @@ function filterContact(people: Contact[], searchTerm: string): Contact[] {
 export default function ContactTable(){
 
   const contacts = useSelector<RootState, Contact[]>(state => state.contacts.list)
+  const isLoading = useSelector<RootState, boolean>(state => state.contacts.isLoading)
   const [showDialog, setShowDialog] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
-  const [showFilterDialog, setShowFilterDialog] = useState(false)
   const [isOpen, setIsOpen] = useState(false)
   const [query, setQuery] = useState("")
 
@@ -54,15 +55,10 @@ export default function ContactTable(){
     setShowDialog(true)
   }
 
-  const handleClickFilter = () => {
-    setShowFilterDialog(true)
-  }
 
   const handlerClose = () => {
     setShowDialog(false)
   }
-
-
 
   const handleActionPress = (item: Contact) => {
     setIsOpen(true)
@@ -133,6 +129,11 @@ export default function ContactTable(){
             }}
             >
             <>
+             <TableSkeleton
+                          isLoading={isLoading && filteredUsers.length <= 0}
+                          size={4}
+                        />
+            
             {filteredUsers.map(item => (
                 <ContactItemRow key={item.id} item={item} onActionPress={handleActionPress} />
             ))}

@@ -18,13 +18,13 @@ const initialState: DataState = {
     [DataTables.JobTitle]: []
   },
   isLoadingData: {
-    [DataTables.AFPInstitution]: false,
-    [DataTables.HealthInstitution]: false,
-    [DataTables.Role]: false,
-    [DataTables.Seniority]: false,
-    [DataTables.Price]: false,
-    [DataTables.CurrencyType]: false,
-    [DataTables.JobTitle]: false
+    [DataTables.AFPInstitution]: true,
+    [DataTables.HealthInstitution]: true,
+    [DataTables.Role]: true,
+    [DataTables.Seniority]: true,
+    [DataTables.Price]: true,
+    [DataTables.CurrencyType]: true,
+    [DataTables.JobTitle]: true
   }
 }
 

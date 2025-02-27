@@ -12,21 +12,7 @@ interface ClientsState {
 const initialState: ClientsState = { 
   isLoading: true,
   isCreateLoading: false,
-  list: [
-    {
-      id: 1,
-      name: "BCI",
-      CurrencyType: {
-        id: 1,
-        name: "Peso chileno"
-      },
-      People: {
-        id: 1,
-        name: "Jorge",
-        last_name: "Acosta"
-      }
-    }
-  ]
+  list: []
 }
 
 const clientsSlice = createSlice({

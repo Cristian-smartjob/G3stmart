@@ -9,7 +9,6 @@ import { useSelector } from "react-redux";
 import { Client, People } from "@/interface/common";
 import { RootState } from "@/lib/store";
 import PeopleItemRow from "../Table/PeopleItemRow";
-import PeopleTableHeader from "../Table/PeopleTableHeader";
 import AddPeopleForm from "../dialogForm/AddPeopleForm";
 import { PlusIcon, FunnelIcon } from "@heroicons/react/24/outline";
 import AssignProjectModal from "../modals/AssignProjectModal";
@@ -17,6 +16,7 @@ import GenericDialog from "../dialog/GenericDialog";
 import FilterPeople from "../dialog/FilterPeople";
 import GenericModal from "../modals/GenericModal";
 import MainTable from "../Table/MainTable";
+import TableSkeleton from "../core/TableSkeleton";
 
 
 const header = [
@@ -47,6 +47,7 @@ function filterPeople(people: People[], searchTerm: string): People[] {
 export default function PeopleTable(){
 
   const users = useSelector<RootState, People[]>(state => state.users.list)
+  const isLoading = useSelector<RootState, boolean>(state => state.users.isLoading)
   const clients = useSelector<RootState, Client[]>(state => state.clients.list)
   
   const [currentPage, setCurrentPage] = useState(1)
@@ -161,6 +162,13 @@ export default function PeopleTable(){
             }}
             >
             <>
+
+
+            <TableSkeleton
+              isLoading={isLoading && filteredUsers.length <= 0}
+              size={7}
+            />
+
             {(filteredUsers.slice((Math.max(0, currentPage - 1)) * 10, currentPage * 10)).map(item => (
                 <PeopleItemRow 
                   clients={clients} 

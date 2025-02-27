@@ -11,12 +11,14 @@ import Search from "../Table/Search/SearchBar";
 import GenericModal from "../modals/GenericModal";
 import MainTable from "../Table/MainTable";
 import ClientItemRow from "../Table/ClientItemRow";
+import TableSkeleton from "../core/TableSkeleton";
 
 const header = ["Nombre", "Rut", "Día facturación", "Moneda"]
 
 export default function ClientTable(){
 
   const clients = useSelector<RootState, Client[]>(state => state.clients.list)
+  const isLoading = useSelector<RootState, boolean>(state => state.clients.isLoading)
   const [showDialog, setShowDialog] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
   const dispatch = useAppDispatch()
@@ -34,14 +36,14 @@ export default function ClientTable(){
   }
 
   return (
-      <div className="overflow-x-auto">
+      <div>
         
         <GenericModal  isOpen={showDialog} onClose={handlerClose}>
           <AddClientForm />
         </GenericModal>
 
         <Search buttonAddTitle="Agregar cliente" buttonAddOnClick={handleClick} />
-
+      
         <MainTable 
               title={"Clientes"} 
               count={clients.length} 
@@ -62,6 +64,10 @@ export default function ClientTable(){
               }}
               >
               <>
+               <TableSkeleton
+                  isLoading={isLoading && clients.length <= 0}
+                  size={4}
+                />
               {(clients.slice((Math.max(0, currentPage - 1)) * 10, currentPage * 10)).map(item => (
                   <ClientItemRow key={item.id} item={item} />
               ))}

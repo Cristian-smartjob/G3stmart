@@ -25,6 +25,7 @@ export default function ContactPersonal({handleBlur, handleChange, onSelectorFie
 
 
     const clients = useSelector<RootState, Client[]>(state => state.clients.list)
+    const isLoading = useSelector<RootState, boolean>(state => state.clients.isLoading)
 
     return (
 
@@ -108,6 +109,7 @@ export default function ContactPersonal({handleBlur, handleChange, onSelectorFie
             <div className="mt-6">
                 <Selector 
                     title='Cliente' 
+                    isLoading={isLoading}
                     items={(clients || []).map(item => ({id:item.id, label: `${item.name}`}))}
                     onChange={(item: SelectorItem | null) => {
                         if(item !== null){

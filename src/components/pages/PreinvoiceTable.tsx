@@ -13,6 +13,7 @@ import GenericModal from "../modals/GenericModal";
 import MainTable from "../Table/MainTable";
 import TabSelector, { Selector } from "../core/TabSelector";
 import PreInvoiceItemRow from "../Table/row/PreInvoiceItemRow";
+import TableSkeleton from "../core/TableSkeleton";
 
 
 const header = [
@@ -107,6 +108,10 @@ export default function PreinvoiceTable(){
           }}
           >
           <>
+           <TableSkeleton
+                isLoading={isLoading && filteredPreInvoices.length <= 0}
+                size={6}
+              />
           {filteredPreInvoices.map(item => (
               <PreInvoiceItemRow key={item.id} item={item}  />
           ))}

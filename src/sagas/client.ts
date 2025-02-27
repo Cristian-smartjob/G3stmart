@@ -41,7 +41,7 @@ function* fetchClient(){
         }
 
         if(data !== null){
-        yield put(ReducerClient.fetchSuccessfull(data))
+            yield put(ReducerClient.fetchSuccessfull(data))
         }
 
     } catch(e) {
