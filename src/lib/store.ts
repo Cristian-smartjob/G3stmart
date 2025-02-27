@@ -6,7 +6,6 @@ import clients from "./features/clients"
 import projects from "./features/projects"
 import preInvoices from "./features/preinvoices"
 import data from "./features/data"
-import prices from "./features/prices";
 import preInvoicesDetail from './features/preinvoicesdetail'
 import contacts from './features/contacts'
 import leaveDays from './features/leaveDays'
@@ -23,7 +22,6 @@ export const makeStore = () => {
         clients,
         projects,
         preInvoices,
-        prices,
         preInvoicesDetail,
         contacts,
         leaveDays
