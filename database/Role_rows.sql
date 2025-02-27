@@ -1,0 +1,1 @@
+INSERT INTO "public"."Role" ("id", "created_at", "updated_at", "name") VALUES ('1', '2025-01-08 13:46:44+00', '2025-01-08 10:46:44', 'Smarter'), ('2', '2025-01-08 13:47:32.996283+00', '2025-01-08 13:47:32.996283', 'ClientContact');
