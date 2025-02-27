@@ -17,7 +17,7 @@ export default function PeopleContact({handleBlur, handleChange}: Props){
 
 
     const { ref } = usePlacesWidget({
-        apiKey: "AIzaSyDxf_-JrlM9ky_msSKF1odhE11j7pSZAFU",
+        apiKey: "", //TODO ADD API KEY
         options: {
             types: ['address'], 
           },
