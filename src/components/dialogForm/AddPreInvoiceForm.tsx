@@ -1,21 +1,32 @@
 
 import Selector from '../core/Selector'
 import { useSelector } from 'react-redux'
-import { Client, Contact, PreInvoice } from '@/interface/common'
+import { Client, Contact } from '@/interface/common'
 import { RootState } from '@/lib/store'
 import { useEffect } from 'react'
 import { useAppDispatch } from '@/lib/hook'
-import { fetch as FetchClients } from "@/lib/features/clients";
-import { fetch as FetchContacts } from "@/lib/features/contacts";
+import { fetch as FetchClients } from "@/lib/features/clients"
+import { fetch as FetchContacts } from "@/lib/features/contacts"
 import { create } from '@/lib/features/preinvoices'
 import SimpleSelector from '../core/SimpleSelector'
 import { Formik } from 'formik';
 import { SelectorItem } from '@/interface/ui'
 import { months } from '@/utils/constants'
 import { PreinvoiceForm } from '@/interface/form'
+import * as Yup from 'yup'
+import ErrorAlert from '../core/ErrorAlert'
 
 const initialValues: PreinvoiceForm = {}
 const currentYear = new Date().getFullYear()
+
+const validationSchema = Yup.object({
+  client_id: Yup.number().required('Debes seleccionar un cliente'),
+  contact_id: Yup.number().required('Debes seleccionar un contacto'),
+  month: Yup.number().required('Debes debes seleccionar un mes'),
+  year: Yup.number().required('Debes debes seleccionar un año'),
+});
+
+
 
 const data =  Array(3).fill(null).map((item, index) => (  {
   id: index + 1,
@@ -25,11 +36,17 @@ const data =  Array(3).fill(null).map((item, index) => (  {
 
 const dataMonths = months.map((item, index) => ({id: index, label: item, value: item}))
 
-export default function AddPreInvoiceForm() {
+interface Props {
+  onSave: () => void;
+}
 
+export default function AddPreInvoiceForm({ onSave }: Props) {
 
   const clients = useSelector<RootState, Client[]>(state => state.clients.list)
   const contacts = useSelector<RootState, Contact[]>(state => state.contacts.list)
+  const isLoading = useSelector<RootState, boolean>(state => state.contacts.isLoading)
+  const isLoadingClient = useSelector<RootState, boolean>(state => state.contacts.isLoading)
+
 
   const dispatch = useAppDispatch()
 
@@ -49,12 +66,13 @@ export default function AddPreInvoiceForm() {
       
       <Formik
        initialValues={initialValues}     
+       validationSchema={validationSchema}
        onSubmit={(values, { setSubmitting }) => {
        
           dispatch(create(values as PreinvoiceForm))
           setSubmitting(true)
+          onSave()
 
-         
        }}
      >
        {({
@@ -78,6 +96,7 @@ export default function AddPreInvoiceForm() {
             <div className="mt-6">
               <Selector 
                 title='Cliente' 
+                isLoading={isLoadingClient}
                 items={(clients || []).map(item => ({id:item.id, label: item.name}))}
                 onChange={(item: SelectorItem | null) => {
                   if(item !== null){
@@ -91,7 +110,8 @@ export default function AddPreInvoiceForm() {
 
             <div className="mt-6">
               <Selector 
-                title='Contraparte' 
+                title='Contraparte (debes selecionar un cliente)' 
+                isLoading={isLoading}
                 items={(contacts || []).filter(item => item.Client.id === values.client_id).map(item => ({id:item.id, label: `${item.name} ${item.last_name}`}))}
                 onChange={(item: SelectorItem | null) => {
                   if(item !== null){
@@ -109,26 +129,21 @@ export default function AddPreInvoiceForm() {
                   <SimpleSelector 
                     title='Mes' 
                     items={dataMonths} 
-                    value={dataMonths.find(item => item.id === values.month - 1) || {id: 1, label: "Febrero", value: currentYear}}
+                    value={dataMonths.find(item => item.id === (values.month || 0) - 1) || null}
                     onChange={(item: SelectorItem) => {
                       setFieldValue("month", item.id + 1)
                     }}  
                   />
               </div>
               <div className="p-2">
-            
-            
-       
                 <SimpleSelector 
                     title='Año' 
                     items={data} 
-                    value={data.find(item => item.value === values.year) || {id: 2, label: currentYear, value: currentYear}}
+                    value={data.find(item => item.value === values.year) || null}
                     onChange={(item: SelectorItem) => {
                       setFieldValue("year", item.value)
                     }}  
                   />
-           
-            
               </div>
             </div>
             </div>
@@ -138,6 +153,11 @@ export default function AddPreInvoiceForm() {
 
           </section>
 
+{Object.values(errors).length > 0 ? (
+                  <div className='mt-4'>
+                  <ErrorAlert  message={Object.values(errors).join(", ")} />
+                </div>
+              ) : null}
 
           <div className="mt-10 border-t border-gray-200 pt-6 sm:flex sm:items-center sm:justify-between">
             <button

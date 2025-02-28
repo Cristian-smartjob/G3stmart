@@ -1,13 +1,12 @@
 import { useEffect } from 'react'
 import { useAppDispatch } from '@/lib/hook'
-import { useFormik } from 'formik';
-
+import { useFormik } from 'formik'
 import { fetch as FetchClients} from '@/lib/features/clients'
 import { ContactForm } from '@/interface/form'
-import ErrorAlert from '../core/ErrorAlert';
-import ContactPersonal from '../form/ContactPersonal';
-import { create, update } from '@/lib/features/contacts';
-import * as Yup from 'yup';
+import ErrorAlert from '../core/ErrorAlert'
+import ContactPersonal from '../form/ContactPersonal'
+import { create, update } from '@/lib/features/contacts'
+import * as Yup from 'yup'
 
 const initialValues: ContactForm = {}
 

@@ -7,12 +7,16 @@ interface ClientsState {
   list: Client[];
   isLoading: boolean;
   isCreateLoading: boolean;
+  isEditingLoading: {[key:string]: boolean};
+  isDeletingLoading: {[key:string]: boolean};
 }
 
 const initialState: ClientsState = { 
   isLoading: true,
   isCreateLoading: false,
-  list: []
+  list: [],
+  isEditingLoading: {},
+  isDeletingLoading: {}
 }
 
 const clientsSlice = createSlice({
@@ -25,6 +29,18 @@ const clientsSlice = createSlice({
     createSuccessfull(state){
       state.isCreateLoading = false
     },
+    update(state, action: PayloadAction<ClientForm>){
+          state.isEditingLoading = {
+            ...state.isEditingLoading,
+            [action.payload.id || 0]: true
+          }
+        },
+        deleteItem(state, action: PayloadAction<ClientForm>){
+          state.isDeletingLoading = {
+            ...state.isDeletingLoading,
+            [action.payload.id || 0]: true
+          }
+        },
     fetch(state){
       state.isLoading = true
     },
@@ -43,6 +59,8 @@ export const {
   fetch,
   fetchSuccessfull,
   fetchError,
-  createSuccessfull
+  createSuccessfull,
+  update,
+  deleteItem
 } = clientsSlice.actions;
 export default clientsSlice.reducer;

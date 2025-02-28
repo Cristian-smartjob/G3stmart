@@ -14,6 +14,7 @@ import MainTable from "../Table/MainTable";
 import TabSelector, { Selector } from "../core/TabSelector";
 import PreInvoiceItemRow from "../Table/row/PreInvoiceItemRow";
 import TableSkeleton from "../core/TableSkeleton";
+import LoadingPreInvoiceModal from "../modals/LoadingPreInvoiceModal";
 
 
 const header = [
@@ -42,6 +43,7 @@ export default function PreinvoiceTable(){
 
   const preInvoices = useSelector<RootState, PreInvoice[]>(state => state.preInvoices.list)
   const isLoading = useSelector<RootState, boolean>(state => state.preInvoices.isLoading)
+  const isLoadingCreating = useSelector<RootState, boolean>(state => state.preInvoices.isLoadingCreating)
 
   const selectedTab = tabs.find(item => item.id === selected)
 
@@ -64,18 +66,28 @@ export default function PreinvoiceTable(){
     setShowDialog(false)
   }
 
+  const hanlderSearch = (query: string) => {
+
+  }
+
   return (
     <>
     
       <GenericModal isOpen={showDialog} onClose={handlerClose}>
-        <AddPreInvoiceForm />
+        <AddPreInvoiceForm onSave={handlerClose} />
       </GenericModal>
+
+      <LoadingPreInvoiceModal isOpen={isLoadingCreating} />
    
-      <div className="overflow-x-auto">
+      <div>
 
        
 
-        <Search buttonAddTitle="Agregar prefactura" buttonAddOnClick={handlerNewItem} />
+        <Search 
+          buttonAddTitle="Agregar prefactura" 
+          buttonAddOnClick={handlerNewItem} 
+          onSearch={hanlderSearch} 
+        />
 
         <MainTable 
           title="Prefacturas" 
