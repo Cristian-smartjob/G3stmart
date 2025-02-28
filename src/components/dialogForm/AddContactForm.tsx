@@ -36,7 +36,14 @@ export default function AddContactForm({ onSave, isEditMode, contact = {} }: Pro
     validateOnBlur: false,
     onSubmit: values => {
       if(isEditMode){
-        dispatch(update(values))
+        dispatch(update({
+          client_id: values.client_id,
+          id: values.id,
+          email: values.email,
+          phone: values.phone,
+          name: values.name,
+          last_name: values.last_name,
+        }))
       } else {
         dispatch(create(values))
       }

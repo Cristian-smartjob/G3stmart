@@ -35,7 +35,18 @@ const usersSlices = createSlice({
       }
     },
     createSuccessfull(){},
-    updateSuccessfull(){},
+    deleteSuccessfull(state, action: PayloadAction<ContactForm>){
+      state.isDeletingLoading = {
+        ...state.isDeletingLoading,
+        [action.payload.id || 0]: false
+      }
+    },
+    updateSuccessfull(state, action: PayloadAction<ContactForm>){
+      state.isEditingLoading = {
+        ...state.isEditingLoading,
+        [action.payload.id || 0]: false
+      }
+    },
     fetch(state){
       state.isLoading = true
     },
@@ -57,6 +68,7 @@ export const {
   fetch,
   fetchSuccessfull,
   fetchError,
-  deleteItem
+  deleteItem,
+  deleteSuccessfull
 } = usersSlices.actions;
 export default usersSlices.reducer;

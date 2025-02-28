@@ -2,7 +2,7 @@
 
 
 import { Dialog, DialogBackdrop, DialogPanel, DialogTitle } from '@headlessui/react'
-import { CheckIcon } from '@heroicons/react/24/outline'
+import { ClockIcon } from '@heroicons/react/24/outline'
 
 interface Props {
     isOpen: boolean;
@@ -27,7 +27,7 @@ export default function LoadingPreInvoiceModal({ isOpen }: Props) {
           >
             <div>
               <div className="mx-auto flex size-12 items-center justify-center rounded-full bg-green-100">
-                <CheckIcon aria-hidden="true" className="size-6 text-green-600" />
+                <ClockIcon aria-hidden="true" className="size-6 text-green-600" />
               </div>
               <div className="mt-3 text-center sm:mt-5">
                 <DialogTitle as="h3" className="text-base font-semibold text-gray-900">

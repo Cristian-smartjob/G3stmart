@@ -67,6 +67,8 @@ export default function AddPreInvoiceForm({ onSave }: Props) {
       <Formik
        initialValues={initialValues}     
        validationSchema={validationSchema}
+       validateOnChange={false}
+       validateOnBlur={false}
        onSubmit={(values, { setSubmitting }) => {
        
           dispatch(create(values as PreinvoiceForm))

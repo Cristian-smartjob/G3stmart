@@ -40,6 +40,7 @@ export interface ContactForm {
     email?: string;
     phone?: string;
     client_id?: number;
+    is_delete?: number;
 }
 
 export interface PreinvoiceForm {
