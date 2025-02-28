@@ -11,12 +11,13 @@ interface Props {
   items: SelectorItem[];
   isLoading?: boolean;
   onChange: (item: SelectorItem | null) => void;
+  value?: SelectorItem | null;
 }
 
-export default function Selector({ title, items, isLoading = false, onChange }: Props) {
+export default function Selector({ title, items, isLoading = false, onChange, value = null }: Props) {
 
   const [query, setQuery] = useState('')
-  const [selectedPerson, setSelectedPerson] = useState<SelectorItem | null>(null)
+  const [selectedPerson, setSelectedPerson] = useState<SelectorItem | null>(value)
 
   const filteredItems =
     query === ''

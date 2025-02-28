@@ -6,11 +6,15 @@ import type { PayloadAction } from '@reduxjs/toolkit';
 interface ContactsState {
   list: Contact[];
   isLoading: boolean;
+  isEditingLoading: {[key:string]: boolean};
+  isDeletingLoading: {[key:string]: boolean};
 }
 
 const initialState: ContactsState = { 
   isLoading: true,
-  list: []
+  list: [],
+  isEditingLoading: {},
+  isDeletingLoading: {}
 }
 
 const usersSlices = createSlice({
@@ -18,7 +22,20 @@ const usersSlices = createSlice({
   initialState,
   reducers: {
     create(state, action: PayloadAction<ContactForm>){},
+    update(state, action: PayloadAction<ContactForm>){
+      state.isEditingLoading = {
+        ...state.isEditingLoading,
+        [action.payload.id || 0]: true
+      }
+    },
+    deleteItem(state, action: PayloadAction<ContactForm>){
+      state.isDeletingLoading = {
+        ...state.isDeletingLoading,
+        [action.payload.id || 0]: true
+      }
+    },
     createSuccessfull(){},
+    updateSuccessfull(){},
     fetch(state){
       state.isLoading = true
     },
@@ -34,9 +51,12 @@ const usersSlices = createSlice({
 
 export const { 
   create,
+  update,
   createSuccessfull,
+  updateSuccessfull,
   fetch,
   fetchSuccessfull,
-  fetchError
+  fetchError,
+  deleteItem
 } = usersSlices.actions;
 export default usersSlices.reducer;

@@ -33,6 +33,7 @@ export interface PeopleForm {
 }
 
 export interface ContactForm {
+    id?: number;
     name?: string;
     last_name?: string;
     email?: string;

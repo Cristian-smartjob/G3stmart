@@ -1,27 +1,28 @@
 'use client'
 
-import { Table } from "flowbite-react";
 import { useEffect, useState } from "react";
 import { fetch } from "@/lib/features/contacts";
 import { useAppDispatch } from "@/lib/hook";
 import { useSelector } from "react-redux";
-import { Contact, People } from "@/interface/common";
+import { Contact } from "@/interface/common";
 import { RootState } from "@/lib/store";
-import { PlusIcon, FunnelIcon } from "@heroicons/react/24/outline";
+import { PlusIcon } from "@heroicons/react/24/outline";
 import GenericModal from "../modals/GenericModal";
 import ContactItemRow from "../Table/ContactItemRow";
+import { deleteItem } from "@/lib/features/contacts";
 
 import AddContactForm from "../dialogForm/AddContactForm";
-import ContactTableHeader from "../Table/ContactTableHeader";
 import MainTable from "../Table/MainTable";
 import TableSkeleton from "../core/TableSkeleton";
+import DeleteModal from "../modals/DeleteModal";
 
 
 const header = [
   "Empresa",
   "Nombre apellido",
   "Telefono",
-  "Correo"
+  "Correo",
+  "Opciones"
 ]
 
 function filterContact(people: Contact[], searchTerm: string): Contact[] {
@@ -38,9 +39,13 @@ export default function ContactTable(){
 
   const contacts = useSelector<RootState, Contact[]>(state => state.contacts.list)
   const isLoading = useSelector<RootState, boolean>(state => state.contacts.isLoading)
+
+  const [isOpenDelete, setIsOpenDelete] = useState(false)
   const [showDialog, setShowDialog] = useState(false)
+  const [isEditMode, setEditMode] = useState(false)
+  const [selectContact, setSelectContact] = useState<Contact | null>(null)
   const [currentPage, setCurrentPage] = useState(1)
-  const [isOpen, setIsOpen] = useState(false)
+
   const [query, setQuery] = useState("")
 
   const filteredUsers = filterContact(contacts, query)
@@ -52,6 +57,7 @@ export default function ContactTable(){
   }, [dispatch])
 
   const handleClick = () => {
+    setSelectContact(null)
     setShowDialog(true)
   }
 
@@ -60,16 +66,44 @@ export default function ContactTable(){
     setShowDialog(false)
   }
 
-  const handleActionPress = (item: Contact) => {
-    setIsOpen(true)
+  const handlerPressItem = (option: string, contact: Contact) => {
+    setSelectContact(contact)
+
+    if(option === "edit"){
+      setShowDialog(true)
+      setEditMode(true)
+      
+    } else if (option === "delete"){
+      setIsOpenDelete(true)
+    }
   }
 
+
   return (
-      <div className="overflow-x-auto">
+      <div>
         
         <GenericModal isOpen={showDialog} onClose={handlerClose}>
-          <AddContactForm />
+          <AddContactForm 
+              isEditMode={isEditMode} 
+              contact={selectContact === null ? {} : {
+                ...selectContact,
+                client_id: selectContact.Client.id
+              }}
+              onSave={handlerClose} />
         </GenericModal>
+
+        <DeleteModal
+          isOpen={isOpenDelete}
+          onClose={() => {setIsOpenDelete(false)}}
+          onConfirm={() => {
+            setIsOpenDelete(false)
+            dispatch(deleteItem({
+              ...selectContact,
+              client_id: selectContact?.Client.id
+            }))
+          }}
+          element="contacto"
+        />
 
     
         <div className="bg-white dark:bg-gray-800 relative shadow-md sm:rounded-lg overflow-hidden">
@@ -131,11 +165,15 @@ export default function ContactTable(){
             <>
              <TableSkeleton
                           isLoading={isLoading && filteredUsers.length <= 0}
-                          size={4}
+                          size={5}
                         />
             
             {filteredUsers.map(item => (
-                <ContactItemRow key={item.id} item={item} onActionPress={handleActionPress} />
+                <ContactItemRow 
+                  key={item.id} 
+                  item={item}  
+                  onPressItem={handlerPressItem}
+                />
             ))}
             </>
         </MainTable>

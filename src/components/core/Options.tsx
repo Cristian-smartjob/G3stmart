@@ -1,13 +1,15 @@
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react'
 import {
-  DocumentDuplicateIcon,
   PencilSquareIcon,
   TrashIcon,
-  UserPlusIcon,
   EllipsisVerticalIcon
 } from '@heroicons/react/20/solid'
 
-export default function Options() {
+interface Props {
+  onPressItem: (option: string) => void;
+}
+
+export default function Options({ onPressItem }: Props) {
   return (
     <Menu as="div" className="relative inline-block text-left">
       <div>
@@ -26,6 +28,7 @@ export default function Options() {
             <a
               href="#"
               className="group flex items-center px-4 py-2 text-sm text-gray-700 data-[focus]:bg-gray-100 data-[focus]:text-gray-900 data-[focus]:outline-none"
+              onClick={() => onPressItem("edit")}
             >
               <PencilSquareIcon
                 aria-hidden="true"
@@ -36,23 +39,13 @@ export default function Options() {
           </MenuItem>
         </div>
       
-        <div className="py-1">
-          <MenuItem>
-            <a
-              href="#"
-              className="group flex items-center px-4 py-2 text-sm text-gray-700 data-[focus]:bg-gray-100 data-[focus]:text-gray-900 data-[focus]:outline-none"
-            >
-              <UserPlusIcon aria-hidden="true" className="mr-3 size-5 text-gray-400 group-data-[focus]:text-gray-500" />
-              Agregar contacto
-            </a>
-          </MenuItem>
-       
-        </div>
+      
         <div className="py-1">
           <MenuItem >
             <a
               href="#"
               className="group flex items-center px-4 py-2 text-sm text-gray-700 data-[focus]:bg-gray-100 data-[focus]:text-gray-900 data-[focus]:outline-none"
+              onClick={() => onPressItem("delete")}
             >
               <TrashIcon aria-hidden="true" className="mr-3 size-5 text-gray-400 group-data-[focus]:text-gray-500" />
               Eliminar

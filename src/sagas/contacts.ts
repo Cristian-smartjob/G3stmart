@@ -23,6 +23,24 @@ function* addNewContact(action: {type: string; payload: ContactForm}){
     }
 }
 
+function* updateContact(action: {type: string; payload: ContactForm}){
+    try{
+       
+        const client = createClient()
+       
+        // @ts-expect-error: 'call'
+        const { error } = yield call([client.from('Contact'), 'insert'], action.payload);
+    
+        if (error) {
+            throw new Error(error.message);
+        }
+
+        yield put(ReducerContacts.updateSuccessfull())
+    }catch(e){
+        console.log('e', e)
+    }
+}
+
 
 function* fetchContacts(){
     try {
@@ -53,13 +71,18 @@ function* fetchContactsAction(){
     yield takeLatest([ReducerContacts.fetch, ReducerContacts.createSuccessfull], fetchContacts);
  }
 
-  function* addNewContactAction(){
-     yield takeLatest([ReducerContacts.create], addNewContact);
-  }
+function* addNewContactAction(){
+    yield takeLatest([ReducerContacts.create], addNewContact);
+}
+
+function* updateContactAction(){
+    yield takeLatest([ReducerContacts.update], updateContact);
+}
 
 export default function* contactsActions() {
     yield all([
         fetchContactsAction(),
         addNewContactAction(),
+        updateContactAction(),
     ])
  }

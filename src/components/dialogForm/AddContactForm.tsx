@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { useAppDispatch } from '@/lib/hook'
 import { useFormik } from 'formik';
 
@@ -6,36 +6,55 @@ import { fetch as FetchClients} from '@/lib/features/clients'
 import { ContactForm } from '@/interface/form'
 import ErrorAlert from '../core/ErrorAlert';
 import ContactPersonal from '../form/ContactPersonal';
-import { create } from '@/lib/features/contacts';
-
+import { create, update } from '@/lib/features/contacts';
+import * as Yup from 'yup';
 
 const initialValues: ContactForm = {}
 
 
-export default function AddContactForm() {
+const validationSchema = Yup.object({
+  name: Yup.string().required('Debes proporcionar un nombre'),
+  last_name: Yup.string().required('Debes proporcionar un apellido'),
+  email: Yup.string().required('Debes proporcionar un correo'),
+  phone: Yup.string().required('Debes proporcionar un telefono'),
+  client_id: Yup.number().required('Debes elegir un cliente'),
+});
+
+interface Props {
+  onSave: () => void;
+  isEditMode: boolean;
+  contact?: ContactForm;
+}
+
+export default function AddContactForm({ onSave, isEditMode, contact = {} }: Props) {
 
   const dispatch = useAppDispatch()
 
-  const [errors, setErrors] = useState<string | null>(null)
-
   const formik = useFormik({
-    initialValues: initialValues,
+    initialValues: {...initialValues, ...contact},
+    validationSchema: validationSchema,
+    validateOnChange: false,
+    validateOnBlur: false,
     onSubmit: values => {
-      dispatch(create(values))
+      if(isEditMode){
+        dispatch(update(values))
+      } else {
+        dispatch(create(values))
+      }
+      
+      onSave()
     },
   });
+
+  formik.values
 
   useEffect(() => {
     dispatch(FetchClients())
   }, [dispatch])
 
-
   const handlerClick = async () => {
-
     formik.submitForm()
-    
   }
-
 
   return (
     <div className="bg-white">
@@ -46,22 +65,23 @@ export default function AddContactForm() {
 
               <ContactPersonal 
                 handleBlur={formik.handleBlur}
+                values={formik.values}
                 handleChange={formik.handleChange}
                 onSelectorField={(field, value) => {
                   formik.setFieldValue(field, value)
                 }}
               />
 
-              {errors !== null ? (
+              
+              {Object.values(formik.errors).length > 0 ? (
                  <div className='mt-4'>
                    <ErrorAlert 
-                  message={errors}
+                  message={Object.values(formik.errors).join(", ")}
                  />
                   </div>
               ) : null}
              
            
-
             <div className="mt-10 border-t border-gray-200 pt-6 sm:flex sm:items-center sm:justify-between">
               <button
                 type="button"

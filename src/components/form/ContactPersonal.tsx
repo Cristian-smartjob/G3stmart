@@ -3,8 +3,7 @@ import Selector from "../core/Selector";
 import { RootState } from "@/lib/store";
 import { Client } from "@/interface/common";
 import { SelectorItem } from "@/interface/ui";
-
-
+import { ContactForm } from "@/interface/form";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 interface Props {
@@ -17,15 +16,18 @@ interface Props {
         <T = string | React.ChangeEvent<any>>(field: T): T extends React.ChangeEvent<any> ? void : (e: string | React.ChangeEvent<any>) => void;
     },
     onSelectorField: (field: string, value: string | number) => void;
+    values: ContactForm;
 }
  /* eslint-enable @typescript-eslint/no-explicit-any */
 
-export default function ContactPersonal({handleBlur, handleChange, onSelectorField}: Props){
+export default function ContactPersonal({handleBlur, handleChange, onSelectorField, values}: Props){
 
 
 
     const clients = useSelector<RootState, Client[]>(state => state.clients.list)
     const isLoading = useSelector<RootState, boolean>(state => state.clients.isLoading)
+
+    const selectedClient = clients.find(item => item.id === values.client_id)
 
     return (
 
@@ -45,6 +47,7 @@ export default function ContactPersonal({handleBlur, handleChange, onSelectorFie
                             name="name"
                             type="text"
                             autoComplete="text"
+                            value={values.name}
                             className="block w-full rounded-md bg-white px-3 py-2 text-base text-gray-900 outline outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
                             onChange={handleChange}
                             onBlur={handleBlur}
@@ -62,6 +65,7 @@ export default function ContactPersonal({handleBlur, handleChange, onSelectorFie
                             name="last_name"
                             type="text"
                             autoComplete="text"
+                            value={values.last_name}
                             className="block w-full rounded-md bg-white px-3 py-2 text-base text-gray-900 outline outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
                             onChange={handleChange}
                             onBlur={handleBlur}
@@ -81,6 +85,7 @@ export default function ContactPersonal({handleBlur, handleChange, onSelectorFie
                             name="email"
                             type="text"
                             autoComplete="text"
+                            value={values.email}
                             className="block w-full rounded-md bg-white px-3 py-2 text-base text-gray-900 outline outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
                             onChange={handleChange}
                             onBlur={handleBlur}
@@ -98,6 +103,7 @@ export default function ContactPersonal({handleBlur, handleChange, onSelectorFie
                             name="phone"
                             type="text"
                             autoComplete="text"
+                            value={values.phone}
                             className="block w-full rounded-md bg-white px-3 py-2 text-base text-gray-900 outline outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
                             onChange={handleChange}
                             onBlur={handleBlur}
@@ -111,6 +117,10 @@ export default function ContactPersonal({handleBlur, handleChange, onSelectorFie
                     title='Cliente' 
                     isLoading={isLoading}
                     items={(clients || []).map(item => ({id:item.id, label: `${item.name}`}))}
+                    value={selectedClient === undefined ? null : {
+                        id: selectedClient.id,
+                        label: selectedClient.name
+                    }}
                     onChange={(item: SelectorItem | null) => {
                         if(item !== null){
                             onSelectorField("client_id", item.id)
