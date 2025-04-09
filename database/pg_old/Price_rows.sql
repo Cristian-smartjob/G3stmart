@@ -1,0 +1,1 @@
+INSERT INTO "public"."Price" ("id","name","value") VALUES ('1', 'Engineer Level 1', '1000000');

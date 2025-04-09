@@ -1,0 +1,1 @@
+INSERT INTO "public"."JobTitle" ("id","name") VALUES ('1', 'Technical Lead');

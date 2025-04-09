@@ -1,10 +1,11 @@
-import { AFPInstitution, DataTables, GenericDataMap, HealthInstitution, Role, Seniority } from '@/interface/common';
-import { createSlice } from '@reduxjs/toolkit';
-import type { PayloadAction } from '@reduxjs/toolkit';
+import { AFPInstitution, DataTables, GenericDataMap, HealthInstitution, Role, Seniority } from "@/interface/common";
+import { createSlice } from "@reduxjs/toolkit";
+import type { PayloadAction } from "@reduxjs/toolkit";
 
 interface DataState {
   list: GenericDataMap;
-  isLoadingData: {[key: string]: boolean};
+  isLoadingData: { [key: string]: boolean };
+  errorData: { [key: string]: boolean };
 }
 
 const initialState: DataState = {
@@ -15,7 +16,7 @@ const initialState: DataState = {
     [DataTables.Seniority]: [],
     [DataTables.Price]: [],
     [DataTables.CurrencyType]: [],
-    [DataTables.JobTitle]: []
+    [DataTables.JobTitle]: [],
   },
   isLoadingData: {
     [DataTables.AFPInstitution]: true,
@@ -24,30 +25,41 @@ const initialState: DataState = {
     [DataTables.Seniority]: true,
     [DataTables.Price]: true,
     [DataTables.CurrencyType]: true,
-    [DataTables.JobTitle]: true
-  }
-}
+    [DataTables.JobTitle]: true,
+  },
+  errorData: {
+    [DataTables.AFPInstitution]: false,
+    [DataTables.HealthInstitution]: false,
+    [DataTables.Role]: false,
+    [DataTables.Seniority]: false,
+    [DataTables.Price]: false,
+    [DataTables.CurrencyType]: false,
+    [DataTables.JobTitle]: false,
+  },
+};
 
 const dataSlices = createSlice({
-  name: 'data',
+  name: "data",
   initialState,
   reducers: {
-    fetch(state, action: PayloadAction<DataTables>){
-      state.isLoadingData[action.payload] = true
+    fetch(state, action: PayloadAction<DataTables>) {
+      state.isLoadingData[action.payload] = true;
+      state.errorData[action.payload] = false;
     },
-    fetchSuccessfull(state, action: PayloadAction<{list: (AFPInstitution | HealthInstitution | Role | Seniority)[]; table: DataTables}>){
-      state.isLoadingData[action.payload.table] = true
-      state.list = {...state.list, [action.payload.table]: [...action.payload.list] }
+    fetchSuccessfull(
+      state,
+      action: PayloadAction<{ list: (AFPInstitution | HealthInstitution | Role | Seniority)[]; table: DataTables }>
+    ) {
+      state.isLoadingData[action.payload.table] = false;
+      state.errorData[action.payload.table] = false;
+      state.list = { ...state.list, [action.payload.table]: [...action.payload.list] };
     },
-    fetchError(state, action: PayloadAction<DataTables>){
-      state.isLoadingData[action.payload] = false
-    }
+    fetchError(state, action: PayloadAction<DataTables>) {
+      state.isLoadingData[action.payload] = false;
+      state.errorData[action.payload] = true;
+    },
   },
 });
 
-export const { 
-  fetch,
-  fetchSuccessfull,
-  fetchError
-} = dataSlices.actions;
+export const { fetch, fetchSuccessfull, fetchError } = dataSlices.actions;
 export default dataSlices.reducer;

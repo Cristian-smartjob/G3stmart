@@ -66,7 +66,7 @@ export default function CompleteBillModal({ isOpen, setIsOpen, preinvoiceId}: Pr
                         </div>
 
                         <div>
-                            <label htmlFor="last_name" className="block text-sm/6 font-medium text-gray-700">
+                            <label htmlFor="lastName" className="block text-sm/6 font-medium text-gray-700">
                                 Número HES
                             </label>
                             <div className="mt-2">
@@ -99,7 +99,7 @@ export default function CompleteBillModal({ isOpen, setIsOpen, preinvoiceId}: Pr
                         </div>
 
                         <div>
-                            <label htmlFor="last_name" className="block text-sm/6 font-medium text-gray-700">
+                            <label htmlFor="lastName" className="block text-sm/6 font-medium text-gray-700">
                                 Monto OC
                             </label>
                             <div className="mt-2">

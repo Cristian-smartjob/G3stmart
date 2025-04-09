@@ -19,7 +19,7 @@ export default function PreInvoiceItemRow({ item }: Props){
           <th scope="row" className="px-4 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white flex items-center">
           {item.Client.name}
           </th>
-          <td className="px-4 py-3">{item.Contact === null ? "No asignada" : `${item.Contact.name} ${item.Contact.last_name}`}</td>
+          <td className="px-4 py-3">{item.Contact === null ? "No asignada" : `${item.Contact.name} ${item.Contact.lastName}`}</td>
           <td className="px-4 py-3"> {item.month<10?"0":""}{item.month} / {item.year}</td>
           <td className="px-4 py-3">{formatCurrency(item.value)}</td>
 

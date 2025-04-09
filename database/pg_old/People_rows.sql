@@ -1,0 +1,1 @@
+INSERT INTO "public"."People" ("id","name","last_name","dni","country","job_title_id","fee","client_id") VALUES ('3', 'Aldo', 'Hernandez Segovia', '1256965156', 'México', '2', '500000', '12');

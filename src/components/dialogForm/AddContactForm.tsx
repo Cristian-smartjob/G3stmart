@@ -13,7 +13,7 @@ const initialValues: ContactForm = {}
 
 const validationSchema = Yup.object({
   name: Yup.string().required('Debes proporcionar un nombre'),
-  last_name: Yup.string().required('Debes proporcionar un apellido'),
+  lastName: Yup.string().required('Debes proporcionar un apellido'),
   email: Yup.string().required('Debes proporcionar un correo'),
   phone: Yup.string().required('Debes proporcionar un telefono'),
   client_id: Yup.number().required('Debes elegir un cliente'),
@@ -42,7 +42,7 @@ export default function AddContactForm({ onSave, isEditMode, contact = {} }: Pro
           email: values.email,
           phone: values.phone,
           name: values.name,
-          last_name: values.last_name,
+          lastName: values.lastName,
         }))
       } else {
         dispatch(create(values))

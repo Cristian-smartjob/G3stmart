@@ -1,0 +1,1 @@
+INSERT INTO "public"."Contact" ("id","name","last_name","email","phone","client_id") VALUES ('10', 'Cosme', 'Fulanito', 'cosme@falabella.com', '+56930303030', '12'));
