@@ -5,13 +5,13 @@ type Decimal = Prisma.Decimal;
 export interface Client {
   id: number;
   name: string;
-  currencyTypeId?: number;
-  billableDay?: number;
-  rut?: string;
-  address?: string;
-  companyName?: string;
-  createdAt?: Date;
-  updatedAt?: Date;
+  currencyTypeId?: number | null;
+  billableDay?: number | Decimal | null;
+  rut?: string | null;
+  address?: string | null;
+  companyName?: string | null;
+  createdAt?: Date | null;
+  updatedAt?: Date | null;
   currencyType?: {
     id: number;
     name: string;

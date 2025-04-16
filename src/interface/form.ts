@@ -1,16 +1,16 @@
 export interface ClientForm {
   id?: number;
   name?: string;
-  company_name?: string;
-  rut?: string;
-  currency_type_id?: number;
-  address?: string;
-  locality?: string;
-  sublocality?: string;
-  administrative_area_level_1?: string;
-  administrative_area_level_2?: string;
-  country?: string;
-  billable_day?: number;
+  company_name?: string | null;
+  rut?: string | null;
+  currency_type_id?: number | null;
+  address?: string | null;
+  locality?: string | null;
+  sublocality?: string | null;
+  administrative_area_level_1?: string | null;
+  administrative_area_level_2?: string | null;
+  country?: string | null;
+  billable_day?: number | null;
 }
 
 export interface PeopleForm {

@@ -24,6 +24,7 @@ const validationSchema = Yup.object({
 
 interface Props {
   onSave: () => void;
+  isEditMode?: boolean;
 }
 
 export default function AddClientForm({ onSave }: Props) {

@@ -23,7 +23,8 @@ const clientsSlice = createSlice({
   name: 'clients',
   initialState,
   reducers: {
-    create(state){
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    create(state, action: PayloadAction<ClientForm>){
       state.isCreateLoading = true
     },
     createSuccessfull(state){
