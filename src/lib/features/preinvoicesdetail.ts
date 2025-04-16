@@ -1,8 +1,9 @@
-import { PreInvoiceDetail } from '@/interface/common';
+import type { PreInvoiceDetail as PrismaPreInvoiceDetail } from '@prisma/client';
 import { CheckboxStatus } from '@/interface/ui';
 import { createSlice } from '@reduxjs/toolkit';
 import type { PayloadAction } from '@reduxjs/toolkit';
 
+export type PreInvoiceDetail = PrismaPreInvoiceDetail & { isSelected?: boolean };
 
 interface PreInvoiceDetailState {
   list: PreInvoiceDetail[];

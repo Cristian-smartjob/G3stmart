@@ -73,9 +73,9 @@ export default function PreInvoiceDetailTable({ typeFilter, rightContent, bottom
 
   
 
-  const handleActionPress = (item: PreInvoiceDetail) => {
-    setIsOpen(true)
-  }
+  // const handleActionPress = (item: PreInvoiceDetail) => {
+  //   setIsOpen(true)
+  // }
 
   const handlerChangeSelectAll = (value: CheckboxStatus) => {
     dispatch(selectAll(value))

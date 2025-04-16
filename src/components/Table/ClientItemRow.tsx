@@ -34,8 +34,8 @@ export default function ClientItemRow({ item, onPressItem }: Props){
                         {isDeleting ? <DeletingIndicator /> : null}
             </th>
             <td className="px-4 py-3">{item.rut}</td>
-            <td className="px-4 py-3">{item.billable_day}</td>
-            <td className="px-4 py-3">{item.CurrencyType.name}</td>
+            <td className="px-4 py-3">{item.billableDay}</td>
+            <td className="px-4 py-3">{item.currencyType?.name || '-'}</td>
              <td className="px-4 py-3">
                             <Options onPressItem={(value) => {
                                 onPressItem(value, item)

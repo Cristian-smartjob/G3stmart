@@ -1,22 +1,49 @@
-import { takeLatest, all, put, call } from "redux-saga/effects";
+import { takeLatest, all, put, call, CallEffect, PutEffect } from "redux-saga/effects";
 import * as ReducerUser from "@/lib/features/users";
-import { createClient } from "@/lib/postgresClient";
+import type { People, JobTitle, Client, Role, AFPInstitution, HealthInstitution, Seniority, CurrencyType } from "@prisma/client";
 
-function* fetchPeople() {
+// Definir el tipo de respuesta esperada de la API
+type PeopleWithRelations = People & {
+  jobTitle: JobTitle | null;
+  client: Client | null;
+  role: Role | null;
+  afpInstitution: AFPInstitution | null;
+  healthInstitution: HealthInstitution | null;
+  seniority: Seniority | null;
+  currencyType: CurrencyType | null;
+};
+
+type ApiResponse = {
+  data: PeopleWithRelations[];
+  message?: string;
+};
+
+// Tipar el generador con los tipos correctos
+function* fetchPeople(): Generator<
+  CallEffect<unknown> | PutEffect<ReturnType<typeof ReducerUser.fetchSuccessfull> | ReturnType<typeof ReducerUser.fetchError>>,
+  void,
+  unknown
+> {
   try {
-    const client = createClient();
     console.log("Fetching People data...");
 
-    const { data, error } = yield call(() => client.from("People").select("*").withAllJoins().execute());
-
-    if (error) {
-      console.log("Error fetching People data:", error);
-      yield put(ReducerUser.fetchError());
-      return;
+    const response = yield call(() => 
+      fetch("/api/people", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        }
+      })
+    );
+    
+    const result = yield call(() => (response as Response).json());
+    
+    if (!(response as Response).ok) {
+      throw new Error((result as ApiResponse).message || "Error fetching People data");
     }
 
-    console.log("People data fetched successfully:", data?.length || 0, "records");
-    yield put(ReducerUser.fetchSuccessfull(data));
+    console.log("People data fetched successfully:", (result as ApiResponse)?.data?.length || 0, "records");
+    yield put(ReducerUser.fetchSuccessfull((result as ApiResponse).data));
   } catch (e) {
     console.log("error", e);
     yield put(ReducerUser.fetchError());

@@ -1,14 +1,21 @@
 import { peopleRepository } from "../database/repositories";
-import type { People, LeaveDays } from "../database/prisma";
-import type { Prisma } from "../database/prisma";
-import type { PeopleWithRelations } from "../database/repositories/peopleRepository";
+import type { People, LeaveDays, Client, JobTitle, Role, Seniority, AFPInstitution, HealthInstitution } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 
 export class PeopleService {
   async getAllPeople(): Promise<People[]> {
     return peopleRepository.findAll();
   }
 
-  async getPersonById(id: number): Promise<PeopleWithRelations | null> {
+  async getPersonById(id: number): Promise<(People & {
+    client: Client | null;
+    jobTitle: JobTitle | null;
+    role: Role | null;
+    seniority: Seniority | null;
+    afpInstitution: AFPInstitution | null;
+    healthInstitution: HealthInstitution | null;
+    leaveDays: LeaveDays[];
+  }) | null> {
     return peopleRepository.findById(id);
   }
 
@@ -51,8 +58,8 @@ export class PeopleService {
     if (personData.administrativeArea !== undefined) data.administrativeArea = personData.administrativeArea;
     if (personData.country !== undefined) data.country = personData.country;
     if (personData.nationality !== undefined) data.nationality = personData.nationality;
-    if (personData.netSalary !== undefined) data.netSalary = personData.netSalary;
-    if (personData.fee !== undefined) data.fee = personData.fee;
+    if (personData.netSalary !== undefined) data.netSalary = new Prisma.Decimal(personData.netSalary);
+    if (personData.fee !== undefined) data.fee = new Prisma.Decimal(personData.fee);
     if (personData.birth !== undefined) data.birth = personData.birth;
     if (personData.phone !== undefined) data.phone = personData.phone;
     if (personData.billableDay !== undefined) data.billableDay = personData.billableDay;
@@ -123,8 +130,8 @@ export class PeopleService {
     if (personData.administrativeArea !== undefined) data.administrativeArea = personData.administrativeArea;
     if (personData.country !== undefined) data.country = personData.country;
     if (personData.nationality !== undefined) data.nationality = personData.nationality;
-    if (personData.netSalary !== undefined) data.netSalary = personData.netSalary;
-    if (personData.fee !== undefined) data.fee = personData.fee;
+    if (personData.netSalary !== undefined) data.netSalary = new Prisma.Decimal(personData.netSalary);
+    if (personData.fee !== undefined) data.fee = new Prisma.Decimal(personData.fee);
     if (personData.birth !== undefined) data.birth = personData.birth;
     if (personData.phone !== undefined) data.phone = personData.phone;
     if (personData.billableDay !== undefined) data.billableDay = personData.billableDay;

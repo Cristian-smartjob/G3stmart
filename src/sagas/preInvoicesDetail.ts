@@ -1,63 +1,69 @@
 import { takeLatest, all, put, call } from 'redux-saga/effects'
 import * as ReducerPreInvoicesDetail from '@/lib/features/preinvoicesdetail'
-import { createClient } from '@/lib/postgresClient';
-import { SupabaseClient } from '@supabase/supabase-js';
+import { FetchSagaGenerator, ApiResponse } from '@/types/saga'
+import type { PreInvoiceDetail } from '@prisma/client'
 
+// Tipo para los detalles de preinvoice con relaciones
+type PreInvoiceDetailWithRelations = PreInvoiceDetail & {
+    person: {
+        id: number;
+        name: string;
+        lastName: string;
+        dni: string | null;
+        country: string | null;
+        jobTitle: {
+            id: number;
+            name: string;
+        } | null;
+    } | null;
+};
 
-const fetch = async (id: number)  => {
-    const client = createClient()
-    return await client.from("PreInvoiceDetail").select(`
-        id,
-        value,
-        status,
-        billable_days,
-            leave_days,
-            total_consume_days,
-        People (
-            id,
-            name,
-            last_name,
-            dni,
-            country,
-            JobTitle (
-                id,
-                name
-            )
-        )
-    `).eq("preinvoice_id",id)
-}
-
-
-function* fetchPreinvoices(action: {type:string; payload: number;}){
-
+function* fetchPreinvoices(action: {type:string; payload: number;}): FetchSagaGenerator<PreInvoiceDetailWithRelations[]> {
     try {
         console.log('fetchPreinvoices', action.payload)
-        const { data, error } = yield call(fetch, action.payload)
-        if (error) {
-            throw new Error(error.message);
+        
+        const response = yield call(() => 
+            fetch(`/api/preinvoices/details/${action.payload}`, {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                }
+            })
+        );
+        
+        const result = yield call(() => (response as Response).json());
+        
+        if (!(response as Response).ok) {
+            throw new Error((result as ApiResponse<unknown>).message || "Error fetching pre-invoice details");
         }
-        yield put(ReducerPreInvoicesDetail.fetchSuccessfull(data))
+        
+        yield put(ReducerPreInvoicesDetail.fetchSuccessfull((result as ApiResponse<PreInvoiceDetailWithRelations[]>).data))
     } catch(e) {
+        console.error("Error:", e);
         yield put(ReducerPreInvoicesDetail.fetchError())
     }
-
 }
 
-const  update = async (client: SupabaseClient, id: number, status: string) => {
-
-  return await client
-  .from('PreInvoiceDetail')
-  .update({ status })
-  .eq('id', id)
-}
-
-function* AssignToPreinvoice(action: {type: string; payload: {preInvoce: number; smartersIds: number[]}}) {
+function* AssignToPreinvoice(action: {type: string; payload: {preInvoce: number; smartersIds: number[]}}): FetchSagaGenerator<PreInvoiceDetail> {
     try {
-        const client = createClient();
-
         for (const id of action.payload.smartersIds) {
             console.log('id', id)
-            yield call(update, client, id, 'ASSIGN')
+            
+            const response = yield call(() => 
+                fetch(`/api/preinvoices/details/${id}/status`, {
+                    method: "PUT",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({ status: 'ASSIGN' })
+                })
+            );
+            
+            if (!(response as Response).ok) {
+                const errorData = yield call(() => (response as Response).json());
+                throw new Error((errorData as ApiResponse<unknown>).message || "Error assigning pre-invoice detail");
+            }
+            
             yield put(ReducerPreInvoicesDetail.addProgress())
         }
 
@@ -67,23 +73,32 @@ function* AssignToPreinvoice(action: {type: string; payload: {preInvoce: number;
     }
 }
 
-function* UnAssignToPreinvoice(action: {type: string; payload: {preInvoce: number; smartersIds: number[]}}) {
+function* UnAssignToPreinvoice(action: {type: string; payload: {preInvoce: number; smartersIds: number[]}}): FetchSagaGenerator<PreInvoiceDetail> {
     try {
-        const client = createClient();
-
-
         for (const id of action.payload.smartersIds) {
-            yield call(update, client, id, 'NO_ASSIGN')
+            const response = yield call(() => 
+                fetch(`/api/preinvoices/details/${id}/status`, {
+                    method: "PUT",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({ status: 'NO_ASSIGN' })
+                })
+            );
+            
+            if (!(response as Response).ok) {
+                const errorData = yield call(() => (response as Response).json());
+                throw new Error((errorData as ApiResponse<unknown>).message || "Error unassigning pre-invoice detail");
+            }
+            
             yield put(ReducerPreInvoicesDetail.addProgress())
         }
 
         yield put(ReducerPreInvoicesDetail.assignSuccessfull(action.payload.preInvoce));
-
     } catch (e) {
        console.log('error', e)
     }
 }
-
 
 function* fetchPreinvoicesAction(){
     yield takeLatest([
@@ -105,4 +120,4 @@ export default function* preInvoicesDetailActions() {
         AssignToPreinvoiceAction(),
         UnAssignToPreinvoiceAction(),
     ])
- }
+}

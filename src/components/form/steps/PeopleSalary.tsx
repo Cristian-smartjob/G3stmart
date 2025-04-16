@@ -1,5 +1,6 @@
 import Selector from "@/components/core/Selector"
-import { Client, DataTables, GenericDataMap } from "@/interface/common"
+import type { Client, CurrencyType } from "@prisma/client";
+import { DataTables, GenericDataMap } from "@/lib/features/data";
 import { RootState } from "@/lib/store"
 
 import { useSelector } from "react-redux"
@@ -23,7 +24,13 @@ export default function Peoplesalary(){
                       <div className="col-span-3 sm:col-span-4">
                       <Selector 
                         title='Cliente' 
-                        items={(clients || []).map(item => ({id:item.id, label: `${item.name} (${item.CurrencyType.name})`}))}
+                        items={(clients || []).map(item => {
+                          const currency = (currencies as CurrencyType[] | undefined)?.find(c => c.id === item.currencyTypeId);
+                          return {
+                            id: item.id,
+                            label: `${item.name}${currency ? ` (${currency.name})` : ''}`
+                          };
+                        })}
                         onChange={() => {
                           
                         }}
@@ -56,7 +63,7 @@ export default function Peoplesalary(){
                      <div className="col-span-3 sm:col-span-4">
                        <Selector 
                          title='Moneda' 
-                         items={currencies.map(item => ({id:item.id, label: item.name}))}
+                         items={((currencies || []) as CurrencyType[]).map(item => ({id: item.id, label: item.name}))}
                          onChange={() => {
                            
                          }}

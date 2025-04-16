@@ -1,24 +1,28 @@
-import { takeLatest, all, put, call, CallEffect, PutEffect } from "redux-saga/effects";
+import { takeLatest, all, put, call } from "redux-saga/effects";
 import * as ReducerContacts from "@/lib/features/contacts";
-import { Contact } from "@/lib/features/contacts";
-import { createClient } from "@/lib/postgresClient";
 import { ContactForm } from "@/interface/form";
+import { ApiResponse, DeleteSagaGenerator, CreateSagaGenerator, UpdateSagaGenerator, FetchSagaGenerator } from "@/types/saga";
+import type { Contact, Client } from "@prisma/client";
 
-const update = async (payload: Partial<ContactForm>) => {
-  const client = createClient();
-  return await client.from("Contact").update(payload).execute();
+// Tipo para contactos con relaciones
+type ContactWithRelations = Contact & {
+  client: Client | null;
 };
 
-function* deleteItem(action: { type: string; payload: ContactForm }) {
+function* deleteItem(action: { type: string; payload: ContactForm }): DeleteSagaGenerator<Contact> {
   try {
-    const { error } = yield call(() =>
-      update({
-        id: action.payload.id,
+    const response = yield call(() =>
+      fetch(`/api/contacts/${action.payload.id}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        }
       })
     );
 
-    if (error) {
-      throw new Error(error.message);
+    if (!(response as Response).ok) {
+      const errorData = yield call(() => (response as Response).json());
+      throw new Error((errorData as ApiResponse<unknown>).message || "Error deleting contact");
     }
 
     yield put(ReducerContacts.deleteSuccessfull(action.payload));
@@ -27,14 +31,21 @@ function* deleteItem(action: { type: string; payload: ContactForm }) {
   }
 }
 
-function* addNewContact(action: { type: string; payload: ContactForm }) {
+function* addNewContact(action: { type: string; payload: ContactForm }): CreateSagaGenerator<Contact> {
   try {
-    const client = createClient();
+    const response = yield call(() => 
+      fetch("/api/contacts", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(action.payload)
+      })
+    );
 
-    const { error } = yield call(() => client.from("Contact").insert(action.payload as Record<string, unknown>));
-
-    if (error) {
-      throw new Error(error.message);
+    if (!(response as Response).ok) {
+      const errorData = yield call(() => (response as Response).json());
+      throw new Error((errorData as ApiResponse<unknown>).message || "Error creating contact");
     }
 
     yield put(ReducerContacts.createSuccessfull());
@@ -43,12 +54,21 @@ function* addNewContact(action: { type: string; payload: ContactForm }) {
   }
 }
 
-function* updateContact(action: { type: string; payload: ContactForm }) {
+function* updateContact(action: { type: string; payload: ContactForm }): UpdateSagaGenerator<Contact> {
   try {
-    const { error } = yield call(() => update(action.payload));
+    const response = yield call(() => 
+      fetch(`/api/contacts/${action.payload.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(action.payload)
+      })
+    );
 
-    if (error) {
-      throw new Error(error.message);
+    if (!(response as Response).ok) {
+      const errorData = yield call(() => (response as Response).json());
+      throw new Error((errorData as ApiResponse<unknown>).message || "Error updating contact");
     }
 
     yield put(ReducerContacts.updateSuccessfull(action.payload));
@@ -57,37 +77,28 @@ function* updateContact(action: { type: string; payload: ContactForm }) {
   }
 }
 
-function* fetchContacts(): Generator<CallEffect<Response | any> | PutEffect<any>, void, any> {
+function* fetchContacts(): FetchSagaGenerator<ContactWithRelations[]> {
   try {
     console.log("Fetching Contacts data...");
 
-    const fetchEffect = yield call(() =>
-      fetch("/api/db/select", {
-        method: "POST",
+    const response = yield call(() =>
+      fetch("/api/contacts", {
+        method: "GET",
         headers: {
           "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          table: "Contact",
-          conditions: [],
-        }),
+        }
       })
     );
 
-    const response: Response = fetchEffect;
+    const result = yield call(() => (response as Response).json());
 
-    const jsonEffect = yield call(() => response.json());
-    const responseData: { data: Contact[] } = jsonEffect;
-
-    if (!response.ok) {
-      console.log("Error fetching Contacts data:", responseData);
-      yield put(ReducerContacts.fetchError());
-      return;
+    if (!(response as Response).ok) {
+      throw new Error((result as ApiResponse<unknown>).message || "Error fetching contacts");
     }
 
-    console.log("Contacts data fetched successfully:", responseData?.data?.length || 0, "records");
+    console.log("Contacts data fetched successfully:", (result as ApiResponse<ContactWithRelations[]>)?.data?.length || 0, "records");
 
-    yield put(ReducerContacts.fetchSuccessfull(responseData?.data || []));
+    yield put(ReducerContacts.fetchSuccessfull((result as ApiResponse<ContactWithRelations[]>).data || []));
   } catch (e) {
     console.log("error", e);
     yield put(ReducerContacts.fetchError());

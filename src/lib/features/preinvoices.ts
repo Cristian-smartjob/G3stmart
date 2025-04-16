@@ -1,56 +1,42 @@
-import { PreInvoice, PreInvoiceUpdate } from '@/interface/common';
-import { PreinvoiceForm } from '@/interface/form';
-import { CheckboxStatus } from '@/interface/ui';
+import type { PreInvoice } from '@prisma/client';
 import { createSlice } from '@reduxjs/toolkit';
 import type { PayloadAction } from '@reduxjs/toolkit';
 
-interface PreInvoiceState {
+// Definición local de PreInvoiceUpdate (ajusta los campos según tu uso real)
+export type PreInvoiceUpdate = Partial<Omit<PreInvoice, 'id'>>;
+
+interface PreInvoicesState {
   list: PreInvoice[];
   isLoading: boolean;
-  isLoadingCreating: boolean;
- 
+  error: string | null;
 }
 
-const initialState: PreInvoiceState = { 
-  isLoading: true,
-  isLoadingCreating: false,
+const initialState: PreInvoicesState = {
   list: [],
-  
-}
+  isLoading: false,
+  error: null,
+};
 
-const preInvoicesSlices = createSlice({
+const preInvoicesSlice = createSlice({
   name: 'preInvoices',
   initialState,
   reducers: {
-    update(state, action:PayloadAction<PreInvoiceUpdate>){},
-    updateSuccessfull(){},
-    create(state, action: PayloadAction<PreinvoiceForm>){
-      state.isLoadingCreating = true
+    fetch(state) {
+      state.isLoading = true;
+      state.error = null;
     },
-    createSuccessfull(state){
-      state.isLoadingCreating = false
+    fetchSuccessfull(state, action: PayloadAction<PreInvoice[]>) {
+      state.isLoading = false;
+      state.list = action.payload;
+      state.error = null;
     },
-    fetch(state){
-      state.isLoading = true
+    fetchError(state, action: PayloadAction<string | undefined>) {
+      state.isLoading = false;
+      state.error = action.payload || 'Error al cargar preInvoices';
     },
-    fetchSuccessfull(state, action: PayloadAction<PreInvoice[]>){
-      state.isLoading = false
-      state.list = action.payload
-    },
-    fetchError(state){
-      state.isLoading = false
-    },
-    
+    // Puedes agregar más reducers según tus necesidades
   },
 });
 
-export const { 
-  create,
-  createSuccessfull,
-  fetch,
-  fetchSuccessfull,
-  fetchError,
-  update,
-  updateSuccessfull
-} = preInvoicesSlices.actions;
-export default preInvoicesSlices.reducer;
+export const { fetch, fetchSuccessfull, fetchError } = preInvoicesSlice.actions;
+export default preInvoicesSlice.reducer;

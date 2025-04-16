@@ -1,6 +1,6 @@
 import { roleRepository } from "../database/repositories";
-import type { Role } from "../database/prisma";
-import type { Prisma } from "../database/prisma";
+import type { Role } from "@prisma/client";
+import type { Prisma } from "@prisma/client";
 
 export class RoleService {
   async getAllRoles(): Promise<Role[]> {

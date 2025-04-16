@@ -14,6 +14,7 @@ import ClientItemRow from "../Table/ClientItemRow";
 import TableSkeleton from "../core/TableSkeleton";
 import { filterClient } from "@/utils/filter";
 import DeleteModal from "../modals/DeleteModal";
+import { DataTables, GenericDataMap } from "@/lib/features/data";
 
 const header = ["Nombre", "Rut", "Día facturación", "Moneda", "Opciones"]
 
