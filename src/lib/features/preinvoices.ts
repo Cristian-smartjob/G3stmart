@@ -34,9 +34,14 @@ const preInvoicesSlice = createSlice({
       state.isLoading = false;
       state.error = action.payload || 'Error al cargar preInvoices';
     },
+    update(state, action: PayloadAction<{id: number, status: string}>) {
+      state.list = state.list.map(item => 
+        item.id === action.payload.id ? {...item, status: action.payload.status} : item
+      );
+    },
     // Puedes agregar más reducers según tus necesidades
   },
 });
 
-export const { fetch, fetchSuccessfull, fetchError } = preInvoicesSlice.actions;
+export const { fetch, fetchSuccessfull, fetchError, update } = preInvoicesSlice.actions;
 export default preInvoicesSlice.reducer;

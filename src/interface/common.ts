@@ -1,4 +1,6 @@
 import { CurrencyType } from "@prisma/client";
+import { Prisma } from "@prisma/client";
+type Decimal = Prisma.Decimal;
 
 export interface Client {
   id: number;
@@ -31,37 +33,38 @@ export interface Contact {
 
 export interface PreInvoice {
   id: number;
-  clientId?: number;
-  contactId?: number;
-  total?: number;
+  clientId?: number | null;
+  contactId?: number | null;
+  total?: number | Decimal | null;
   status: string;
-  ocNumber?: string;
-  hesNumber?: string;
-  invoiceNumber?: string;
+  ocNumber?: string | null;
+  hesNumber?: string | null;
+  invoiceNumber?: string | null;
   month: number;
   year: number;
-  value: number;
-  rejectNote?: string;
-  ocAmount?: number;
-  edpNumber?: string;
-  createdAt?: Date;
-  updatedAt?: Date;
+  value: number | Decimal;
+  rejectNote?: string | null;
+  ocAmount?: number | Decimal | null;
+  edpNumber?: string | null;
+  createdAt?: Date | null;
+  updatedAt?: Date | null;
   client?: Client;
   contact?: Contact;
 }
 
 export interface PreInvoiceDetail {
   id: number;
-  preInvoiceId?: number;
-  personId?: number;
+  preInvoiceId?: number | null;
+  personId?: number | null;
   status: string;
-  value: number;
-  currency_type?: number;
-  billableDays: number;
-  leaveDays: number;
-  totalConsumeDays: number;
-  createdAt?: Date;
-  updatedAt?: Date;
+  value: number | Decimal;
+  currency_type?: number | null;
+  billableDays: number | Decimal;
+  leaveDays: number | Decimal;
+  totalConsumeDays: number | Decimal;
+  isSelected?: boolean;
+  createdAt?: Date | null;
+  updatedAt?: Date | null;
   CurrencyType?: CurrencyType;
   preInvoice?: PreInvoice;
 }
