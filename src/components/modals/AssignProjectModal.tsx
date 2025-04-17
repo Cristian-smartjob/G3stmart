@@ -2,7 +2,18 @@
 
 import { Dialog, DialogBackdrop, DialogPanel } from "@headlessui/react";
 import AddAsignedProjectForm from "../dialogForm/AddAsignedProjectForm";
-import { PeopleWithAllRelations } from "@/infrastructure/database/repositories/peopleRepository";
+import type { People, JobTitle, Client, Role, AFPInstitution, HealthInstitution, Seniority, CurrencyType } from "@prisma/client";
+
+// Definir el tipo de PeopleWithAllRelations según lo que necesitamos
+type PeopleWithAllRelations = People & {
+  jobTitle: JobTitle | null;
+  client: Client | null;
+  role: Role | null;
+  afpInstitution: AFPInstitution | null;
+  healthInstitution: HealthInstitution | null;
+  seniority: Seniority | null;
+  currencyType: CurrencyType | null;
+};
 
 interface Props {
   isOpen: boolean;

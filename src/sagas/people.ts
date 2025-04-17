@@ -2,8 +2,8 @@ import { takeLatest, all, put, call, CallEffect, PutEffect } from "redux-saga/ef
 import * as ReducerUser from "@/lib/features/users";
 import type { People, JobTitle, Client, Role, AFPInstitution, HealthInstitution, Seniority, CurrencyType } from "@prisma/client";
 
-// Definir el tipo de respuesta esperada de la API
-type PeopleWithRelations = People & {
+// Definir el tipo de PeopleWithAllRelations según lo que necesitamos
+type PeopleWithAllRelations = People & {
   jobTitle: JobTitle | null;
   client: Client | null;
   role: Role | null;
@@ -14,7 +14,7 @@ type PeopleWithRelations = People & {
 };
 
 type ApiResponse = {
-  data: PeopleWithRelations[];
+  data: PeopleWithAllRelations[];
   message?: string;
 };
 
