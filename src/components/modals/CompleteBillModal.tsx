@@ -4,6 +4,8 @@ import { update } from '@/lib/features/preinvoices';
 import { useAppDispatch } from '@/lib/hook';
 import { Dialog, DialogBackdrop, DialogPanel, DialogTitle } from '@headlessui/react'
 import { CheckIcon } from '@heroicons/react/24/outline'
+import { useState } from 'react';
+import { updatePreInvoice } from '@/app/actions/preInvoices';
 
 interface Props {
     isOpen:boolean;
@@ -11,20 +13,85 @@ interface Props {
     preinvoiceId: number;
 }
 
-
-
 export default function CompleteBillModal({ isOpen, setIsOpen, preinvoiceId}: Props) {
- 
-
-   const dispatch = useAppDispatch()
+  const [isLoading, setIsLoading] = useState(false);
+  const [formData, setFormData] = useState({
+    numberBill: '',
+    numberHes: '',
+    numberOc: '',
+    ocAmount: ''
+  });
   
-    const handlerUpdate = () => {
+  const dispatch = useAppDispatch();
   
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+  
+  const handlerUpdate = async () => {
+    if (isLoading) return;
+    
+    setIsLoading(true);
+    console.log('Iniciando completado de facturación para ID:', preinvoiceId, 'con datos:', formData);
+    
+    try {
+      // 1. Actualizar en Redux
       dispatch(update({
         id: preinvoiceId,
-        status: "APPROVED"
-      }))
+        status: "COMPLETED"
+      }));
+      console.log('Estado actualizado en Redux');
+      
+      // 2. Actualizar en el servidor usando server action
+      try {
+        const result = await updatePreInvoice(preinvoiceId, { 
+          id: preinvoiceId, 
+          status: "COMPLETED",
+          invoiceNumber: formData.numberBill,
+          hesNumber: formData.numberHes,
+          ocNumber: formData.numberOc,
+          ocAmount: formData.ocAmount ? Number(formData.ocAmount) : undefined
+        });
+        console.log('Facturación completada en servidor:', result);
+      } catch (error) {
+        console.error('Error al actualizar en el servidor:', error);
+      }
+      
+      // 3. Actualizar usando API REST
+      try {
+        const apiResponse = await fetch(`/api/preinvoices/${preinvoiceId}/status`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ 
+            status: 'COMPLETED',
+            invoiceNumber: formData.numberBill,
+            hesNumber: formData.numberHes,
+            ocNumber: formData.numberOc,
+            ocAmount: formData.ocAmount ? Number(formData.ocAmount) : undefined
+          }),
+        });
+        
+        const apiResult = await apiResponse.json();
+        console.log('Respuesta de la API:', apiResult);
+      } catch (error) {
+        console.error('Error al llamar a la API:', error);
+      }
+      
+      // Redirigir a la lista de prefacturas después de completar todo
+      setTimeout(() => {
+        window.location.href = '/preinvoice';
+      }, 500);
+    } catch (error) {
+      console.error('Error general en la facturación:', error);
+      setIsLoading(false);
     }
+  }
    
   return (
     <Dialog open={isOpen} onClose={setIsOpen} className="relative z-50">
@@ -55,12 +122,12 @@ export default function CompleteBillModal({ isOpen, setIsOpen, preinvoiceId}: Pr
                             </label>
                             <div className="mt-2">
                                 <input
-                                     id="number_bill"
-                                     name="number_bill"
-                                      type="number"
-                                     autoComplete="number"
-                                    className="block w-full rounded-md bg-white px-3 py-2 text-base text-gray-900 outline outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
-                                
+                                     id="numberBill"
+                                     name="numberBill"
+                                     type="text"
+                                     value={formData.numberBill}
+                                     onChange={handleInputChange}
+                                     className="block w-full rounded-md bg-white px-3 py-2 text-base text-gray-900 outline outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
                                 />
                             </div>
                         </div>
@@ -71,12 +138,12 @@ export default function CompleteBillModal({ isOpen, setIsOpen, preinvoiceId}: Pr
                             </label>
                             <div className="mt-2">
                                 <input
-                                    id="number_hes"
-                                    name="number_hes"
-                                     type="number"
-                                    autoComplete="number"
+                                    id="numberHes"
+                                    name="numberHes"
+                                    type="text"
+                                    value={formData.numberHes}
+                                    onChange={handleInputChange}
                                     className="block w-full rounded-md bg-white px-3 py-2 text-base text-gray-900 outline outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
-                                
                                 />
                             </div>
                         </div>
@@ -88,12 +155,12 @@ export default function CompleteBillModal({ isOpen, setIsOpen, preinvoiceId}: Pr
                             </label>
                             <div className="mt-2">
                                 <input
-                                    id="number_oc"
-                                    name="number_oc"
-                                     type="number"
-                                    autoComplete="number"
+                                    id="numberOc"
+                                    name="numberOc"
+                                    type="text"
+                                    value={formData.numberOc}
+                                    onChange={handleInputChange}
                                     className="block w-full rounded-md bg-white px-3 py-2 text-base text-gray-900 outline outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
-                                
                                 />
                             </div>
                         </div>
@@ -104,12 +171,12 @@ export default function CompleteBillModal({ isOpen, setIsOpen, preinvoiceId}: Pr
                             </label>
                             <div className="mt-2">
                                 <input
-                                    id="oc_amount"
-                                    name="oc_amount"
+                                    id="ocAmount"
+                                    name="ocAmount"
                                     type="number"
-                                    autoComplete="number"
+                                    value={formData.ocAmount}
+                                    onChange={handleInputChange}
                                     className="block w-full rounded-md bg-white px-3 py-2 text-base text-gray-900 outline outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
-                                
                                 />
                             </div>
                         </div>
@@ -120,21 +187,27 @@ export default function CompleteBillModal({ isOpen, setIsOpen, preinvoiceId}: Pr
             <div className="mt-5 sm:mt-6 sm:grid sm:grid-flow-row-dense sm:grid-cols-2 sm:gap-3">
               <button
                 type="button"
+                disabled={isLoading}
                 onClick={() => {
-                  setIsOpen()
-                  handlerUpdate()
+                  setIsOpen();
+                  handlerUpdate();
                 }}
-                className="inline-flex w-full justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 sm:col-start-2"
+                className={`inline-flex w-full justify-center rounded-md px-3 py-2 text-sm font-semibold text-white shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 sm:col-start-2 ${
+                  isLoading ? 'bg-indigo-400 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-500'
+                }`}
               >
-                Aprobar
+                {isLoading ? 'Procesando...' : 'Completar facturación'}
               </button>
               <button
                 type="button"
                 data-autofocus
+                disabled={isLoading}
                 onClick={() => setIsOpen()}
-                className="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:col-start-1 sm:mt-0"
+                className={`mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:col-start-1 sm:mt-0 ${
+                  isLoading ? 'opacity-50 cursor-not-allowed' : ''
+                }`}
               >
-                Cancel
+                Cancelar
               </button>
             </div>
           </DialogPanel>

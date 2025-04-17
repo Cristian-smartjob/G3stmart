@@ -4,8 +4,9 @@ import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useAppDispatch } from "@/lib/hook";
 import {
-  fetch as fetchPreInvoiceDetail,
   unAssign,
+  fetch as fetchPreInvoiceDetails,
+  fetchSuccessfull,
 } from "@/lib/features/preinvoicesdetail";
 import { useSelector } from "react-redux";
 import { RootState } from "@/lib/store";
@@ -17,7 +18,7 @@ import TabSelector, { Selector } from "../core/TabSelector";
 import AssignToPreInvoceModal from "../modals/AssignToPreInvoceModal";
 import { assign } from "@/lib/features/preinvoicesdetail";
 import { formatCurrency } from "@/utils/data";
-import { ArrowDownIcon, CalculatorIcon } from "@heroicons/react/24/outline";
+import { ArrowDownIcon, CalculatorIcon, ArrowLeftIcon } from "@heroicons/react/24/outline";
 import { selectAll } from "@/lib/features/preinvoicesdetail";
 import { CheckboxStatus } from "@/interface/ui";
 import UnAssignToPreInvoceModal from "../modals/UnAssignToPreInvoceModal";
@@ -29,6 +30,9 @@ import { Label } from "flowbite-react";
 import AprovePreinvoiceButton from "../buttons/AprovePreinvoiceButton";
 import RejectPreinvoiceButton from "../buttons/RejectPreinvoiceButton";
 import CompleteBillButton from "../buttons/CompleteBillButton";
+import Link from "next/link";
+import { fetchPreInvoices as fetchPreInvoicesAction } from "@/app/actions/preInvoices";
+import { updatePreInvoice } from "@/app/actions/preInvoices";
 
 const tabs: Selector[] = [
   { id: 1, label: "Todas" },
@@ -38,6 +42,9 @@ const tabs: Selector[] = [
 
 export default function PreinvoceDetail() {
   const { id } = useParams();
+  const dispatch = useAppDispatch();
+
+  console.log('Renderizando PreinvoceDetail con ID:', id);
 
   const preInvoices = useSelector<RootState, PreInvoice[]>(
     (state) => state.preInvoices.list
@@ -53,9 +60,15 @@ export default function PreinvoceDetail() {
   );
 
   const preInvoice = preInvoices.find((item) => item.id === Number(id));
-
+  
   const detailsRoot = useSelector<RootState, PreInvoiceDetail[]>(
-    (state) => state.preInvoicesDetail.list
+    (state) => {
+      console.log('Consultando estado de detalles en Redux:', 
+                  state.preInvoicesDetail.list.length, 
+                  'elementos, isLoading:', 
+                  state.preInvoicesDetail.isLoading);
+      return state.preInvoicesDetail.list;
+    }
   );
   const details = detailsRoot.filter((item) => {
     return item.status === "ASSIGN";
@@ -84,11 +97,75 @@ export default function PreinvoceDetail() {
   const [showModalDownload, setShowModalDownload] = useState(false);
   const [showModalUnassign, setShowModalUnassign] = useState(false);
 
-  const dispatch = useAppDispatch();
+  // Añadir estado local para la prefactura actual
+  const [currentPreInvoice, setCurrentPreInvoice] = useState<PreInvoice | null>(null);
 
+  // useEffect para monitorear el montaje y desmontaje
   useEffect(() => {
-    dispatch(fetchPreInvoiceDetail(Number(id)));
-  }, [dispatch, id]);
+    console.log('PreinvoceDetail montado');
+    
+    return () => {
+      console.log('PreinvoceDetail desmontado');
+    };
+  }, []);
+
+  // Inicializar el estado al cargar el componente
+  useEffect(() => {
+    // Inicializar el estado con un arreglo vacío para evitar problemas
+    dispatch(fetchSuccessfull([]));
+    
+    console.log('Componente PreinvoceDetail inicializado');
+  }, [dispatch]);
+
+  // Cargar los detalles de prefactura cuando cambie el ID
+  useEffect(() => {
+    // Intentar convertir el ID a número de manera segura
+    let numericId: number;
+    
+    if (typeof id === 'string') {
+      numericId = Number(id);
+    } else if (Array.isArray(id)) {
+      numericId = Number(id[0]);
+    } else if (id) { // Si id existe pero es de otro tipo
+      numericId = Number(String(id));
+    } else {
+      numericId = 0;
+    }
+    
+    console.log('Cargando detalles de prefactura para ID:', id, 'convertido a:', numericId);
+    
+    if (!isNaN(numericId) && numericId > 0) {
+      console.log('Dispatching fetchPreInvoiceDetails con ID:', numericId);
+      dispatch(fetchPreInvoiceDetails(numericId));
+    } else {
+      console.error('ID inválido para detalles de prefactura:', id);
+    }
+  }, [id, dispatch]);
+
+  // Cargar la prefactura directamente usando server actions
+  useEffect(() => {
+    const loadPreInvoice = async () => {
+      try {
+        console.log('Cargando prefactura con ID:', id);
+        const allPreInvoices = await fetchPreInvoicesAction();
+        const foundPreInvoice = allPreInvoices.find(item => item.id === Number(id));
+        
+        if (foundPreInvoice) {
+          console.log('Prefactura encontrada con estado:', foundPreInvoice.status);
+          setCurrentPreInvoice(foundPreInvoice);
+        } else {
+          console.log('No se encontró la prefactura con ID:', id);
+        }
+      } catch (error) {
+        console.error('Error al cargar la prefactura:', error);
+      }
+    };
+    
+    loadPreInvoice();
+  }, [id, showModalDownload]); // Añadir dependencia para recargar cuando el modal se cierre
+
+  // Usar currentPreInvoice en lugar de preInvoice del store cuando renderizamos
+  const activePreInvoice = currentPreInvoice || preInvoice;
 
   return (
     <>
@@ -126,14 +203,58 @@ export default function PreinvoceDetail() {
 
       <DownloadPreInvoiceModal
         isOpen={showModalDownload}
-        onAssign={() => {
+        onAssign={async () => {
           if (id !== undefined) {
-            dispatch(
-              ReducerPreInvoices.update({
-                id: Number(id),
-                status: "DOWNLOADED",
-              })
-            );
+            console.log('Intentando actualizar el estado a DOWNLOADED para id:', id);
+            
+            try {
+              // 1. Usar la API REST
+              const apiResponse = await fetch(`/api/preinvoices/${id}/status`, {
+                method: 'PUT',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ status: 'DOWNLOADED' }),
+              });
+              
+              const apiResult = await apiResponse.json();
+              console.log('Respuesta de la API:', apiResult);
+              
+              if (apiResponse.ok) {
+                // 2. Actualizar el estado local en Redux
+                dispatch(
+                  ReducerPreInvoices.update({
+                    id: Number(id),
+                    status: "DOWNLOADED",
+                  })
+                );
+                
+                // 3. También actualizar usando server action
+                try {
+                  const serverActionResult = await updatePreInvoice(Number(id), { 
+                    id: Number(id), 
+                    status: "DOWNLOADED" 
+                  });
+                  console.log('Resultado de server action:', serverActionResult);
+                } catch (serverError) {
+                  console.error('Error en server action:', serverError);
+                }
+                
+                // 4. Recargar la prefactura para asegurar que los cambios se reflejen
+                const refreshedInvoices = await fetchPreInvoicesAction();
+                const updated = refreshedInvoices.find(inv => inv.id === Number(id));
+                console.log('Estado actualizado de la prefactura:', updated?.status);
+                setCurrentPreInvoice(updated || null);
+                
+                // 5. Redirigir a /preinvoice
+                window.location.href = '/preinvoice';
+                return;
+              } else {
+                console.error('Error en la respuesta de la API:', apiResult);
+              }
+            } catch (error) {
+              console.error('Error al actualizar el estado:', error);
+            }
           }
           setShowModalDownload(false);
         }}
@@ -147,26 +268,56 @@ export default function PreinvoceDetail() {
           {/* Secondary navigation */}
           <header className="pb-4 pt-6 sm:pb-6">
             <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-6 px-4 sm:flex-nowrap sm:px-6 lg:px-8">
+              <Link
+                href="/preinvoice"
+                className="inline-flex items-center justify-center rounded-md bg-blue-700 p-2 text-white shadow-sm hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+              >
+                <ArrowLeftIcon className="h-5 w-5" aria-hidden="true" />
+                <span className="sr-only">Volver a Prefacturas</span>
+              </Link>
+              
               <div>
-                <h1 className="text-xl font-semibold text-gray-900">
-                  Prefactura {preInvoice?.client?.name} {preInvoice?.month} /{" "}
-                  {preInvoice?.year}
-                </h1>
+                <div className="flex flex-col">
+                  <h1 className="text-xl font-semibold text-gray-900">
+                    Prefactura / Contraparte
+                  </h1>
 
-                {preInvoice?.contact !== null ? (
-                  <p className="text-sm">
-                    Contraparte {preInvoice?.contact?.name}{" "}
-                    {preInvoice?.contact?.lastName}
-                  </p>
-                ) : null}
-
+                  <div className="mt-2">
+                    <Badge status={activePreInvoice?.status || "PENDING"} />
+                  </div>
+                </div>
+                
                 <div className="mt-6">
-                  <Badge status={preInvoice?.status || "PENDING"} />
+                  <h2 className="text-lg font-medium text-gray-900">
+                    {activePreInvoice?.client?.name} {activePreInvoice?.month} /{" "}
+                    {activePreInvoice?.year}
+                  </h2>
+
+                  {activePreInvoice?.contact !== null ? (
+                    <p className="text-sm">
+                      Contraparte {activePreInvoice?.contact?.name}{" "}
+                      {activePreInvoice?.contact?.lastName}
+                    </p>
+                  ) : null}
                 </div>
               </div>
 
               <div className="ml-auto flex  gap-x-4">
-                {preInvoice?.status === "PENDING" ? (
+                {/* Botón para recargar detalles manualmente */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (id) {
+                      console.log('Recargando detalles manualmente');
+                      dispatch(fetchPreInvoiceDetails(Number(id)));
+                    }
+                  }}
+                  className="px-3 py-2 text-xs font-medium text-center inline-flex items-center text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+                >
+                  Recargar detalles
+                </button>
+                
+                {activePreInvoice?.status === "PENDING" ? (
                   <>
                     <a
                       href="#"
@@ -195,11 +346,11 @@ export default function PreinvoceDetail() {
                   </>
                 ) : null}
 
-                {preInvoice?.status === "APPROVED" ? (
+                {activePreInvoice?.status === "APPROVED" ? (
                   <CompleteBillButton preinvoiceId={Number(id)} />
                 ) : null}
 
-                {preInvoice?.status === "DOWNLOADED" ? (
+                {activePreInvoice?.status === "DOWNLOADED" ? (
                   <>
                     <RejectPreinvoiceButton preinvoiceId={Number(id)} />
                     <AprovePreinvoiceButton preinvoiceId={Number(id)} />
@@ -219,27 +370,27 @@ export default function PreinvoceDetail() {
               <PreInvoceStat
                 name="Número factura"
                 value={
-                  preInvoice?.invoiceNumber === undefined
+                  activePreInvoice?.invoiceNumber === undefined
                     ? "No asignado"
-                    : `${preInvoice?.invoiceNumber}`
+                    : `${activePreInvoice?.invoiceNumber}`
                 }
                 statIdx={0}
               />
               <PreInvoceStat
                 name="Número HES"
                 value={
-                  preInvoice?.hesNumber === null
+                  activePreInvoice?.hesNumber === null
                     ? "No asignado"
-                    : `${preInvoice?.hesNumber}`
+                    : `${activePreInvoice?.hesNumber}`
                 }
                 statIdx={0}
               />
               <PreInvoceStat
                 name="Número OC"
                 value={
-                  preInvoice?.ocNumber === null
+                  activePreInvoice?.ocNumber === null
                     ? "No asignado"
-                    : `${preInvoice?.ocNumber}`
+                    : `${activePreInvoice?.ocNumber}`
                 }
                 statIdx={0}
               />

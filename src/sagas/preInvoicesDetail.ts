@@ -20,10 +20,21 @@ type PreInvoiceDetailWithRelations = PreInvoiceDetail & {
 
 function* fetchPreinvoices(action: {type:string; payload: number;}): FetchSagaGenerator<PreInvoiceDetailWithRelations[]> {
     try {
-        console.log('fetchPreinvoices', action.payload)
+        console.log('Iniciando fetchPreinvoices para preInvoiceId:', action.payload, 'tipo:', action.type);
         
+        // Asegurarnos de que tenemos un ID válido
+        const id = typeof action.payload === 'number' ? action.payload : 
+                  action.type === ReducerPreInvoicesDetail.assignSuccessfull.type ? action.payload : 
+                  0;
+        
+        if (!id) {
+            console.error('ID inválido para fetchPreinvoices');
+            return;
+        }
+        
+        console.log('Realizando petición API para ID:', id);
         const response = yield call(() => 
-            fetch(`/api/preinvoices/details/${action.payload}`, {
+            fetch(`/api/preinvoices/details/${id}`, {
                 method: "GET",
                 headers: {
                     "Content-Type": "application/json",
@@ -31,15 +42,19 @@ function* fetchPreinvoices(action: {type:string; payload: number;}): FetchSagaGe
             })
         );
         
+        console.log('Respuesta recibida de la API:', (response as Response).status);
+        
         const result = yield call(() => (response as Response).json());
         
         if (!(response as Response).ok) {
+            console.error('Error en la respuesta de la API:', result);
             throw new Error((result as ApiResponse<unknown>).message || "Error fetching pre-invoice details");
         }
         
+        console.log('Detalles de prefactura recibidos:', (result as ApiResponse<PreInvoiceDetailWithRelations[]>).data.length);
         yield put(ReducerPreInvoicesDetail.fetchSuccessfull((result as ApiResponse<PreInvoiceDetailWithRelations[]>).data))
     } catch(e) {
-        console.error("Error:", e);
+        console.error("Error en fetchPreinvoices:", e);
         yield put(ReducerPreInvoicesDetail.fetchError())
     }
 }
@@ -101,9 +116,10 @@ function* UnAssignToPreinvoice(action: {type: string; payload: {preInvoce: numbe
 }
 
 function* fetchPreinvoicesAction(){
+    console.log('Configurando saga watcher para fetchPreinvoices');
     yield takeLatest([
-        ReducerPreInvoicesDetail.fetch, 
-        ReducerPreInvoicesDetail.assignSuccessfull], fetchPreinvoices);
+        ReducerPreInvoicesDetail.fetch.type, 
+        ReducerPreInvoicesDetail.assignSuccessfull.type], fetchPreinvoices);
 }
 
 function* AssignToPreinvoiceAction(){

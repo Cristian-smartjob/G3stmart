@@ -34,9 +34,14 @@ const preInvoicesSlice = createSlice({
       state.isLoading = false;
       state.error = action.payload || 'Error al cargar preInvoices';
     },
-    update(state, action: PayloadAction<{id: number, status: string}>) {
+    update(state, action: PayloadAction<{id: number, status: string, rejectNote?: string}>) {
       state.list = state.list.map(item => 
-        item.id === action.payload.id ? {...item, status: action.payload.status} : item
+        item.id === action.payload.id ? 
+          {
+            ...item, 
+            status: action.payload.status,
+            rejectNote: action.payload.rejectNote !== undefined ? action.payload.rejectNote : item.rejectNote
+          } : item
       );
     },
     // Puedes agregar más reducers según tus necesidades

@@ -12,6 +12,8 @@ export async function GET(_request: Request, { params }: Params) {
     const { id } = params;
     const preInvoiceId = Number(id);
     
+    console.log(`API: Buscando detalles para prefactura ID ${preInvoiceId}`);
+    
     const details = await prisma.preInvoiceDetail.findMany({
       where: {
         preInvoiceId
@@ -41,6 +43,8 @@ export async function GET(_request: Request, { params }: Params) {
       }
     });
 
+    console.log(`API: Se encontraron ${details.length} detalles para prefactura ID ${preInvoiceId}`);
+    
     return NextResponse.json({ data: details }, { status: 200 });
   } catch (error) {
     console.error(`Error fetching pre-invoice details:`, error);

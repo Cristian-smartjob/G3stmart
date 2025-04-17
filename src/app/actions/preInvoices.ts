@@ -211,6 +211,8 @@ export async function createPreInvoice(data: PreinvoiceForm): Promise<PreInvoice
 
 export async function updatePreInvoice(id: number, data: PreInvoiceUpdate): Promise<PreInvoice> {
   try {
+    console.log("updatePreInvoice: Iniciando actualización para ID:", id, "con datos:", data);
+    
     // Adaptamos los datos al formato esperado por Prisma
     const updateData: Prisma.PreInvoiceUpdateInput = {};
 
@@ -219,14 +221,34 @@ export async function updatePreInvoice(id: number, data: PreInvoiceUpdate): Prom
       updateData.client = { connect: { id: data.client.id } };
     }
 
+    // Aplicar directamente el cambio de estado si está presente
+    if (data.status) {
+      console.log("updatePreInvoice: Actualizando estado a:", data.status);
+      updateData.status = data.status;
+    }
+
+    // También actualizar otros campos si están presentes
+    if (data.ocNumber) updateData.ocNumber = data.ocNumber;
+    if (data.hesNumber) updateData.hesNumber = data.hesNumber;
+    if (data.invoiceNumber) updateData.invoiceNumber = data.invoiceNumber;
+    if (data.rejectNote) updateData.rejectNote = data.rejectNote;
+    if (data.ocAmount !== undefined) updateData.ocAmount = data.ocAmount;
+    if (data.edpNumber) updateData.edpNumber = data.edpNumber;
+
+    console.log("updatePreInvoice: Datos a actualizar:", updateData);
+    
     await preInvoiceRepository.update(id, updateData);
+    console.log("updatePreInvoice: Actualización exitosa en la base de datos");
+    
     const preInvoiceWithRelations = await preInvoiceRepository.findById(id);
     revalidatePath("/");
 
     if (!preInvoiceWithRelations) {
+      console.error("updatePreInvoice: No se encontró la prefactura después de la actualización");
       throw new Error("No se pudo actualizar la prefactura");
     }
 
+    console.log("updatePreInvoice: Prefactura recuperada:", preInvoiceWithRelations);
     return await mapToDomainModel(preInvoiceWithRelations);
   } catch (error) {
     console.error("Error updating preInvoice:", error);
