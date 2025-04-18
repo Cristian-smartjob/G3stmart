@@ -159,10 +159,42 @@ export async function createPreInvoice(data: PreinvoiceForm): Promise<PreInvoice
       // Continuamos de todos modos, ya que puede que no sea un problema de secuencia
     }
 
-    // Ahora intentamos crear la prefactura usando la transacción
+    // Obtener todos los smarters/people para agregarlos como detalles
+    const allPeople = await prisma.people.findMany({
+      where: {
+        clientId: clientId // Filtrar solo por smarters/people del cliente específico
+      },
+      select: {
+        id: true,
+        fee: true,
+        billableDay: true,
+      },
+    });
+    
+    console.log(`Se encontraron ${allPeople.length} smarters asociados al cliente ${clientId} para agregar a la prefactura`);
+
+    // Intentar reparar la secuencia de PreInvoiceDetail antes de crear los detalles
+    try {
+      // Obtener el valor máximo actual de ID en PreInvoiceDetail
+      const lastPreInvoiceDetail = await prisma.preInvoiceDetail.findFirst({
+        orderBy: { id: "desc" },
+      });
+
+      const maxDetailId = lastPreInvoiceDetail ? lastPreInvoiceDetail.id : 0;
+      console.log("ID máximo actual de PreInvoiceDetail:", maxDetailId);
+
+      // Reparar la secuencia usando SQL nativo
+      await prisma.$executeRaw`SELECT setval('"PreInvoiceDetail_id_seq"', ${maxDetailId}, true)`;
+      console.log("Secuencia de PreInvoiceDetail reparada exitosamente");
+    } catch (seqError) {
+      console.error("Error al intentar reparar la secuencia de PreInvoiceDetail:", seqError);
+      // Continuamos de todos modos
+    }
+
+    // Ahora intentamos crear la prefactura y sus detalles usando la transacción
     const result = await prisma.$transaction(async (tx) => {
       // Crear la prefactura
-      return await tx.preInvoice.create({
+      const createdPreInvoice = await tx.preInvoice.create({
         data: {
           status: "PENDING",
           month: month,
@@ -184,9 +216,29 @@ export async function createPreInvoice(data: PreinvoiceForm): Promise<PreInvoice
           contact: true,
         },
       });
+      
+      console.log("PreInvoice creada con éxito:", createdPreInvoice);
+      
+      // Crear detalles para cada smarter/people
+      for (const person of allPeople) {
+        await tx.preInvoiceDetail.create({
+          data: {
+            status: "PENDING", // Estado inicial
+            personId: person.id,
+            preInvoiceId: createdPreInvoice.id,
+            value: person.fee || 0,
+            billableDays: person.billableDay || 0,
+            leaveDays: 0,
+            totalConsumeDays: person.billableDay || 0,
+          },
+        });
+      }
+      
+      console.log(`Se agregaron ${allPeople.length} smarters como detalles a la prefactura ${createdPreInvoice.id}`);
+      
+      return createdPreInvoice;
     });
 
-    console.log("PreInvoice creada con éxito:", result);
     revalidatePath("/");
 
     // Mapear directamente los resultados
