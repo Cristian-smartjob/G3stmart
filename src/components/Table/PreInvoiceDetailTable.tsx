@@ -142,8 +142,6 @@ export default function PreInvoiceDetailTable({
   const isLoading = useSelector<RootState, boolean>((state) => state.preInvoicesDetail.isLoading);
   const checkboxStatus = useSelector<RootState, CheckboxStatus>((state) => state.preInvoicesDetail.allSelectedStatus);
 
-  console.log("PreInvoiceDetailTable: detailsRoot recibidos:", detailsRoot.length, "isLoading:", isLoading);
-
   // Convertir los detalles al tipo UI para usar en la tabla
   const uiDetailsRoot = detailsRoot.map(adaptToUIDetail);
 
@@ -156,8 +154,6 @@ export default function PreInvoiceDetailTable({
       return item.status === "NO_ASSIGN";
     }
   });
-
-  console.log("PreInvoiceDetailTable: details filtrados por tipo", typeFilter, ":", details.length);
 
   const [menu, setMenu] = useState(1);
   const [isOpen, setIsOpen] = useState(false);

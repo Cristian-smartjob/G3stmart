@@ -41,8 +41,6 @@ export default function PreinvoceDetail() {
   const dispatch = useAppDispatch();
   const [isRecalculating, setIsRecalculating] = useState(false);
 
-  console.log("Renderizando PreinvoceDetail con ID:", id);
-
   const preInvoices = useSelector<RootState, PreInvoice[]>((state) => state.preInvoices.list);
   const isLoadingAssignOrUnassign = useSelector<RootState, boolean>(
     (state) => state.preInvoicesDetail.isLoadingAssignOrUnassign
@@ -57,12 +55,6 @@ export default function PreinvoceDetail() {
   const preInvoice = preInvoices.find((item) => item.id === Number(id));
 
   const detailsRoot = useSelector<RootState, PreInvoiceDetail[]>((state) => {
-    console.log(
-      "Consultando estado de detalles en Redux:",
-      state.preInvoicesDetail.list.length,
-      "elementos, isLoading:",
-      state.preInvoicesDetail.isLoading
-    );
     return state.preInvoicesDetail.list;
   });
   const details = detailsRoot.filter((item) => {
@@ -88,21 +80,10 @@ export default function PreinvoceDetail() {
   // Añadir estado local para la prefactura actual
   const [currentPreInvoice, setCurrentPreInvoice] = useState<PreInvoice | null>(null);
 
-  // useEffect para monitorear el montaje y desmontaje
-  useEffect(() => {
-    console.log("PreinvoceDetail montado");
-
-    return () => {
-      console.log("PreinvoceDetail desmontado");
-    };
-  }, []);
-
   // Inicializar el estado al cargar el componente
   useEffect(() => {
     // Inicializar el estado con un arreglo vacío para evitar problemas
     dispatch(fetchSuccessfull([]));
-
-    console.log("Componente PreinvoceDetail inicializado");
   }, [dispatch]);
 
   // Cargar los detalles de prefactura cuando cambie el ID
@@ -121,10 +102,7 @@ export default function PreinvoceDetail() {
       numericId = 0;
     }
 
-    console.log("Cargando detalles de prefactura para ID:", id, "convertido a:", numericId);
-
     if (!isNaN(numericId) && numericId > 0) {
-      console.log("Dispatching fetchPreInvoiceDetails con ID:", numericId);
       dispatch(fetchPreInvoiceDetails(numericId));
     } else {
       console.error("ID inválido para detalles de prefactura:", id);
@@ -135,18 +113,10 @@ export default function PreinvoceDetail() {
   useEffect(() => {
     const loadPreInvoice = async () => {
       try {
-        console.log("Cargando prefactura con ID:", id);
         const allPreInvoices = await fetchPreInvoicesAction();
         const foundPreInvoice = allPreInvoices.find((item) => item.id === Number(id));
 
         if (foundPreInvoice) {
-          console.log("Prefactura encontrada con estado:", foundPreInvoice.status);
-          console.log("Datos de la prefactura:", {
-            invoiceNumber: foundPreInvoice.invoiceNumber,
-            hesNumber: foundPreInvoice.hesNumber,
-            ocNumber: foundPreInvoice.ocNumber,
-            status: foundPreInvoice.status,
-          });
           setCurrentPreInvoice(foundPreInvoice);
         } else {
           console.log("No se encontró la prefactura con ID:", id);
@@ -386,22 +356,31 @@ export default function PreinvoceDetail() {
           </header>
 
           <div className="border-b border-b-gray-900/10 lg:border-t lg:border-t-gray-900/5">
-            <dl className="mx-auto grid max-w-7xl grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 lg:px-2 xl:px-0">
+            <dl className="mx-auto grid max-w-7xl grid-cols-1 sm:grid-cols-3 lg:grid-cols-5 lg:px-2 xl:px-0">
               <PreInvoceStat name="Total a facturar" value={`${formatCurrency(total)}`} statIdx={0} />
               <PreInvoceStat
                 name="Número factura"
-                value={!activePreInvoice?.invoiceNumber ? "No asignado" : `${activePreInvoice?.invoiceNumber}`}
-                statIdx={0}
+                value={!activePreInvoice?.invoiceNumber ? "" : `${activePreInvoice?.invoiceNumber}`}
+                statIdx={1}
               />
               <PreInvoceStat
                 name="Número HES"
-                value={activePreInvoice?.hesNumber === null ? "No asignado" : `${activePreInvoice?.hesNumber}`}
-                statIdx={0}
+                value={activePreInvoice?.hesNumber === null ? "" : `${activePreInvoice?.hesNumber}`}
+                statIdx={2}
               />
               <PreInvoceStat
                 name="Número OC"
-                value={activePreInvoice?.ocNumber === null ? "No asignado" : `${activePreInvoice?.ocNumber}`}
-                statIdx={0}
+                value={activePreInvoice?.ocNumber === null ? "" : `${activePreInvoice?.ocNumber}`}
+                statIdx={3}
+              />
+              <PreInvoceStat
+                name="Margen (%)"
+                value={
+                  activePreInvoice?.marginPercentage === null || activePreInvoice?.marginPercentage === undefined
+                    ? "0%"
+                    : `${Number(activePreInvoice.marginPercentage)}%`
+                }
+                statIdx={4}
               />
             </dl>
           </div>

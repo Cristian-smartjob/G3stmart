@@ -45,6 +45,7 @@ export interface PreInvoice {
   month?: number;
   year?: number;
   value?: number | Decimal;
+  marginPercentage?: number | Decimal | null;
   rejectNote?: string | null;
   ocAmount?: number | Decimal | null;
   edpNumber?: string | null;
@@ -86,7 +87,9 @@ export interface PreInvoiceUpdate {
   invoiceNumber?: string;
   rejectNote?: string;
   ocAmount?: number;
+  marginPercentage?: number;
   edpNumber?: string;
   completedBy?: string;
   completedAt?: Date;
+  client?: Client;
 }

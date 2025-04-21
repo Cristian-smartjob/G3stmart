@@ -25,9 +25,7 @@ export default function PreInvoiceItemRow({ item }: Props) {
         {item.client ? item.client.name : "Sin cliente"}
       </th>
       <td className="px-4 py-3">
-        {!item.contact
-          ? "No asignada"
-          : `${item.contact.name} ${item.contact.lastName || ""}`}
+        {!item.contact ? "No asignada" : `${item.contact.name} ${item.contact.lastName || ""}`}
       </td>
       <td className="px-4 py-3">
         {" "}

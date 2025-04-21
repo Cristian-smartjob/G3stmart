@@ -40,6 +40,7 @@ const initialValues: PreinvoiceForm = {
   month: undefined,
   year: undefined,
   billable_day: undefined,
+  margin_percentage: undefined,
 };
 
 const currentYear = new Date().getFullYear();
@@ -142,6 +143,7 @@ export default function AddPreInvoiceForm({ onSave }: Props) {
         month: Number(values.month),
         year: Number(values.year),
         billable_day: values.billable_day ? Number(values.billable_day) : undefined,
+        margin_percentage: values.margin_percentage ? Number(values.margin_percentage) : undefined,
       };
 
       console.log("Enviando datos de prefactura:", formData);
@@ -310,6 +312,28 @@ export default function AddPreInvoiceForm({ onSave }: Props) {
                         />
                         {touched.year && errors.year && <p className="mt-1 text-sm text-red-600">{errors.year}</p>}
                       </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-6">
+                    <label htmlFor="margin_percentage" className="block text-sm font-medium text-gray-700">
+                      Porcentaje de margen (%)
+                    </label>
+                    <div className="mt-1">
+                      <input
+                        type="number"
+                        name="margin_percentage"
+                        id="margin_percentage"
+                        min="0"
+                        max="100"
+                        step="0.01"
+                        placeholder="0.00"
+                        className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                        value={values.margin_percentage || ""}
+                        onChange={(e) => {
+                          setFieldValue("margin_percentage", e.target.value ? parseFloat(e.target.value) : undefined);
+                        }}
+                      />
                     </div>
                   </div>
                 </section>

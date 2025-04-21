@@ -48,6 +48,7 @@ export interface PreinvoiceForm {
   month?: number;
   year?: number;
   billable_day?: number;
+  margin_percentage?: number;
 }
 
 export interface AssignLeaveDaysForm {

@@ -82,6 +82,7 @@ async function mapToDomainModel(dbPreInvoice: PreInvoiceWithRelations): Promise<
     month: dbPreInvoice.month,
     year: dbPreInvoice.year,
     value: Number(dbPreInvoice.value),
+    marginPercentage: dbPreInvoice.marginPercentage !== null ? Number(dbPreInvoice.marginPercentage) : null,
     rejectNote: dbPreInvoice.rejectNote || "",
     client,
     contact,
@@ -141,8 +142,9 @@ export async function createPreInvoice(data: PreinvoiceForm): Promise<PreInvoice
     const contactId = data.contact_id ? Number(data.contact_id) : undefined;
     const month = Number(data.month);
     const year = Number(data.year);
+    const marginPercentage = data.margin_percentage !== undefined ? Number(data.margin_percentage) : undefined;
 
-    console.log("Datos procesados:", { clientId, contactId, month, year });
+    console.log("Datos procesados:", { clientId, contactId, month, year, marginPercentage });
 
     // Obtener todos los smarters/people para agregarlos como detalles
     const allPeople = await prisma.people.findMany({
@@ -216,6 +218,7 @@ export async function createPreInvoice(data: PreinvoiceForm): Promise<PreInvoice
           month: month,
           year: year,
           value: totalValue,
+          marginPercentage: marginPercentage,
           client: {
             connect: { id: clientId },
           },
@@ -239,7 +242,7 @@ export async function createPreInvoice(data: PreinvoiceForm): Promise<PreInvoice
       for (const person of allPeople) {
         await tx.preInvoiceDetail.create({
           data: {
-            status: "PENDING", // Estado inicial
+            status: "ASSIGN", // Estado inicial (antes era "PENDING")
             personId: person.id,
             preInvoiceId: createdPreInvoice.id,
             value: person.fee || 0,

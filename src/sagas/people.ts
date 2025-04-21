@@ -1,6 +1,15 @@
 import { takeLatest, all, put, call, CallEffect, PutEffect } from "redux-saga/effects";
 import * as ReducerUser from "@/lib/features/users";
-import type { People, JobTitle, Client, Role, AFPInstitution, HealthInstitution, Seniority, CurrencyType } from "@prisma/client";
+import type {
+  People,
+  JobTitle,
+  Client,
+  Role,
+  AFPInstitution,
+  HealthInstitution,
+  Seniority,
+  CurrencyType,
+} from "@prisma/client";
 
 // Definir el tipo de PeopleWithAllRelations según lo que necesitamos
 type PeopleWithAllRelations = People & {
@@ -20,32 +29,29 @@ type ApiResponse = {
 
 // Tipar el generador con los tipos correctos
 function* fetchPeople(): Generator<
-  CallEffect<unknown> | PutEffect<ReturnType<typeof ReducerUser.fetchSuccessfull> | ReturnType<typeof ReducerUser.fetchError>>,
+  | CallEffect<unknown>
+  | PutEffect<ReturnType<typeof ReducerUser.fetchSuccessfull> | ReturnType<typeof ReducerUser.fetchError>>,
   void,
   unknown
 > {
   try {
-    console.log("Fetching People data...");
-
-    const response = yield call(() => 
+    const response = yield call(() =>
       fetch("/api/people", {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
-        }
+        },
       })
     );
-    
+
     const result = yield call(() => (response as Response).json());
-    
+
     if (!(response as Response).ok) {
       throw new Error((result as ApiResponse).message || "Error fetching People data");
     }
 
-    console.log("People data fetched successfully:", (result as ApiResponse)?.data?.length || 0, "records");
     yield put(ReducerUser.fetchSuccessfull((result as ApiResponse).data));
-  } catch (e) {
-    console.log("error", e);
+  } catch {
     yield put(ReducerUser.fetchError());
   }
 }

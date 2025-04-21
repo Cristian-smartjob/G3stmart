@@ -41,15 +41,14 @@ const preInvoicesDetailSlices = createSlice({
       state.progressAssignOrUnassign = state.progressAssignOrUnassign + 1;
     },
     assignSuccessfull(state, action: PayloadAction<number>) {
-      console.log("Reducer assignSuccessfull: recibido ID:", action.payload);
+      console.log(action);
       state.isLoadingAssignOrUnassign = false;
     },
     fetch(state, action: PayloadAction<number>) {
-      console.log("Reducer fetch: recibido ID:", action.payload);
+      console.log(action);
       state.isLoading = true;
     },
     fetchSuccessfull(state, action: PayloadAction<PreInvoiceDetail[]>) {
-      console.log("Reducer: Guardando detalles de prefactura en estado:", action.payload.length, "elementos");
       state.isLoading = false;
       state.list = action.payload;
     },
