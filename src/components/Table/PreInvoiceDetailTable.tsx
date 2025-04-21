@@ -1,4 +1,4 @@
-'use client'
+"use client";
 
 import { useEffect, useState } from "react";
 import { fetch } from "@/lib/features/users";
@@ -13,7 +13,6 @@ import MainTable from "./MainTable";
 import { CheckboxStatus } from "@/interface/ui";
 import { selectAll, selectItem, PreInvoiceDetail as ReduxPreInvoiceDetail } from "@/lib/features/preinvoicesdetail";
 import TableSkeleton from "../core/TableSkeleton";
-import { Prisma } from "@prisma/client";
 
 // Definir la interfaz para usar con los componentes de UI
 interface UIPreInvoiceDetail {
@@ -66,29 +65,39 @@ const adaptToUIDetail = (item: ReduxPreInvoiceDetail): UIPreInvoiceDetail => {
 
 // Función para adaptar el tipo de UI al tipo de Redux
 const adaptToReduxDetail = (item: UIPreInvoiceDetail): ReduxPreInvoiceDetail => {
-  // Crear un objeto mínimo que cumpla con los requisitos
-  const reduxItem: ReduxPreInvoiceDetail = {
+  // Serializar los valores numéricos como strings para evitar problemas con Decimal
+  const numValue = typeof item.value === "string" ? item.value : item.value.toString();
+  const numBillableDays =
+    typeof item.billableDays === "string"
+      ? item.billableDays
+      : item.billable_days
+      ? item.billable_days.toString()
+      : "0";
+  const numLeaveDays =
+    typeof item.leaveDays === "string" ? item.leaveDays : item.leave_days ? item.leave_days.toString() : "0";
+  const numTotalConsumeDays =
+    typeof item.totalConsumeDays === "string"
+      ? item.totalConsumeDays
+      : item.total_consume_days
+      ? item.total_consume_days.toString()
+      : "0";
+
+  // Crear un objeto serializable para Redux
+  const reduxItem = {
     id: item.id,
     status: item.status,
     preInvoiceId: item.preInvoiceId || null,
     personId: item.personId || null,
-    // Convertir campos al tipo Decimal que espera Redux
-    value: typeof item.value === 'string' ? new Prisma.Decimal(item.value) : new Prisma.Decimal(item.value.toString()),
-    billableDays: typeof item.billableDays === 'string' ? new Prisma.Decimal(item.billableDays) : 
-                 item.billable_days ? new Prisma.Decimal(item.billable_days.toString()) : 
-                 new Prisma.Decimal(0),
-    leaveDays: typeof item.leaveDays === 'string' ? new Prisma.Decimal(item.leaveDays) : 
-              item.leave_days ? new Prisma.Decimal(item.leave_days.toString()) : 
-              new Prisma.Decimal(0),
-    totalConsumeDays: typeof item.totalConsumeDays === 'string' ? new Prisma.Decimal(item.totalConsumeDays) : 
-                     item.total_consume_days ? new Prisma.Decimal(item.total_consume_days.toString()) : 
-                     new Prisma.Decimal(0),
+    value: numValue,
+    billableDays: numBillableDays,
+    leaveDays: numLeaveDays,
+    totalConsumeDays: numTotalConsumeDays,
     currency_type: item.currency_type || null,
     createdAt: item.createdAt || null,
     updatedAt: item.updatedAt || null,
-    isSelected: item.isSelected
-  };
-  
+    isSelected: item.isSelected,
+  } as unknown as ReduxPreInvoiceDetail;
+
   return reduxItem;
 };
 
@@ -105,144 +114,148 @@ const header = [
   "HH mes consumidos",
   "Total por cobrar (UF)",
   "Total por cobrar (CLP)",
-]
+];
 
 const tabs: Selector[] = [
-  { id:1, label: 'Datos' },
-  { id:2, label: 'Días fuera' },
-]
+  { id: 1, label: "Datos" },
+  { id: 2, label: "Días fuera" },
+];
 
 interface Props {
   typeFilter: number;
   rightContent?: React.ReactNode;
   bottomContent?: React.ReactNode;
   showCheckbox?: boolean;
+  isPreInvoiceBlocked?: boolean;
 }
 
-export default function PreInvoiceDetailTable({ typeFilter, rightContent, bottomContent, showCheckbox }: Props){
+export default function PreInvoiceDetailTable({
+  typeFilter,
+  rightContent,
+  bottomContent,
+  showCheckbox,
+  isPreInvoiceBlocked = false,
+}: Props) {
+  const [currentPage, setCurrentPage] = useState(1);
 
-  const [currentPage, setCurrentPage] = useState(1)
+  const detailsRoot = useSelector<RootState, ReduxPreInvoiceDetail[]>((state) => state.preInvoicesDetail.list);
+  const isLoading = useSelector<RootState, boolean>((state) => state.preInvoicesDetail.isLoading);
+  const checkboxStatus = useSelector<RootState, CheckboxStatus>((state) => state.preInvoicesDetail.allSelectedStatus);
 
-  const detailsRoot = useSelector<RootState, ReduxPreInvoiceDetail[]>(state => state.preInvoicesDetail.list)
-  const isLoading = useSelector<RootState, boolean>(state => state.preInvoicesDetail.isLoading)
-  const checkboxStatus = useSelector<RootState, CheckboxStatus>(state => state.preInvoicesDetail.allSelectedStatus)
-
-  console.log('PreInvoiceDetailTable: detailsRoot recibidos:', detailsRoot.length, 'isLoading:', isLoading);
+  console.log("PreInvoiceDetailTable: detailsRoot recibidos:", detailsRoot.length, "isLoading:", isLoading);
 
   // Convertir los detalles al tipo UI para usar en la tabla
   const uiDetailsRoot = detailsRoot.map(adaptToUIDetail);
 
-  const details = uiDetailsRoot.filter(item => {
-    if(typeFilter === 1){
-      return true
-    } else if(typeFilter === 2){
-      return item.status === "ASSIGN"
-    }else {
-      return item.status === "NO_ASSIGN"
+  const details = uiDetailsRoot.filter((item) => {
+    if (typeFilter === 1) {
+      return true;
+    } else if (typeFilter === 2) {
+      return item.status === "ASSIGN";
+    } else {
+      return item.status === "NO_ASSIGN";
     }
-  })
+  });
 
-  console.log('PreInvoiceDetailTable: details filtrados por tipo', typeFilter, ':', details.length);
+  console.log("PreInvoiceDetailTable: details filtrados por tipo", typeFilter, ":", details.length);
 
-  const [menu, setMenu] = useState(1)
-  const [isOpen, setIsOpen] = useState(false)
+  const [menu, setMenu] = useState(1);
+  const [isOpen, setIsOpen] = useState(false);
 
-
-  const dispatch = useAppDispatch()
+  const dispatch = useAppDispatch();
 
   useEffect(() => {
-    dispatch(fetch())
-  }, [dispatch])
-
-  
+    dispatch(fetch());
+  }, [dispatch]);
 
   // const handleActionPress = (item: PreInvoiceDetail) => {
   //   setIsOpen(true)
   // }
 
   const handlerChangeSelectAll = (value: CheckboxStatus) => {
-    dispatch(selectAll(value))
-  }
+    dispatch(selectAll(value));
+  };
 
   const handlerChangeSelectItem = (item: UIPreInvoiceDetail, value: CheckboxStatus) => {
     const newItem = {
       ...item,
-      isSelected: value === CheckboxStatus.On
-    }
-    
-    // Convertir de UI a Redux y luego dispatch
-    dispatch(selectItem(adaptToReduxDetail(newItem)))
-  }
+      isSelected: value === CheckboxStatus.On,
+    };
 
+    // Convertir de UI a Redux y luego dispatch
+    dispatch(selectItem(adaptToReduxDetail(newItem)));
+  };
 
   return (
-      <div className="overflow-x-auto">
-        
-        <GenericModal isOpen={isOpen} onClose={() => {
-          setIsOpen(false)
-        }}>
-          <div>
-            <TabSelector labels={tabs} selected={menu}  onSelect={(index: number) => {
-              setMenu(index)
-                          
-                }}  />
-            <div className="mt-6">
+    <div className="overflow-x-auto">
+      <GenericModal
+        isOpen={isOpen}
+        onClose={() => {
+          setIsOpen(false);
+        }}
+      >
+        <div>
+          <TabSelector
+            labels={tabs}
+            selected={menu}
+            onSelect={(index: number) => {
+              setMenu(index);
+            }}
+          />
+          <div className="mt-6">
             <LeaveDaysCalendar />
-            </div>
           </div>
-        </GenericModal>
-        
-       
+        </div>
+      </GenericModal>
 
-         <MainTable 
-                   title="Detalle" 
-                   count={details.length} 
-                   page={currentPage}
-                   header={header} 
-                   showCheckbox={showCheckbox} 
-                   checkboxStatus={checkboxStatus}
-                   onChangeSelectAll={handlerChangeSelectAll}
-                   rightContent={rightContent}
-                   bottomContent={bottomContent}
-                   onSelectPage={page => {
-                     setCurrentPage(page)
-                   }}
-                   onNext={() => {
-                     const page = Math.min(Math.ceil(details.length / 10), currentPage + 1)
-                     setCurrentPage(page)
-                   }}
-                   onPrev={() => {
-                       const page = Math.max(1, currentPage - 1)
-                       setCurrentPage(page)
-                   }}
-                   >
-                   <>
+      <MainTable
+        title="Detalle"
+        count={details.length}
+        page={currentPage}
+        header={header}
+        showCheckbox={showCheckbox}
+        checkboxStatus={checkboxStatus}
+        onChangeSelectAll={handlerChangeSelectAll}
+        rightContent={rightContent}
+        bottomContent={bottomContent}
+        isPreInvoiceBlocked={isPreInvoiceBlocked}
+        onSelectPage={(page) => {
+          setCurrentPage(page);
+        }}
+        onNext={() => {
+          const page = Math.min(Math.ceil(details.length / 10), currentPage + 1);
+          setCurrentPage(page);
+        }}
+        onPrev={() => {
+          const page = Math.max(1, currentPage - 1);
+          setCurrentPage(page);
+        }}
+      >
+        <>
+          <TableSkeleton isLoading={isLoading && details.length <= 0} size={6} />
 
-                   <TableSkeleton
-                    isLoading={isLoading && details.length <= 0}
-                    size={6}
-                    />
-
-                   {details.length === 0 && !isLoading ? (
-                     <tr>
-                       <td colSpan={header.length + (showCheckbox ? 1 : 0)} className="px-4 py-3 text-center text-gray-500">
-                         No hay datos para mostrar
-                       </td>
-                     </tr>
-                   ) : (
-                     (details.slice((Math.max(0, currentPage - 1)) * 10, currentPage * 10)).map(item => (
-                       <PreInvoiceDetailRow 
-                          key={item.id} 
-                          showCheckbox={showCheckbox}
-                          onChangeCheckBox={handlerChangeSelectItem}
-                          item={item} 
-                          onClick={() => {}} 
-                         />
-                      ))
-                   )}
-                   </>
-                 </MainTable>
-        
-      </div>
-  )
+          {details.length === 0 && !isLoading ? (
+            <tr>
+              <td colSpan={header.length + (showCheckbox ? 1 : 0)} className="px-4 py-3 text-center text-gray-500">
+                No hay datos para mostrar
+              </td>
+            </tr>
+          ) : (
+            details
+              .slice(Math.max(0, currentPage - 1) * 10, currentPage * 10)
+              .map((item) => (
+                <PreInvoiceDetailRow
+                  key={item.id}
+                  showCheckbox={showCheckbox}
+                  onChangeCheckBox={handlerChangeSelectItem}
+                  item={item}
+                  onClick={() => {}}
+                  isPreInvoiceBlocked={isPreInvoiceBlocked}
+                />
+              ))
+          )}
+        </>
+      </MainTable>
+    </div>
+  );
 }

@@ -20,6 +20,7 @@ const tabs: Selector[] = [
   { id: 3, label: "Descargados", value: "DOWNLOADED" },
   { id: 4, label: "Aprobados", value: "APPROVED" },
   { id: 5, label: "Rechazados", value: "REJECTED" },
+  { id: 6, label: "Facturados", value: "COMPLETED" },
 ];
 
 export default function PreinvoiceTable() {
@@ -29,7 +30,7 @@ export default function PreinvoiceTable() {
   const [preInvoices, setPreInvoices] = useState<PreInvoice[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isFormSubmitting, setIsFormSubmitting] = useState(false);
-  
+
   const selectedTab = tabs.find((item) => item.id === selected);
 
   const filteredPreInvoices = preInvoices.filter((item) => {

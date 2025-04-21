@@ -25,6 +25,7 @@ interface Props {
   onNext: () => void;
   onPrev: () => void;
   isLoading?: boolean;
+  isPreInvoiceBlocked?: boolean;
 }
 
 export default function MainTable({
@@ -46,6 +47,7 @@ export default function MainTable({
   onNext,
   onPrev,
   isLoading = false,
+  isPreInvoiceBlocked = false,
 }: Props) {
   return (
     <section className="h-screen bg-gray-50 dark:bg-gray-900 py-3 sm:py-5">
@@ -73,13 +75,20 @@ export default function MainTable({
                           value={checkboxStatus}
                           checked={checkboxStatus === CheckboxStatus.On}
                           onChange={(value) => {
-                            if (value.target.value === CheckboxStatus.Off) {
-                              onChangeSelectAll(CheckboxStatus.On);
-                            } else {
-                              onChangeSelectAll(CheckboxStatus.Off);
+                            if (!isPreInvoiceBlocked) {
+                              if (value.target.value === CheckboxStatus.Off) {
+                                onChangeSelectAll(CheckboxStatus.On);
+                              } else {
+                                onChangeSelectAll(CheckboxStatus.Off);
+                              }
                             }
                           }}
-                          className="w-4 h-4 text-primary-600 bg-gray-100 rounded border-gray-300 focus:ring-primary-500 dark:focus:ring-primary-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                          disabled={isPreInvoiceBlocked}
+                          className={`w-4 h-4 rounded border-gray-300 focus:ring-2 ${
+                            isPreInvoiceBlocked
+                              ? "bg-gray-300 cursor-not-allowed text-gray-400 dark:bg-gray-600 dark:border-gray-500"
+                              : "text-primary-600 bg-gray-100 focus:ring-primary-500 dark:focus:ring-primary-600 dark:ring-offset-gray-800 dark:bg-gray-700 dark:border-gray-600"
+                          }`}
                         />
                         <label className="sr-only">checkbox</label>
                       </div>
@@ -87,11 +96,7 @@ export default function MainTable({
                   ) : null}
 
                   {header.map((item) => (
-                    <th
-                      key={item}
-                      scope="col"
-                      className="px-4 py-3 min-w-[10rem]"
-                    >
+                    <th key={item} scope="col" className="px-4 py-3 min-w-[10rem]">
                       {item}
                       <svg
                         className="h-4 w-4 ml-1 inline-block"

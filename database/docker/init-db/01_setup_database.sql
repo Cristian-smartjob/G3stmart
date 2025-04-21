@@ -172,6 +172,8 @@ CREATE TABLE "public"."PreInvoice" (
     "reject_note" TEXT,
     "oc_amount" DECIMAL(12,2),
     "edp_number" VARCHAR(50),
+    "completedBy" VARCHAR(255),
+    "completedAt" TIMESTAMP WITH TIME ZONE,
     "created_at" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
@@ -392,29 +394,46 @@ INSERT INTO "public"."Contact" ("id", "name", "last_name", "email", "phone", "cl
 ('8', 'Sofía', 'Fernández', 'sofia.fernandez@falabella.cl', '+56978901234', '20', '2025-02-11 15:10:09.698662+00', '2025-02-11 15:10:09.698662'),
 ('9', 'Diego', 'Torres', 'diego.torres@consorcio.cl', '+56989012345', '21', '2025-02-11 15:10:09.698662+00', '2025-02-11 15:10:09.698662'),
 ('10', 'Valentina', 'Silva', 'valentina.silva@ripley.cl', '+56990123456', '22', '2025-02-11 15:10:09.698662+00', '2025-02-11 15:10:09.698662'),
-('11', 'Cosme', 'Fulanito', 'cosme@falabella.com', '+56930303030', '12', '2025-02-11 15:10:09.698662+00', '2025-02-11 15:10:09.698662');
+('11', 'Cosme', 'Fulanito', 'cosme@falabella.com', '+56930303030', '12', '2025-02-11 15:10:09.698662+00', '2025-02-11 15:10:09.698662'),
+('12', 'Andrés', 'Cortés', 'andres.cortes@cencosud.com', '+56911223344', '13', '2025-02-11 15:10:09.698662+00', '2025-02-11 15:10:09.698662'),
+('13', 'Patricia', 'Muñoz', 'patricia.munoz@sonda.com', '+56922334455', '14', '2025-02-11 15:10:09.698662+00', '2025-02-11 15:10:09.698662'),
+('14', 'Fernando', 'Rojas', 'fernando.rojas@bci.cl', '+56933445566', '15', '2025-02-11 15:10:09.698662+00', '2025-02-11 15:10:09.698662'),
+('15', 'Carolina', 'Vargas', 'carolina.vargas@fidseguros.cl', '+56944556677', '16', '2025-02-11 15:10:09.698662+00', '2025-02-11 15:10:09.698662'),
+('16', 'Ricardo', 'Mendoza', 'ricardo.mendoza@sodimac.com', '+56955667788', '17', '2025-02-11 15:10:09.698662+00', '2025-02-11 15:10:09.698662'),
+('17', 'Daniela', 'Pino', 'daniela.pino@logisticainternacional.cl', '+56966778899', '18', '2025-02-11 15:10:09.698662+00', '2025-02-11 15:10:09.698662'),
+('18', 'Javier', 'Silva', 'javier.silva@falabella.com', '+56977889900', '19', '2025-02-11 15:10:09.698662+00', '2025-02-11 15:10:09.698662'),
+('19', 'Camila', 'Torres', 'camila.torres@falabella.com', '+56988990011', '20', '2025-02-11 15:10:09.698662+00', '2025-02-11 15:10:09.698662'),
+('20', 'Felipe', 'Gómez', 'felipe.gomez@wom.cl', '+56999001122', '21', '2025-02-11 15:10:09.698662+00', '2025-02-11 15:10:09.698662'),
+('21', 'María José', 'Ríos', 'mariajose.rios@ikea.cl', '+56900112233', '22', '2025-02-11 15:10:09.698662+00', '2025-02-11 15:10:09.698662'),
+('22', 'Alejandro', 'Castro', 'alejandro.castro@smu.cl', '+56911223344', '23', '2025-02-11 15:10:09.698662+00', '2025-02-11 15:10:09.698662'),
+('23', 'Valeria', 'Herrera', 'valeria.herrera@falabella.com', '+56922334455', '24', '2025-02-11 15:10:09.698662+00', '2025-02-11 15:10:09.698662'),
+('24', 'Rodrigo', 'Navarro', 'rodrigo.navarro@bancointernacional.cl', '+56933445566', '25', '2025-02-11 15:10:09.698662+00', '2025-02-11 15:10:09.698662'),
+('25', 'Isabel', 'Mora', 'isabel.mora@itau.cl', '+56944556677', '26', '2025-02-11 15:10:09.698662+00', '2025-02-11 15:10:09.698662'),
+('26', 'Pablo', 'Fuentes', 'pablo.fuentes@ey.com', '+56955667788', '27', '2025-02-11 15:10:09.698662+00', '2025-02-11 15:10:09.698662'),
+('27', 'Natalia', 'Espinoza', 'natalia.espinoza@copec.cl', '+56966778899', '28', '2025-02-11 15:10:09.698662+00', '2025-02-11 15:10:09.698662'),
+('28', 'Gonzalo', 'Araya', 'gonzalo.araya@mallplaza.cl', '+56977889900', '29', '2025-02-11 15:10:09.698662+00', '2025-02-11 15:10:09.698662');
 
 -- PreInvoice data
-INSERT INTO "public"."PreInvoice" ("id", "client_id", "contact_id", "total", "status", "oc_number", "hes_number", "invoice_number", "month", "year", "value", "reject_note", "oc_amount", "edp_number", "created_at", "updated_at") VALUES 
+INSERT INTO "public"."PreInvoice" ("id", "client_id", "contact_id", "total", "status", "oc_number", "hes_number", "invoice_number", "month", "year", "value", "reject_note", "oc_amount", "edp_number", "completedBy", "completedAt", "created_at", "updated_at") VALUES 
 -- Falabella Tecnología (client_id: 12)
-(1, 12, 1, 2500000.00, 'DOWNLOADED', 'OC-001-2023', 'HES-001', null, 3, 2023, 2500000.00, null, null, null, '2023-03-15 10:10:09.698662+00', '2023-03-15 10:10:09.698662'),
-(2, 12, 1, 2800000.00, 'PENDING', 'OC-002-2023', 'HES-002', null, 4, 2023, 2800000.00, null, null, null, '2023-04-10 11:15:09.698662+00', '2023-04-10 11:15:09.698662'),
+(1, 12, 1, 2500000.00, 'DOWNLOADED', 'OC-001-2023', 'HES-001', null, 3, 2023, 2500000.00, null, null, null, null, null, '2023-03-15 10:10:09.698662+00', '2023-03-15 10:10:09.698662'),
+(2, 12, 1, 2800000.00, 'PENDING', 'OC-002-2023', 'HES-002', null, 4, 2023, 2800000.00, null, null, null, null, null, '2023-04-10 11:15:09.698662+00', '2023-04-10 11:15:09.698662'),
 
 -- Cencosud (client_id: 13)
-(3, 13, 2, 3200000.00, 'APPROVED', 'OC-003-2023', 'HES-003', 'INV-001-2023', 5, 2023, 3200000.00, null, 3200000.00, 'EDP-001', '2023-05-20 09:30:09.698662+00', '2023-05-20 09:30:09.698662'),
-(4, 13, 2, 3500000.00, 'PENDING', 'OC-004-2023', 'HES-004', null, 6, 2023, 3500000.00, null, null, null, '2023-06-05 14:20:09.698662+00', '2023-06-05 14:20:09.698662'),
+(3, 13, 2, 3200000.00, 'COMPLETED', 'OC-003-2023', 'HES-003', 'INV-001-2023', 5, 2023, 3200000.00, null, 3200000.00, 'EDP-001', 'Jorge Acosta', '2023-05-25 14:30:00.000000+00', '2023-05-20 09:30:09.698662+00', '2023-05-25 14:30:00.000000+00'),
+(4, 13, 2, 3500000.00, 'PENDING', 'OC-004-2023', 'HES-004', null, 6, 2023, 3500000.00, null, null, null, null, null, '2023-06-05 14:20:09.698662+00', '2023-06-05 14:20:09.698662'),
 
 -- Sonda (client_id: 14)
-(5, 14, 3, 2800000.00, 'REJECTED', 'OC-005-2023', 'HES-005', null, 7, 2023, 2800000.00, 'Missing documentation', null, null, '2023-07-12 16:45:09.698662+00', '2023-07-12 16:45:09.698662'),
-(6, 14, 3, 3100000.00, 'DOWNLOADED', 'OC-006-2023', 'HES-006', null, 8, 2023, 3100000.00, null, null, null, '2023-08-03 10:25:09.698662+00', '2023-08-03 10:25:09.698662'),
+(5, 14, 3, 2800000.00, 'REJECTED', 'OC-005-2023', 'HES-005', null, 7, 2023, 2800000.00, 'Missing documentation', null, null, null, null, '2023-07-12 16:45:09.698662+00', '2023-07-12 16:45:09.698662'),
+(6, 14, 3, 3100000.00, 'DOWNLOADED', 'OC-006-2023', 'HES-006', null, 8, 2023, 3100000.00, null, null, null, null, null, '2023-08-03 10:25:09.698662+00', '2023-08-03 10:25:09.698662'),
 
 -- BCI (client_id: 15)
-(7, 15, 4, 1900000.00, 'PENDING', 'OC-007-2023', 'HES-007', null, 9, 2023, 1900000.00, null, null, null, '2023-09-18 13:40:09.698662+00', '2023-09-18 13:40:09.698662'),
-(8, 15, 4, 2200000.00, 'APPROVED', 'OC-008-2024', 'HES-008', 'INV-002-2023', 1, 2024, 2200000.00, null, 2200000.00, 'EDP-002', '2024-01-22 09:15:09.698662+00', '2024-01-22 09:15:09.698662'),
+(7, 15, 4, 1900000.00, 'PENDING', 'OC-007-2023', 'HES-007', null, 9, 2023, 1900000.00, null, null, null, null, null, '2023-09-18 13:40:09.698662+00', '2023-09-18 13:40:09.698662'),
+(8, 15, 4, 2200000.00, 'COMPLETED', 'OC-008-2024', 'HES-008', 'INV-002-2023', 1, 2024, 2200000.00, null, 2200000.00, 'EDP-002', 'María González', '2024-01-28 11:45:00.000000+00', '2024-01-22 09:15:09.698662+00', '2024-01-28 11:45:00.000000+00'),
 
 -- FID Seguros (client_id: 16)
-(9, 16, 5, 3500000.00, 'PENDING', 'OC-009-2024', 'HES-009', null, 2, 2024, 3500000.00, null, null, null, '2024-02-14 11:30:09.698662+00', '2024-02-14 11:30:09.698662'),
-(10, 16, 5, 3800000.00, 'DOWNLOADED', 'OC-010-2025', 'HES-010', null, 2, 2025, 3800000.00, null, null, null, '2025-02-27 14:21:25.008077+00', '2025-02-27 14:21:25.008077');
+(9, 16, 5, 3500000.00, 'PENDING', 'OC-009-2024', 'HES-009', null, 2, 2024, 3500000.00, null, null, null, null, null, '2024-02-14 11:30:09.698662+00', '2024-02-14 11:30:09.698662'),
+(10, 16, 5, 3800000.00, 'DOWNLOADED', 'OC-010-2025', 'HES-010', null, 2, 2025, 3800000.00, null, null, null, null, null, '2025-02-27 14:21:25.008077+00', '2025-02-27 14:21:25.008077');
 
 -- PreInvoiceDetail data
 INSERT INTO "public"."PreInvoiceDetail" ("id", "pre_invoice_id", "person_id", "status", "value", "currency_type", "billable_days", "leave_days", "total_consume_days", "created_at", "updated_at") VALUES 

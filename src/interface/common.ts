@@ -34,22 +34,24 @@ export interface Contact {
 export interface PreInvoice {
   id: number;
   clientId?: number | null;
+  client?: Client;
   contactId?: number | null;
+  contact?: Contact;
   total?: number | Decimal | null;
   status: string;
   ocNumber?: string | null;
   hesNumber?: string | null;
   invoiceNumber?: string | null;
-  month: number;
-  year: number;
-  value: number | Decimal;
+  month?: number;
+  year?: number;
+  value?: number | Decimal;
   rejectNote?: string | null;
   ocAmount?: number | Decimal | null;
   edpNumber?: string | null;
+  completedBy?: string | null;
+  completedAt?: Date | null;
   createdAt?: Date | null;
   updatedAt?: Date | null;
-  client?: Client;
-  contact?: Contact;
 }
 
 export interface PreInvoiceDetail {
@@ -85,5 +87,6 @@ export interface PreInvoiceUpdate {
   rejectNote?: string;
   ocAmount?: number;
   edpNumber?: string;
-  client?: Client;
-} 
+  completedBy?: string;
+  completedAt?: Date;
+}

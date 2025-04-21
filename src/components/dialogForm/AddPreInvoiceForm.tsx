@@ -31,6 +31,7 @@ import { months } from "@/utils/constants";
 import { PreinvoiceForm } from "@/interface/form";
 import * as Yup from "yup";
 import ErrorAlert from "../core/ErrorAlert";
+import { useRouter } from "next/navigation";
 
 // Inicializamos con un objeto vacío pero con propiedades definidas para evitar valores null
 const initialValues: PreinvoiceForm = {
@@ -65,6 +66,7 @@ interface Props {
 }
 
 export default function AddPreInvoiceForm({ onSave }: Props) {
+  const router = useRouter();
   const [clients, setClients] = useState<Client[]>([]);
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -146,12 +148,83 @@ export default function AddPreInvoiceForm({ onSave }: Props) {
       await createPreInvoice(formData);
       console.log("Prefactura creada exitosamente");
       onSave();
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Error creating preInvoice:", error);
-      setFormError("Error al crear la prefactura. Intenta de nuevo.");
+
+      let errorMessage: string;
+
+      if (error instanceof Error) {
+        console.log("Error message:", error.message);
+        errorMessage = error.message;
+      } else if (typeof error === "object" && error !== null && "message" in error) {
+        console.log("Error object message:", (error as { message: string }).message);
+        errorMessage = (error as { message: string }).message;
+      } else {
+        console.log("Unknown error type:", error);
+        errorMessage = "No se pudo crear la prefactura. Por favor, intenta nuevamente más tarde.";
+      }
+
+      setFormError(errorMessage);
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const renderError = (error: string) => {
+    if (error.includes("no tiene smarters asociados")) {
+      return (
+        <div className="rounded-md bg-red-50 p-4">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                <path
+                  fillRule="evenodd"
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                  clipRule="evenodd"
+                />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <h3 className="text-sm font-medium text-red-800">No se puede crear la prefactura</h3>
+              <div className="mt-2 text-sm text-red-700">
+                <p>{error}</p>
+                <div className="mt-4">
+                  <button
+                    type="button"
+                    onClick={() => router.push("/people")}
+                    className="inline-flex items-center rounded-md bg-red-100 px-3 py-2 text-sm font-medium text-red-700 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                  >
+                    Ir a gestión de smarters
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="rounded-md bg-red-50 p-4">
+        <div className="flex">
+          <div className="flex-shrink-0">
+            <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+              <path
+                fillRule="evenodd"
+                d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                clipRule="evenodd"
+              />
+            </svg>
+          </div>
+          <div className="ml-3">
+            <h3 className="text-sm font-medium text-red-800">Error</h3>
+            <div className="mt-2 text-sm text-red-700">
+              <p>{error}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -247,11 +320,7 @@ export default function AddPreInvoiceForm({ onSave }: Props) {
                   </div>
                 ) : null}
 
-                {formError && (
-                  <div className="mt-4">
-                    <ErrorAlert message={formError} />
-                  </div>
-                )}
+                {formError && <div className="mt-4">{renderError(formError)}</div>}
 
                 <div className="mt-10 border-t border-gray-200 pt-6 sm:flex sm:items-center sm:justify-between">
                   <button

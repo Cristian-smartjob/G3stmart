@@ -78,6 +78,7 @@ async function mapToDomainModel(dbPreInvoice: PreInvoiceWithRelations): Promise<
     status: dbPreInvoice.status,
     ocNumber: dbPreInvoice.ocNumber || "",
     hesNumber: dbPreInvoice.hesNumber || "",
+    invoiceNumber: dbPreInvoice.invoiceNumber || "",
     month: dbPreInvoice.month,
     year: dbPreInvoice.year,
     value: Number(dbPreInvoice.value),
@@ -106,6 +107,9 @@ export async function fetchPreInvoices(): Promise<PreInvoice[]> {
           return {
             id: item.id,
             status: item.status || "PENDING",
+            ocNumber: "",
+            hesNumber: "",
+            invoiceNumber: "",
             month: item.month,
             year: item.year,
             value: Number(item.value) || 0,
@@ -140,6 +144,26 @@ export async function createPreInvoice(data: PreinvoiceForm): Promise<PreInvoice
 
     console.log("Datos procesados:", { clientId, contactId, month, year });
 
+    // Obtener todos los smarters/people para agregarlos como detalles
+    const allPeople = await prisma.people.findMany({
+      where: {
+        clientId: clientId, // Filtrar solo por smarters/people del cliente específico
+      },
+      select: {
+        id: true,
+        fee: true,
+        billableDay: true,
+      },
+    });
+
+    // Validar que el cliente tenga smarters asociados
+    if (!allPeople || allPeople.length === 0) {
+      console.error("El cliente no tiene smarters asociados");
+      throw new Error(
+        "No se puede crear la prefactura. El cliente seleccionado no tiene smarters asociados. Por favor, primero asigna smarters al cliente en la sección de gestión de smarters."
+      );
+    }
+
     // Intentar reparar la secuencia antes de crear la nueva prefactura
     try {
       // Obtener el valor máximo actual de ID
@@ -159,20 +183,6 @@ export async function createPreInvoice(data: PreinvoiceForm): Promise<PreInvoice
       // Continuamos de todos modos, ya que puede que no sea un problema de secuencia
     }
 
-    // Obtener todos los smarters/people para agregarlos como detalles
-    const allPeople = await prisma.people.findMany({
-      where: {
-        clientId: clientId // Filtrar solo por smarters/people del cliente específico
-      },
-      select: {
-        id: true,
-        fee: true,
-        billableDay: true,
-      },
-    });
-    
-    console.log(`Se encontraron ${allPeople.length} smarters asociados al cliente ${clientId} para agregar a la prefactura`);
-
     // Intentar reparar la secuencia de PreInvoiceDetail antes de crear los detalles
     try {
       // Obtener el valor máximo actual de ID en PreInvoiceDetail
@@ -191,6 +201,12 @@ export async function createPreInvoice(data: PreinvoiceForm): Promise<PreInvoice
       // Continuamos de todos modos
     }
 
+    // Calcular el valor total de la prefactura
+    const totalValue = allPeople.reduce((sum, person) => {
+      const fee = typeof person.fee === "number" ? person.fee : Number(person.fee);
+      return sum + (fee || 0);
+    }, 0);
+
     // Ahora intentamos crear la prefactura y sus detalles usando la transacción
     const result = await prisma.$transaction(async (tx) => {
       // Crear la prefactura
@@ -199,7 +215,7 @@ export async function createPreInvoice(data: PreinvoiceForm): Promise<PreInvoice
           status: "PENDING",
           month: month,
           year: year,
-          value: 0,
+          value: totalValue,
           client: {
             connect: { id: clientId },
           },
@@ -216,9 +232,9 @@ export async function createPreInvoice(data: PreinvoiceForm): Promise<PreInvoice
           contact: true,
         },
       });
-      
+
       console.log("PreInvoice creada con éxito:", createdPreInvoice);
-      
+
       // Crear detalles para cada smarter/people
       for (const person of allPeople) {
         await tx.preInvoiceDetail.create({
@@ -233,9 +249,9 @@ export async function createPreInvoice(data: PreinvoiceForm): Promise<PreInvoice
           },
         });
       }
-      
+
       console.log(`Se agregaron ${allPeople.length} smarters como detalles a la prefactura ${createdPreInvoice.id}`);
-      
+
       return createdPreInvoice;
     });
 
@@ -243,10 +259,15 @@ export async function createPreInvoice(data: PreinvoiceForm): Promise<PreInvoice
 
     // Mapear directamente los resultados
     return await mapToDomainModel(result);
-  } catch (error: unknown) {
+  } catch (error) {
     console.error("Error creating preInvoice:", error);
 
-    // Mensaje de error más específico según el tipo de error
+    // Mantener el mensaje de error original si es sobre smarters
+    if (error instanceof Error && error.message.includes("no tiene smarters asociados")) {
+      throw error; // Re-lanzar el error original
+    }
+
+    // Para otros tipos de errores, usar mensaje genérico
     let errorMessage = "No se pudo crear la prefactura. Por favor, intenta nuevamente más tarde.";
 
     if (error instanceof Error) {
@@ -264,7 +285,7 @@ export async function createPreInvoice(data: PreinvoiceForm): Promise<PreInvoice
 export async function updatePreInvoice(id: number, data: PreInvoiceUpdate): Promise<PreInvoice> {
   try {
     console.log("updatePreInvoice: Iniciando actualización para ID:", id, "con datos:", data);
-    
+
     // Adaptamos los datos al formato esperado por Prisma
     const updateData: Prisma.PreInvoiceUpdateInput = {};
 
@@ -277,6 +298,20 @@ export async function updatePreInvoice(id: number, data: PreInvoiceUpdate): Prom
     if (data.status) {
       console.log("updatePreInvoice: Actualizando estado a:", data.status);
       updateData.status = data.status;
+
+      // Si el estado cambia a COMPLETED o facturada, registramos quién lo completó y cuándo
+      if (data.status === "COMPLETED") {
+        // Si no se proporciona completedBy, usamos un valor genérico
+        updateData.completedBy = data.completedBy || "sistema";
+        // Si no se proporciona completedAt, usamos la fecha y hora actual
+        updateData.completedAt = data.completedAt || new Date();
+        console.log(
+          "updatePreInvoice: Registrando completación por:",
+          updateData.completedBy,
+          "en:",
+          updateData.completedAt
+        );
+      }
     }
 
     // También actualizar otros campos si están presentes
@@ -286,12 +321,15 @@ export async function updatePreInvoice(id: number, data: PreInvoiceUpdate): Prom
     if (data.rejectNote) updateData.rejectNote = data.rejectNote;
     if (data.ocAmount !== undefined) updateData.ocAmount = data.ocAmount;
     if (data.edpNumber) updateData.edpNumber = data.edpNumber;
+    // Permitir actualización explícita de quién completó y cuándo
+    if (data.completedBy) updateData.completedBy = data.completedBy;
+    if (data.completedAt) updateData.completedAt = data.completedAt;
 
     console.log("updatePreInvoice: Datos a actualizar:", updateData);
-    
+
     await preInvoiceRepository.update(id, updateData);
     console.log("updatePreInvoice: Actualización exitosa en la base de datos");
-    
+
     const preInvoiceWithRelations = await preInvoiceRepository.findById(id);
     revalidatePath("/");
 
@@ -305,5 +343,69 @@ export async function updatePreInvoice(id: number, data: PreInvoiceUpdate): Prom
   } catch (error) {
     console.error("Error updating preInvoice:", error);
     throw new Error("No se pudo actualizar la prefactura");
+  }
+}
+
+export async function recalculatePreInvoice(id: number): Promise<PreInvoice> {
+  try {
+    console.log("Recalculando prefactura con ID:", id);
+
+    // Obtener todos los detalles de la prefactura
+    const details = await prisma.preInvoiceDetail.findMany({
+      where: {
+        preInvoiceId: id,
+      },
+      select: {
+        id: true,
+        value: true,
+        billableDays: true,
+        leaveDays: true,
+        totalConsumeDays: true,
+        person: {
+          select: {
+            id: true,
+            fee: true,
+            billableDay: true,
+          },
+        },
+      },
+    });
+
+    // Calcular el nuevo valor total
+    const totalValue = details.reduce((sum, detail) => {
+      const fee = typeof detail.person?.fee === "number" ? detail.person.fee : Number(detail.person?.fee || 0);
+      const billableDays = Number(detail.billableDays || 0);
+      const leaveDays = Number(detail.leaveDays || 0);
+      const totalConsumeDays = billableDays - leaveDays;
+
+      // Actualizar el detalle con los nuevos valores
+      prisma.preInvoiceDetail.update({
+        where: { id: detail.id },
+        data: {
+          value: fee,
+          totalConsumeDays: totalConsumeDays,
+        },
+      });
+
+      return sum + fee;
+    }, 0);
+
+    // Actualizar la prefactura con el nuevo valor total
+    const updatedPreInvoice = await prisma.preInvoice.update({
+      where: { id },
+      data: {
+        value: totalValue,
+      },
+      include: {
+        client: true,
+        contact: true,
+      },
+    });
+
+    revalidatePath("/");
+    return await mapToDomainModel(updatedPreInvoice);
+  } catch (error) {
+    console.error("Error recalculando prefactura:", error);
+    throw new Error("No se pudo recalcular la prefactura");
   }
 }

@@ -1,98 +1,233 @@
-'use client'
+"use client";
 
-import { update } from '@/lib/features/preinvoices';
-import { useAppDispatch } from '@/lib/hook';
-import { Dialog, DialogBackdrop, DialogPanel, DialogTitle } from '@headlessui/react'
-import { CheckIcon } from '@heroicons/react/24/outline'
-import { useState } from 'react';
-import { updatePreInvoice } from '@/app/actions/preInvoices';
+import { update } from "@/lib/features/preinvoices";
+import { useAppDispatch } from "@/lib/hook";
+import { Dialog, DialogBackdrop, DialogPanel, DialogTitle } from "@headlessui/react";
+import { CheckIcon } from "@heroicons/react/24/outline";
+import { useState, useEffect, useRef } from "react";
+import { updatePreInvoice, fetchPreInvoices } from "@/app/actions/preInvoices";
+import { useSelector } from "react-redux";
+import { RootState } from "@/lib/store";
+import { PreInvoice } from "@/interface/common";
 
 interface Props {
-    isOpen:boolean;
-    setIsOpen: () => void;
-    preinvoiceId: number;
+  isOpen: boolean;
+  setIsOpen: () => void;
+  preinvoiceId: number;
 }
 
-export default function CompleteBillModal({ isOpen, setIsOpen, preinvoiceId}: Props) {
+export default function CompleteBillModal({ isOpen, setIsOpen, preinvoiceId }: Props) {
+  // Referencia para verificar si es la primera renderización
+  const firstRender = useRef(true);
+  const fetchedData = useRef(false);
+
+  console.log("CompleteBillModal renderizado con preinvoiceId:", preinvoiceId, "isOpen:", isOpen);
+
+  // Obtener la preinvoice actual desde el store Redux
+  const preInvoices = useSelector<RootState, PreInvoice[]>((state) => {
+    console.log("Estado actual de preInvoices:", state.preInvoices);
+    return state.preInvoices.list;
+  });
+
+  const currentPreInvoice = preInvoices.find((invoice) => invoice.id === preinvoiceId);
+
+  // Estado para guardar la prefactura obtenida directamente
+  const [directPreInvoice, setDirectPreInvoice] = useState<PreInvoice | null>(null);
+
+  // Usamos la prefactura de cualquiera de las dos fuentes
+  const invoiceData = directPreInvoice || currentPreInvoice;
+
+  console.log("PreInvoice encontrada:", currentPreInvoice);
+  console.log("DirectPreInvoice:", directPreInvoice);
+  console.log("InvoiceData final:", invoiceData);
+
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
-    numberBill: '',
-    numberHes: '',
-    numberOc: '',
-    ocAmount: ''
+    numberBill: "",
+    numberHes: "",
+    numberOc: "",
+    ocAmount: "",
   });
-  
+
+  // Cargar los datos directamente de la API cuando se abre el modal
+  useEffect(() => {
+    const loadPreInvoiceData = async () => {
+      if (isOpen && preinvoiceId && !fetchedData.current) {
+        console.log("Cargando datos de prefactura directamente desde API para ID:", preinvoiceId);
+        try {
+          // Intenta cargar desde la API
+          const response = await fetch(`/api/preinvoices/${preinvoiceId}`);
+          if (response.ok) {
+            const data = await response.json();
+            console.log("Datos obtenidos de API:", data);
+            if (data && data.data) {
+              setDirectPreInvoice(data.data);
+              fetchedData.current = true;
+            }
+          } else {
+            console.error("Error al obtener prefactura desde API:", response.statusText);
+
+            // Intenta cargar datos usando la acción del servidor como respaldo
+            try {
+              console.log("Intentando obtener datos mediante server action...");
+              const allPreInvoices = await fetchPreInvoices();
+              const foundInvoice = allPreInvoices.find((inv) => inv.id === preinvoiceId);
+              if (foundInvoice) {
+                console.log("Prefactura encontrada mediante server action:", foundInvoice);
+                setDirectPreInvoice(foundInvoice);
+                fetchedData.current = true;
+              }
+            } catch (serverActionError) {
+              console.error("Error al obtener prefactura mediante server action:", serverActionError);
+            }
+          }
+        } catch (error) {
+          console.error("Error al cargar prefactura:", error);
+        }
+      }
+    };
+
+    loadPreInvoiceData();
+  }, [isOpen, preinvoiceId]);
+
+  // Actualizar formData cuando se abre el modal o cambia la preinvoice seleccionada
+  useEffect(() => {
+    if (isOpen) {
+      console.log("Modal abierto, datos actuales del formulario:", formData);
+      console.log("InvoiceData disponible:", invoiceData);
+
+      if (invoiceData) {
+        const newFormData = {
+          numberBill: "", // Número de factura siempre vacío
+          numberHes: invoiceData.hesNumber || "",
+          numberOc: invoiceData.ocNumber || "",
+          ocAmount: invoiceData.value !== undefined && invoiceData.value !== null ? String(invoiceData.value) : "",
+        };
+
+        console.log("Actualizando formulario con:", newFormData);
+        setFormData(newFormData);
+      }
+    }
+  }, [isOpen, invoiceData]);
+
+  // Log cuando cambia formData
+  useEffect(() => {
+    if (!firstRender.current) {
+      console.log("formData actualizado:", formData);
+    } else {
+      firstRender.current = false;
+    }
+  }, [formData]);
+
   const dispatch = useAppDispatch();
-  
+
+  // En una aplicación real, este valor vendría del contexto de autenticación
+  // Por ahora usamos un valor estático para simular el usuario actual
+  const currentUser = "Jorge Acosta"; // Esto debería provenir de un hook de autenticación o contexto
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    console.log(`Cambiando campo ${name} a ${value}`);
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
-  
+
   const handlerUpdate = async () => {
     if (isLoading) return;
-    
+
     setIsLoading(true);
-    console.log('Iniciando completado de facturación para ID:', preinvoiceId, 'con datos:', formData);
-    
+    console.log("Iniciando completado de facturación para ID:", preinvoiceId, "con datos:", formData);
+
     try {
       // 1. Actualizar en Redux
-      dispatch(update({
-        id: preinvoiceId,
-        status: "COMPLETED"
-      }));
-      console.log('Estado actualizado en Redux');
-      
-      // 2. Actualizar en el servidor usando server action
-      try {
-        const result = await updatePreInvoice(preinvoiceId, { 
-          id: preinvoiceId, 
+      dispatch(
+        update({
+          id: preinvoiceId,
           status: "COMPLETED",
           invoiceNumber: formData.numberBill,
           hesNumber: formData.numberHes,
           ocNumber: formData.numberOc,
-          ocAmount: formData.ocAmount ? Number(formData.ocAmount) : undefined
+          ocAmount: formData.ocAmount ? Number(formData.ocAmount) : undefined,
+          completedBy: currentUser, // Incluir el usuario que completa
+        })
+      );
+      console.log("Estado actualizado en Redux con número de factura:", formData.numberBill);
+
+      // 2. Actualizar en el servidor usando server action
+      try {
+        const result = await updatePreInvoice(preinvoiceId, {
+          id: preinvoiceId,
+          status: "COMPLETED",
+          invoiceNumber: formData.numberBill,
+          hesNumber: formData.numberHes,
+          ocNumber: formData.numberOc,
+          ocAmount: formData.ocAmount ? Number(formData.ocAmount) : undefined,
+          completedBy: currentUser, // Incluir el usuario que completa
         });
-        console.log('Facturación completada en servidor:', result);
+        console.log("Facturación completada en servidor. Resultado:", {
+          id: result.id,
+          status: result.status,
+          invoiceNumber: result.invoiceNumber,
+          hesNumber: result.hesNumber,
+          ocNumber: result.ocNumber,
+          completedBy: currentUser,
+        });
       } catch (error) {
-        console.error('Error al actualizar en el servidor:', error);
+        console.error("Error al actualizar en el servidor:", error);
       }
-      
+
       // 3. Actualizar usando API REST
       try {
         const apiResponse = await fetch(`/api/preinvoices/${preinvoiceId}/status`, {
-          method: 'PUT',
+          method: "PUT",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
-          body: JSON.stringify({ 
-            status: 'COMPLETED',
+          body: JSON.stringify({
+            status: "COMPLETED",
             invoiceNumber: formData.numberBill,
             hesNumber: formData.numberHes,
             ocNumber: formData.numberOc,
-            ocAmount: formData.ocAmount ? Number(formData.ocAmount) : undefined
+            ocAmount: formData.ocAmount ? Number(formData.ocAmount) : undefined,
+            completedBy: currentUser, // Incluir el usuario que completa
           }),
         });
-        
+
         const apiResult = await apiResponse.json();
-        console.log('Respuesta de la API:', apiResult);
+        console.log("Respuesta de la API:", apiResult);
       } catch (error) {
-        console.error('Error al llamar a la API:', error);
+        console.error("Error al llamar a la API:", error);
       }
-      
-      // Redirigir a la lista de prefacturas después de completar todo
+
+      // Cerrar el modal antes de recargar
+      setIsOpen();
+
+      // Recargar la página actual para refrescar los datos después de un breve retraso
+      // para asegurar que todas las actualizaciones se han completado
       setTimeout(() => {
-        window.location.href = '/preinvoice';
-      }, 500);
+        console.log("Recargando página para mostrar número de factura:", formData.numberBill);
+        window.location.reload();
+      }, 1000);
     } catch (error) {
-      console.error('Error general en la facturación:', error);
+      console.error("Error general en la facturación:", error);
       setIsLoading(false);
     }
-  }
-   
+  };
+
+  // Determinar los valores a mostrar en cada campo
+  const displayValues = {
+    numberBill: formData.numberBill,
+    numberHes: formData.numberHes || invoiceData?.hesNumber || "",
+    numberOc: formData.numberOc || invoiceData?.ocNumber || "",
+    ocAmount:
+      formData.ocAmount ||
+      (invoiceData?.value !== undefined && invoiceData?.value !== null ? String(invoiceData.value) : ""),
+  };
+
+  console.log("Valores a mostrar en inputs:", displayValues);
+
   return (
     <Dialog open={isOpen} onClose={setIsOpen} className="relative z-50">
       <DialogBackdrop
@@ -112,75 +247,75 @@ export default function CompleteBillModal({ isOpen, setIsOpen, preinvoiceId}: Pr
               </div>
               <div className="mt-3 text-center sm:mt-5">
                 <DialogTitle as="h3" className="text-base font-semibold text-gray-900">
-                  Confirmar facturación 
+                  Confirmar facturación
                 </DialogTitle>
                 <div className="mt-2">
-                    <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        <div>
-                            <label htmlFor="name" className="block text-sm/6 font-medium text-gray-700">
-                                Número factura
-                            </label>
-                            <div className="mt-2">
-                                <input
-                                     id="numberBill"
-                                     name="numberBill"
-                                     type="text"
-                                     value={formData.numberBill}
-                                     onChange={handleInputChange}
-                                     className="block w-full rounded-md bg-white px-3 py-2 text-base text-gray-900 outline outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
-                                />
-                            </div>
-                        </div>
-
-                        <div>
-                            <label htmlFor="lastName" className="block text-sm/6 font-medium text-gray-700">
-                                Número HES
-                            </label>
-                            <div className="mt-2">
-                                <input
-                                    id="numberHes"
-                                    name="numberHes"
-                                    type="text"
-                                    value={formData.numberHes}
-                                    onChange={handleInputChange}
-                                    className="block w-full rounded-md bg-white px-3 py-2 text-base text-gray-900 outline outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
-                                />
-                            </div>
-                        </div>
+                  <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div>
+                      <label htmlFor="name" className="block text-sm/6 font-medium text-gray-700">
+                        Número factura
+                      </label>
+                      <div className="mt-2">
+                        <input
+                          id="numberBill"
+                          name="numberBill"
+                          type="text"
+                          value={displayValues.numberBill}
+                          onChange={handleInputChange}
+                          className="block w-full rounded-md bg-white px-3 py-2 text-base text-gray-900 outline outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
+                        />
+                      </div>
                     </div>
-                    <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        <div>
-                            <label htmlFor="name" className="block text-sm/6 font-medium text-gray-700">
-                                Número OC
-                            </label>
-                            <div className="mt-2">
-                                <input
-                                    id="numberOc"
-                                    name="numberOc"
-                                    type="text"
-                                    value={formData.numberOc}
-                                    onChange={handleInputChange}
-                                    className="block w-full rounded-md bg-white px-3 py-2 text-base text-gray-900 outline outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
-                                />
-                            </div>
-                        </div>
 
-                        <div>
-                            <label htmlFor="lastName" className="block text-sm/6 font-medium text-gray-700">
-                                Monto OC
-                            </label>
-                            <div className="mt-2">
-                                <input
-                                    id="ocAmount"
-                                    name="ocAmount"
-                                    type="number"
-                                    value={formData.ocAmount}
-                                    onChange={handleInputChange}
-                                    className="block w-full rounded-md bg-white px-3 py-2 text-base text-gray-900 outline outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
-                                />
-                            </div>
-                        </div>
+                    <div>
+                      <label htmlFor="lastName" className="block text-sm/6 font-medium text-gray-700">
+                        Número HES
+                      </label>
+                      <div className="mt-2">
+                        <input
+                          id="numberHes"
+                          name="numberHes"
+                          type="text"
+                          value={displayValues.numberHes}
+                          onChange={handleInputChange}
+                          className="block w-full rounded-md bg-white px-3 py-2 text-base text-gray-900 outline outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
+                        />
+                      </div>
                     </div>
+                  </div>
+                  <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div>
+                      <label htmlFor="name" className="block text-sm/6 font-medium text-gray-700">
+                        Número OC
+                      </label>
+                      <div className="mt-2">
+                        <input
+                          id="numberOc"
+                          name="numberOc"
+                          type="text"
+                          value={displayValues.numberOc}
+                          onChange={handleInputChange}
+                          className="block w-full rounded-md bg-white px-3 py-2 text-base text-gray-900 outline outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label htmlFor="lastName" className="block text-sm/6 font-medium text-gray-700">
+                        Monto OC
+                      </label>
+                      <div className="mt-2">
+                        <input
+                          id="ocAmount"
+                          name="ocAmount"
+                          type="text"
+                          value={displayValues.ocAmount}
+                          onChange={handleInputChange}
+                          className="block w-full rounded-md bg-white px-3 py-2 text-base text-gray-900 outline outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
+                        />
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -189,14 +324,14 @@ export default function CompleteBillModal({ isOpen, setIsOpen, preinvoiceId}: Pr
                 type="button"
                 disabled={isLoading}
                 onClick={() => {
-                  setIsOpen();
                   handlerUpdate();
+                  setIsOpen();
                 }}
                 className={`inline-flex w-full justify-center rounded-md px-3 py-2 text-sm font-semibold text-white shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 sm:col-start-2 ${
-                  isLoading ? 'bg-indigo-400 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-500'
+                  isLoading ? "bg-indigo-400 cursor-not-allowed" : "bg-indigo-600 hover:bg-indigo-500"
                 }`}
               >
-                {isLoading ? 'Procesando...' : 'Completar facturación'}
+                {isLoading ? "Procesando..." : "Completar facturación"}
               </button>
               <button
                 type="button"
@@ -204,7 +339,7 @@ export default function CompleteBillModal({ isOpen, setIsOpen, preinvoiceId}: Pr
                 disabled={isLoading}
                 onClick={() => setIsOpen()}
                 className={`mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:col-start-1 sm:mt-0 ${
-                  isLoading ? 'opacity-50 cursor-not-allowed' : ''
+                  isLoading ? "opacity-50 cursor-not-allowed" : ""
                 }`}
               >
                 Cancelar
@@ -214,5 +349,5 @@ export default function CompleteBillModal({ isOpen, setIsOpen, preinvoiceId}: Pr
         </div>
       </div>
     </Dialog>
-  )
+  );
 }

@@ -216,6 +216,8 @@ model PreInvoice {
   rejectNote    String?            @map("reject_note")
   ocAmount      Decimal?           @map("oc_amount") @db.Decimal(12, 2)
   edpNumber     String?            @map("edp_number") @db.VarChar(50)
+  completedBy   String?            @map("completed_by") @db.VarChar(255)
+  completedAt   DateTime?          @map("completed_at") @db.Timestamptz(6)
   createdAt     DateTime?          @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt     DateTime?          @default(now()) @map("updated_at") @db.Timestamptz(6)
   client        Client?            @relation(fields: [clientId], references: [id], onDelete: Cascade)
