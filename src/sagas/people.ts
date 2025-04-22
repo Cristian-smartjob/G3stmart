@@ -1,46 +1,32 @@
-import { takeLatest, all, put, call } from 'redux-saga/effects'
-import * as ReducerUser from '@/lib/features/users'
-import { createClient } from '@/lib/supabaseClient';
+import { takeLatest, all, put, call } from "redux-saga/effects";
+import * as ReducerUser from "@/lib/features/users";
+import { createClient } from "@/lib/postgresClient";
 
-function* fetchPeople(){
-    try {
-       
-        const client = createClient()
+function* fetchPeople() {
+  try {
+    const client = createClient();
+    console.log("Fetching People data...");
 
-        const { data } = yield call([client.from('People'), 'select'], 
-        `
-        *,
-        JobTitle (
-            id,
-            name
-        )
-       `);
-        /*
-        const { data, error } = yield call([client.from('PreInvoice'), 'select'], `
-            id,
-            status,
-            oc_number,
-            hes_number,
-            Client (
-                id,
-                name
-            )
-           `)
+    const { data, error } = yield call(() => client.from("People").select("*").withAllJoins().execute());
 
-        */
-        yield put(ReducerUser.fetchSuccessfull(data))
-    } catch(e) {
-        console.log('error', e)
-        yield put(ReducerUser.fetchError())
+    if (error) {
+      console.log("Error fetching People data:", error);
+      yield put(ReducerUser.fetchError());
+      return;
     }
- }
 
-function* fetchPeopleAction(){
-    yield takeLatest([ReducerUser.fetch], fetchPeople);
- }
+    console.log("People data fetched successfully:", data?.length || 0, "records");
+    yield put(ReducerUser.fetchSuccessfull(data));
+  } catch (e) {
+    console.log("error", e);
+    yield put(ReducerUser.fetchError());
+  }
+}
+
+function* fetchPeopleAction() {
+  yield takeLatest([ReducerUser.fetch], fetchPeople);
+}
 
 export default function* peopleAction() {
-    yield all([
-        fetchPeopleAction(),
-    ])
- }
+  yield all([fetchPeopleAction()]);
+}

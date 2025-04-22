@@ -52,8 +52,8 @@ export default function PeoplePersonal({handleBlur, handleChange, onSelectorFiel
             </label>
             <div className="mt-2">
                 <input
-                id="last_name"
-                name="last_name"
+                id="lastName"
+                name="lastName"
                 type="text"
                 autoComplete="text"
                 className="block w-full rounded-md bg-white px-3 py-2 text-base text-gray-900 outline outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"

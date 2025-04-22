@@ -56,16 +56,16 @@ export default function ContactPersonal({handleBlur, handleChange, onSelectorFie
                 </div>
 
                 <div>
-                    <label htmlFor="last_name" className="block text-sm/6 font-medium text-gray-700">
+                    <label htmlFor="lastName" className="block text-sm/6 font-medium text-gray-700">
                         Apellido
                     </label>
                     <div className="mt-2">
                         <input
-                            id="last_name"
-                            name="last_name"
+                            id="lastName"
+                            name="lastName"
                             type="text"
                             autoComplete="text"
-                            value={values.last_name}
+                            value={values.lastName}
                             className="block w-full rounded-md bg-white px-3 py-2 text-base text-gray-900 outline outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
                             onChange={handleChange}
                             onBlur={handleBlur}
@@ -94,7 +94,7 @@ export default function ContactPersonal({handleBlur, handleChange, onSelectorFie
                 </div>
 
                 <div>
-                    <label htmlFor="last_name" className="block text-sm/6 font-medium text-gray-700">
+                    <label htmlFor="lastName" className="block text-sm/6 font-medium text-gray-700">
                         Telefono
                     </label>
                     <div className="mt-2">

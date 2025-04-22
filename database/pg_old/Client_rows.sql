@@ -1,0 +1,1 @@
+INSERT INTO "public"."Client" ("id","name","billable_day","rut") VALUES ('12', 'Falabella Tecnología', '20', null);

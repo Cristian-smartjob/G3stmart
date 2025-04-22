@@ -1,6 +1,6 @@
 import { takeLatest, all, put, call } from 'redux-saga/effects'
 import * as ReducerPreInvoicesDetail from '@/lib/features/preinvoicesdetail'
-import { createClient } from '@/lib/supabaseClient';
+import { createClient } from '@/lib/postgresClient';
 import { SupabaseClient } from '@supabase/supabase-js';
 
 

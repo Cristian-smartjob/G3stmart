@@ -1,0 +1,233 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/infrastructure/database/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model AFPInstitution {
+  id        Int       @id @default(autoincrement())
+  name      String    @db.VarChar(255)
+  createdAt DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime? @default(now()) @map("updated_at") @db.Timestamptz(6)
+  people    People[]
+
+  @@map("AFPInstitution")
+}
+
+model CurrencyType {
+  id        Int       @id @default(autoincrement())
+  name      String    @db.VarChar(50)
+  createdAt DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime? @default(now()) @map("updated_at") @db.Timestamptz(6)
+  clients   Client[]
+  people    People[]
+
+  @@map("CurrencyType")
+}
+
+model Client {
+  id             Int           @id @default(autoincrement())
+  name           String        @db.VarChar(255)
+  currencyTypeId Int?          @map("currency_type_id")
+  billableDay    Decimal?      @default(0) @map("billable_day") @db.Decimal(10, 2)
+  rut            String?       @db.VarChar(20)
+  address        String?
+  companyName    String?       @map("company_name") @db.VarChar(255)
+  createdAt      DateTime?     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime?     @default(now()) @map("updated_at") @db.Timestamptz(6)
+  currencyType   CurrencyType? @relation(fields: [currencyTypeId], references: [id])
+  contacts       Contact[]
+  people         People[]
+  preInvoices    PreInvoice[]
+  projects       Project[]
+
+  @@map("Client")
+}
+
+model Contact {
+  id        Int       @id @default(autoincrement())
+  name      String    @db.VarChar(255)
+  email     String?   @db.VarChar(255)
+  phone     String?   @db.VarChar(50)
+  clientId  Int?      @map("client_id")
+  createdAt DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime? @default(now()) @map("updated_at") @db.Timestamptz(6)
+  client    Client?   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@map("Contact")
+}
+
+model HealthInstitution {
+  id        Int       @id @default(autoincrement())
+  name      String    @db.VarChar(255)
+  createdAt DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime? @default(now()) @map("updated_at") @db.Timestamptz(6)
+  people    People[]
+
+  @@map("HealthInstitution")
+}
+
+model Holidays {
+  id        Int       @id @default(autoincrement())
+  date      DateTime  @db.Date
+  name      String    @db.VarChar(255)
+  createdAt DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime? @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  @@map("Holidays")
+}
+
+model JobTitle {
+  id          Int       @id @default(autoincrement())
+  name        String    @db.VarChar(255)
+  description String?
+  createdAt   DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime? @default(now()) @map("updated_at") @db.Timestamptz(6)
+  people      People[]
+
+  @@map("JobTitle")
+}
+
+model Role {
+  id        Int       @id @default(autoincrement())
+  name      String    @db.VarChar(100)
+  createdAt DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime? @default(now()) @map("updated_at") @db.Timestamptz(6)
+  people    People[]
+
+  @@map("Role")
+}
+
+model Seniority {
+  id        Int       @id @default(autoincrement())
+  name      String    @db.VarChar(100)
+  createdAt DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime? @default(now()) @map("updated_at") @db.Timestamptz(6)
+  people    People[]
+
+  @@map("Seniority")
+}
+
+model SkillLevel {
+  id        Int       @id @default(autoincrement())
+  name      String    @db.VarChar(100)
+  createdAt DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime? @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  @@map("SkillLevel")
+}
+
+model TechnicalsStacks {
+  id        Int       @id @default(autoincrement())
+  name      String    @db.VarChar(255)
+  createdAt DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime? @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  @@map("TechnicalsStacks")
+}
+
+model Price {
+  id        Int       @id @default(autoincrement())
+  amount    Decimal   @db.Decimal(12, 2)
+  createdAt DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime? @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  @@map("Price")
+}
+
+model People {
+  id                  Int                @id @default(autoincrement())
+  name                String             @db.VarChar(255)
+  lastName            String             @map("last_name") @db.VarChar(255)
+  email               String?            @db.VarChar(255)
+  corporateEmail      String?            @map("corporate_email") @db.VarChar(255)
+  roleId              Int?               @map("role_id")
+  dni                 String?            @db.VarChar(50)
+  address             String?
+  sublocality         String?            @db.VarChar(255)
+  locality            String?            @db.VarChar(255)
+  administrativeArea  String?            @map("administrative_area_level_1") @db.VarChar(255)
+  country             String?            @db.VarChar(100)
+  nationality         String?            @db.VarChar(100)
+  afpInstitutionId    Int?               @map("afp_institution_id")
+  healthInstitutionId Int?               @map("health_institution_id")
+  seniorityId         Int?               @map("seniority_id")
+  netSalary           Decimal?           @map("net_salary") @db.Decimal(12, 2)
+  currencyTypeId      Int?               @map("currency_type_id")
+  jobTitleId          Int?               @map("job_title_id")
+  fee                 Decimal?           @db.Decimal(12, 2)
+  birth               DateTime?          @db.Date
+  clientId            Int?               @map("client_id")
+  phone               String?            @db.VarChar(50)
+  billableDay         Decimal?           @default(8.0) @map("billable_day") @db.Decimal(10, 2)
+  createdAt           DateTime?          @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt           DateTime?          @default(now()) @map("updated_at") @db.Timestamptz(6)
+  leaveDays           LeaveDays[]
+  afpInstitution      AFPInstitution?    @relation(fields: [afpInstitutionId], references: [id])
+  client              Client?            @relation(fields: [clientId], references: [id])
+  currencyType        CurrencyType?      @relation(fields: [currencyTypeId], references: [id])
+  healthInstitution   HealthInstitution? @relation(fields: [healthInstitutionId], references: [id])
+  jobTitle            JobTitle?          @relation(fields: [jobTitleId], references: [id])
+  role                Role?              @relation(fields: [roleId], references: [id])
+  seniority           Seniority?         @relation(fields: [seniorityId], references: [id])
+  preInvoiceDetails   PreInvoiceDetail[]
+
+  @@map("People")
+}
+
+model LeaveDays {
+  id        Int       @id @default(autoincrement())
+  personId  Int?      @map("person_id")
+  startDate DateTime  @map("start_date") @db.Date
+  endDate   DateTime  @map("end_date") @db.Date
+  reason    String?
+  createdAt DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime? @default(now()) @map("updated_at") @db.Timestamptz(6)
+  person    People?   @relation(fields: [personId], references: [id], onDelete: Cascade)
+
+  @@map("LeaveDays")
+}
+
+model PreInvoice {
+  id        Int                @id @default(autoincrement())
+  clientId  Int?               @map("client_id")
+  createdAt DateTime?          @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime?          @default(now()) @map("updated_at") @db.Timestamptz(6)
+  client    Client?            @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  details   PreInvoiceDetail[]
+
+  @@map("PreInvoice")
+}
+
+model PreInvoiceDetail {
+  id           Int         @id @default(autoincrement())
+  preInvoiceId Int?        @map("pre_invoice_id")
+  personId     Int?        @map("person_id")
+  hours        Decimal?    @db.Decimal(10, 2)
+  rate         Decimal?    @db.Decimal(12, 2)
+  createdAt    DateTime?   @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime?   @default(now()) @map("updated_at") @db.Timestamptz(6)
+  person       People?     @relation(fields: [personId], references: [id], onDelete: Cascade)
+  preInvoice   PreInvoice? @relation(fields: [preInvoiceId], references: [id], onDelete: Cascade)
+
+  @@map("PreInvoiceDetail")
+}
+
+model Project {
+  id          Int       @id @default(autoincrement())
+  name        String    @db.VarChar(255)
+  description String?
+  clientId    Int?      @map("client_id")
+  startDate   DateTime? @map("start_date") @db.Date
+  endDate     DateTime? @map("end_date") @db.Date
+  status      String?   @db.VarChar(50)
+  createdAt   DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime? @default(now()) @map("updated_at") @db.Timestamptz(6)
+  client      Client?   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@map("Project")
+}

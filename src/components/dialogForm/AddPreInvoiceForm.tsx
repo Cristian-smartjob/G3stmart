@@ -114,7 +114,7 @@ export default function AddPreInvoiceForm({ onSave }: Props) {
               <Selector 
                 title='Contraparte (debes selecionar un cliente)' 
                 isLoading={isLoading}
-                items={(contacts || []).filter(item => item.Client.id === values.client_id).map(item => ({id:item.id, label: `${item.name} ${item.last_name}`}))}
+                items={(contacts || []).filter(item => item.Client.id === values.client_id).map(item => ({id:item.id, label: `${item.name} ${item.lastName}`}))}
                 onChange={(item: SelectorItem | null) => {
                   if(item !== null){
                     setFieldValue("contact_id", item.id)

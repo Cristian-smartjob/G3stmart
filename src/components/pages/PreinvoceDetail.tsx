@@ -113,7 +113,7 @@ export default function PreinvoceDetail() {
                 <h1 className="text-base text-xl font-semibold text-gray-900">Prefactura {preInvoice?.Client.name} {preInvoice?.month} / {preInvoice?.year}</h1>
                 
                 {preInvoice?.Contact !== null ? (
-                  <p className='text-sm'>Contraparte {preInvoice?.Contact.name} {preInvoice?.Contact.last_name}</p>
+                  <p className='text-sm'>Contraparte {preInvoice?.Contact.name} {preInvoice?.Contact.lastName}</p>
                 ) : null}
                 
                 <div className='mt-6'>
