@@ -1,7 +1,6 @@
-
 import Selector from '../core/Selector'
 import { useSelector } from 'react-redux'
-import { DataTables, GenericDataMap } from '@/interface/common'
+import { DataTables, GenericDataMap } from "@/lib/features/data"
 import { RootState } from '@/lib/store'
 import { useEffect } from 'react'
 import { useAppDispatch } from '@/lib/hook'
@@ -25,13 +24,14 @@ const validationSchema = Yup.object({
 
 interface Props {
   onSave: () => void;
+  isEditMode?: boolean;
 }
 
 export default function AddClientForm({ onSave }: Props) {
 
 
   const genericDataMap = useSelector<RootState, GenericDataMap>(state => state.data.list)
-  const currencies = genericDataMap[DataTables.CurrencyType]
+  const currencies = (genericDataMap[DataTables.CurrencyType] ?? []) as {id: string|number, name: string}[];
 
   const initialValues: ClientForm = {}
 
@@ -175,7 +175,7 @@ export default function AddClientForm({ onSave }: Props) {
               <div className="w-1/2">
                  <Selector 
                     title='Moneda de cobro' 
-                    items={currencies.map(item => ({id: item.id, label: `${item.name}`}))}
+                    items={currencies.map((item) => ({ id: Number(item.id), label: item.name }))}
                     onChange={(item: SelectorItem | null) => {
                       setFieldValue("currency_type_id", item?.id)
                     }}

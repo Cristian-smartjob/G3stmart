@@ -1,6 +1,6 @@
 'use client'
 
-import { DataTables } from "@/interface/common";
+import { DataTables } from "@/lib/features/data";
 import GenericDataTable from "./GenericDataTable";
 
 export default function SeniorityTable(){

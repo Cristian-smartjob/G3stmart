@@ -1,5 +1,5 @@
 import { prisma } from "../connection/prisma";
-import type { Prisma, Role } from "../prisma/index";
+import type { Prisma, Role } from "@prisma/client";
 import { BaseRepository } from "./baseRepository";
 
 /**

@@ -5,7 +5,6 @@ import { fetch } from "@/lib/features/users";
 import { fetch as FetchClients } from "@/lib/features/clients";
 import { useAppDispatch } from "@/lib/hook";
 import { useSelector } from "react-redux";
-import { Client } from "@/interface/common";
 import { RootState } from "@/lib/store";
 import PeopleItemRow from "../Table/PeopleItemRow";
 import AddPeopleForm from "../dialogForm/AddPeopleForm";
@@ -16,7 +15,18 @@ import FilterPeople from "../dialog/FilterPeople";
 import GenericModal from "../modals/GenericModal";
 import MainTable from "../Table/MainTable";
 import TableSkeleton from "../core/TableSkeleton";
-import { PeopleWithAllRelations } from "@/infrastructure/database/repositories/peopleRepository";
+import type { People, JobTitle, Client as ClientModel, Role, AFPInstitution, HealthInstitution, Seniority, CurrencyType } from "@prisma/client";
+
+// Definir el tipo de PeopleWithAllRelations según lo que necesitamos
+type PeopleWithAllRelations = People & {
+  jobTitle: JobTitle | null;
+  client: ClientModel | null;
+  role: Role | null;
+  afpInstitution: AFPInstitution | null;
+  healthInstitution: HealthInstitution | null;
+  seniority: Seniority | null;
+  currencyType: CurrencyType | null;
+};
 
 const header = [
   "Empresa",
@@ -47,7 +57,6 @@ function filterPeople(people: PeopleWithAllRelations[] | undefined, searchTerm: 
 export default function PeopleTable() {
   const users = useSelector<RootState, PeopleWithAllRelations[]>((state) => state.users.list);
   const isLoading = useSelector<RootState, boolean>((state) => state.users.isLoading);
-  const clients = useSelector<RootState, Client[]>((state) => state.clients.list);
 
   const [currentPage, setCurrentPage] = useState(1);
   const [showDialog, setShowDialog] = useState(false);
@@ -182,7 +191,7 @@ export default function PeopleTable() {
           <TableSkeleton isLoading={isLoading && filteredUsers.length <= 0} size={7} />
 
           {filteredUsers.slice(Math.max(0, currentPage - 1) * 10, currentPage * 10).map((item) => (
-            <PeopleItemRow clients={clients} key={item.id} item={item} onActionPress={handleActionPress} />
+            <PeopleItemRow key={item.id} item={item} onActionPress={handleActionPress} />
           ))}
         </>
       </MainTable>

@@ -15,8 +15,7 @@ import {
   CurrencyTypeRepository,
   PriceRepository,
 } from "@/infrastructure/database/repositories/dataRepositories";
-import { DataTables } from "@/interface/common";
-
+import { DataTables } from "@/lib/features/data";
 export async function POST(request: Request) {
   try {
     const body = await request.json();
@@ -59,7 +58,7 @@ export async function POST(request: Request) {
     if (table === "PreInvoice") {
       try {
         const preInvoiceRepo = new PreInvoiceRepository();
-        const result = await preInvoiceRepo.findWithRelations(conditions as FilterCondition[]);
+        const result = await preInvoiceRepo.findWithRelations();
         return NextResponse.json({ data: result });
       } catch (error) {
         console.error("Error fetching PreInvoice:", error);

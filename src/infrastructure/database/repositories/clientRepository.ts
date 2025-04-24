@@ -1,23 +1,18 @@
 import { prisma } from "../connection/prisma";
-import type { Prisma } from "../prisma/index";
-import type { Client, Contact } from "../prisma/index";
-
-export interface ClientWithContacts extends Client {
-  contacts: Contact[];
-}
+import type { Prisma, Client, Contact } from "@prisma/client";
 
 export class ClientRepository {
   async findAll(): Promise<Client[]> {
     return prisma.client.findMany();
   }
 
-  async findAllWithRelations(): Promise<ClientWithContacts[]> {
+  async findAllWithRelations(): Promise<(Client & { contacts: Contact[] })[]> {
     return prisma.client.findMany({
       include: { contacts: true },
     });
   }
 
-  async findById(id: number): Promise<ClientWithContacts | null> {
+  async findById(id: number): Promise<(Client & { contacts: Contact[] }) | null> {
     return prisma.client.findUnique({
       where: { id },
       include: { contacts: true },

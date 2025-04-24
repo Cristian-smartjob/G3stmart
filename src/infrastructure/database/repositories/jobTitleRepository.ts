@@ -1,6 +1,5 @@
 import { prisma } from "../connection/prisma";
-import type { Prisma } from "../prisma/index";
-import type { JobTitle } from "../prisma/index";
+import type { Prisma, JobTitle } from "@prisma/client";
 
 export class JobTitleRepository {
   async findAll(): Promise<JobTitle[]> {

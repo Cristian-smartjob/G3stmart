@@ -1,13 +1,9 @@
 import { prisma } from "../connection/prisma";
-import type { Prisma, Client, CurrencyType } from "../prisma/index";
+import type { Prisma, Client, CurrencyType } from "@prisma/client";
 import { FilterCondition } from "../types/database.types";
 
-export interface ClientWithCurrencyType extends Client {
-  CurrencyType: CurrencyType | null;
-}
-
 export class ClientWithCurrencyRepository {
-  async findWithCurrencyType(conditions: FilterCondition[] = []): Promise<ClientWithCurrencyType[]> {
+  async findWithCurrencyType(conditions: FilterCondition[] = []): Promise<(Client & { currencyType: CurrencyType | null })[]> {
     const where: Record<string, unknown> = {};
 
     conditions.forEach((condition) => {
@@ -62,17 +58,14 @@ export class ClientWithCurrencyRepository {
         },
       });
 
-      return result.map((item) => ({
-        ...item,
-        CurrencyType: item.currencyType,
-      })) as ClientWithCurrencyType[];
+      return result as (Client & { currencyType: CurrencyType | null })[];
     } catch (error) {
       console.error("Error fetching Client with relations:", error);
       throw error;
     }
   }
 
-  async findById(id: number): Promise<ClientWithCurrencyType | null> {
+  async findById(id: number): Promise<(Client & { currencyType: CurrencyType | null }) | null> {
     try {
       const result = await prisma.client.findUnique({
         where: { id },
@@ -83,10 +76,7 @@ export class ClientWithCurrencyRepository {
 
       if (!result) return null;
 
-      return {
-        ...result,
-        CurrencyType: result.currencyType,
-      } as ClientWithCurrencyType;
+      return result as Client & { currencyType: CurrencyType | null };
     } catch (error) {
       console.error(`Error fetching Client with id ${id}:`, error);
       throw error;

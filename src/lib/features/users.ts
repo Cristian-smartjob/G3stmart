@@ -1,6 +1,17 @@
-import { PeopleWithAllRelations } from "@/infrastructure/database/repositories/peopleRepository";
+import type { People, JobTitle, Client, Role, AFPInstitution, HealthInstitution, Seniority, CurrencyType } from "@prisma/client";
 import { createSlice } from "@reduxjs/toolkit";
 import type { PayloadAction } from "@reduxjs/toolkit";
+
+// Definir el tipo de PeopleWithAllRelations según lo que necesitamos
+type PeopleWithAllRelations = People & {
+  jobTitle: JobTitle | null;
+  client: Client | null;
+  role: Role | null;
+  afpInstitution: AFPInstitution | null;
+  healthInstitution: HealthInstitution | null;
+  seniority: Seniority | null;
+  currencyType: CurrencyType | null;
+};
 
 interface UsersState {
   list: PeopleWithAllRelations[];

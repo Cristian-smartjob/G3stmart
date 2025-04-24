@@ -1,5 +1,5 @@
 import Selector from "@/components/core/Selector";
-import { DataTables, GenericDataMap } from "@/interface/common";
+import { DataTables, GenericDataMap } from "@/lib/features/data";
 import { RootState } from "@/lib/store";
 import { useSelector } from "react-redux";
 
@@ -7,8 +7,8 @@ export default function PeopleImposition(){
 
    
     const genericDataMap = useSelector<RootState, GenericDataMap>(state => state.data.list)
-    const afpInstitutions = genericDataMap[DataTables.AFPInstitution]
-    const isapreInstitutions = genericDataMap[DataTables.HealthInstitution]
+    const afpInstitutions = (genericDataMap[DataTables.AFPInstitution] ?? []) as {id: string|number, name: string}[];
+    const isapreInstitutions = (genericDataMap[DataTables.HealthInstitution] ?? []) as {id: string|number, name: string}[];
 
 
     return (
@@ -23,7 +23,7 @@ export default function PeopleImposition(){
                 <div className="mt-6">
                     <Selector 
                     title='AFP' 
-                    items={afpInstitutions.map(item => ({id:item.id, label: item.name}))}
+                    items={afpInstitutions.map(item => ({id: Number(item.id), label: item.name}))}
                     onChange={() => {
 
                     }}
@@ -32,7 +32,7 @@ export default function PeopleImposition(){
                 <div className='mt-6'>
                 <Selector 
                 title='Isapre' 
-                items={isapreInstitutions.map(item => ({id:item.id, label: item.name}))}
+                items={isapreInstitutions.map(item => ({id: Number(item.id), label: item.name}))}
                 onChange={() => {
                 
                 }}

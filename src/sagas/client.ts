@@ -1,18 +1,41 @@
-import { takeLatest, all, put, call } from "redux-saga/effects";
+import { takeLatest, all, put, call, CallEffect, PutEffect } from "redux-saga/effects";
 import * as ReducerClient from "@/lib/features/clients";
-import { createClient } from "@/lib/postgresClient";
 import { ClientForm } from "@/interface/form";
+import type { Client } from "@prisma/client";
 
-function* addNewClient(action: { type: string; payload: ClientForm }) {
+// Definir los tipos de respuesta de API
+type ClientWithRelations = Client & {
+  currencyType: {
+    id: number;
+    name: string;
+  } | null;
+};
+
+type ApiResponse<T> = {
+  data: T;
+  message?: string;
+};
+
+// Generador tipado para añadir cliente
+function* addNewClient(action: { type: string; payload: ClientForm }): Generator<
+  CallEffect<unknown> | PutEffect<ReturnType<typeof ReducerClient.createSuccessfull>>,
+  void,
+  unknown
+> {
   try {
-    const client = createClient();
-
-    const { error } = yield call(() =>
-      client.from("Client").insert(action.payload as Record<string, unknown> as Record<string, unknown>)
+    const response = yield call(() =>
+      fetch("/api/clients", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(action.payload),
+      })
     );
 
-    if (error) {
-      throw new Error(error.message);
+    if (!(response as Response).ok) {
+      const errorData = yield call(() => (response as Response).json());
+      throw new Error((errorData as ApiResponse<unknown>).message || "Error adding client");
     }
 
     yield put(ReducerClient.createSuccessfull());
@@ -21,34 +44,29 @@ function* addNewClient(action: { type: string; payload: ClientForm }) {
   }
 }
 
-function* fetchClient() {
+// Generador tipado para obtener clientes
+function* fetchClient(): Generator<
+  CallEffect<unknown> | PutEffect<ReturnType<typeof ReducerClient.fetchSuccessfull> | ReturnType<typeof ReducerClient.fetchError>>,
+  void,
+  unknown
+> {
   try {
-    const client = createClient();
-    const { data, error } = yield call(() =>
-      client
-        .from("Client")
-        .select(
-          `
-            id,
-            name,
-            billable_day,
-            rut,
-            CurrencyType (
-                id,
-                name
-            )
-           `
-        )
-        .execute()
+    const response = yield call(() =>
+      fetch("/api/clients", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      })
     );
 
-    if (error) {
-      throw new Error(error.message);
+    const result = yield call(() => (response as Response).json());
+
+    if (!(response as Response).ok) {
+      throw new Error((result as ApiResponse<unknown>).message || "Error fetching clients");
     }
 
-    if (data !== null) {
-      yield put(ReducerClient.fetchSuccessfull(data));
-    }
+    yield put(ReducerClient.fetchSuccessfull((result as ApiResponse<ClientWithRelations[]>).data));
   } catch (e) {
     console.error("Error fetching client:", e);
     yield put(ReducerClient.fetchError());
@@ -60,7 +78,7 @@ function* fetchClientAction() {
 }
 
 function* addNewClientAction() {
-  yield takeLatest([ReducerClient.create], addNewClient);
+  yield takeLatest(ReducerClient.create.type, addNewClient);
 }
 
 export default function* clientsActions() {

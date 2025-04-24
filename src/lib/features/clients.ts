@@ -1,4 +1,4 @@
-import { Client } from '@/interface/common';
+import { Client } from '@prisma/client';
 import { ClientForm } from '@/interface/form';
 import { createSlice } from '@reduxjs/toolkit';
 import type { PayloadAction } from '@reduxjs/toolkit';
@@ -23,6 +23,7 @@ const clientsSlice = createSlice({
   name: 'clients',
   initialState,
   reducers: {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     create(state, action: PayloadAction<ClientForm>){
       state.isCreateLoading = true
     },
