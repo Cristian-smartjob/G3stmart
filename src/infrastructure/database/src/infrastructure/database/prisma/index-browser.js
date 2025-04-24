@@ -127,6 +127,7 @@ exports.Prisma.AFPInstitutionScalarFieldEnum = {
 exports.Prisma.CurrencyTypeScalarFieldEnum = {
   id: 'id',
   name: 'name',
+  symbol: 'symbol',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };
@@ -146,6 +147,7 @@ exports.Prisma.ClientScalarFieldEnum = {
 exports.Prisma.ContactScalarFieldEnum = {
   id: 'id',
   name: 'name',
+  lastName: 'lastName',
   email: 'email',
   phone: 'phone',
   clientId: 'clientId',
@@ -193,6 +195,7 @@ exports.Prisma.SeniorityScalarFieldEnum = {
 exports.Prisma.SkillLevelScalarFieldEnum = {
   id: 'id',
   name: 'name',
+  level: 'level',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };
@@ -206,7 +209,10 @@ exports.Prisma.TechnicalsStacksScalarFieldEnum = {
 
 exports.Prisma.PriceScalarFieldEnum = {
   id: 'id',
-  amount: 'amount',
+  name: 'name',
+  description: 'description',
+  value: 'value',
+  currency_type: 'currency_type',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };
@@ -253,6 +259,18 @@ exports.Prisma.LeaveDaysScalarFieldEnum = {
 exports.Prisma.PreInvoiceScalarFieldEnum = {
   id: 'id',
   clientId: 'clientId',
+  contactId: 'contactId',
+  total: 'total',
+  status: 'status',
+  ocNumber: 'ocNumber',
+  hesNumber: 'hesNumber',
+  invoiceNumber: 'invoiceNumber',
+  month: 'month',
+  year: 'year',
+  value: 'value',
+  rejectNote: 'rejectNote',
+  ocAmount: 'ocAmount',
+  edpNumber: 'edpNumber',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };
@@ -261,8 +279,12 @@ exports.Prisma.PreInvoiceDetailScalarFieldEnum = {
   id: 'id',
   preInvoiceId: 'preInvoiceId',
   personId: 'personId',
-  hours: 'hours',
-  rate: 'rate',
+  status: 'status',
+  value: 'value',
+  currency_type: 'currency_type',
+  billableDays: 'billableDays',
+  leaveDays: 'leaveDays',
+  totalConsumeDays: 'totalConsumeDays',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };

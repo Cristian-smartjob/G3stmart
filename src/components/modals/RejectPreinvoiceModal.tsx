@@ -6,6 +6,7 @@ import {  TrashIcon } from '@heroicons/react/24/outline'
 import clsx from 'clsx'
 import { useAppDispatch } from '@/lib/hook'
 import { update } from '@/lib/features/preinvoices'
+import { updatePreInvoice } from '@/app/actions/preInvoices'
 
 interface Props {
     isOpen:boolean;
@@ -14,17 +15,64 @@ interface Props {
 }
 
 export default function RejectPreinvoiceModal({ isOpen, preinvoiceId, setIsOpen}: Props) {
-
   const [note, setNote] = useState("")
+  const [isLoading, setIsLoading] = useState(false)
   const dispatch = useAppDispatch()
 
-  const handlerUpdate = () => {
-
-    dispatch(update({
-      id: preinvoiceId,
-      reject_note: note,
-      status: "REJECTED"
-    }))
+  const handlerUpdate = async () => {
+    if (isLoading || note === "") return;
+    
+    setIsLoading(true);
+    console.log('Iniciando rechazo de prefactura ID:', preinvoiceId, 'con nota:', note);
+    
+    try {
+      // 1. Actualizar en Redux
+      dispatch(update({
+        id: preinvoiceId,
+        rejectNote: note,
+        status: "REJECTED"
+      }));
+      console.log('Estado actualizado en Redux');
+      
+      // 2. Actualizar en el servidor usando server action
+      try {
+        const result = await updatePreInvoice(preinvoiceId, { 
+          id: preinvoiceId, 
+          status: "REJECTED",
+          rejectNote: note
+        });
+        console.log('Prefactura rechazada en servidor:', result);
+      } catch (error) {
+        console.error('Error al actualizar en el servidor:', error);
+      }
+      
+      // 3. Actualizar usando API REST
+      try {
+        const apiResponse = await fetch(`/api/preinvoices/${preinvoiceId}/status`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ 
+            status: 'REJECTED',
+            rejectNote: note 
+          }),
+        });
+        
+        const apiResult = await apiResponse.json();
+        console.log('Respuesta de la API:', apiResult);
+      } catch (error) {
+        console.error('Error al llamar a la API:', error);
+      }
+      
+      // Redirigir a la lista de prefacturas después de completar todo
+      setTimeout(() => {
+        window.location.href = '/preinvoice';
+      }, 500);
+    } catch (error) {
+      console.error('Error general en el rechazo:', error);
+      setIsLoading(false);
+    }
   }
  
 
@@ -78,28 +126,31 @@ export default function RejectPreinvoiceModal({ isOpen, preinvoiceId, setIsOpen}
               <button
                 type="button"
                 onClick={() =>{
-                  handlerUpdate()
                   setIsOpen()
+                  handlerUpdate()
                 }}
-                disabled={note === ""}
+                disabled={note === "" || isLoading}
                 className={
                   clsx(
-                    note === "" ? "opacity-50" : "opacity-100",
+                    (note === "" || isLoading) ? "opacity-50 cursor-not-allowed" : "opacity-100",
                     "inline-flex w-full justify-center rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600 sm:col-start-2")
                 }
               >
-                Rechazar
+                {isLoading ? 'Procesando...' : 'Rechazar'}
               </button>
               <button
                 type="button"
                 data-autofocus
+                disabled={isLoading}
                 onClick={() => {
-                  
                   setIsOpen()
                 }}
-                className="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:col-start-1 sm:mt-0"
+                className={clsx(
+                  isLoading ? "opacity-50 cursor-not-allowed" : "",
+                  "mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:col-start-1 sm:mt-0"
+                )}
               >
-                Cancel
+                Cancelar
               </button>
             </div>
           </DialogPanel>

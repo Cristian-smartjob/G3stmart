@@ -7,8 +7,13 @@ import type {
   Role,
   JobTitle,
   CurrencyType,
-} from "../prisma/index";
+  Price,
+} from "@prisma/client";
 import { FilterCondition } from "../types/database.types";
+
+export interface PriceWithCurrencyType extends Price {
+  CurrencyType: CurrencyType | null;
+}
 
 export class AFPInstitutionRepository {
   async findAll(conditions: FilterCondition[] = []): Promise<AFPInstitution[]> {
@@ -419,7 +424,7 @@ export class CurrencyTypeRepository {
 }
 
 export class PriceRepository {
-  async findAll(conditions: FilterCondition[] = []): Promise<any[]> {
+  async findAll(conditions: FilterCondition[] = []): Promise<PriceWithCurrencyType[]> {
     const where: Record<string, unknown> = {};
 
     conditions.forEach((condition) => {
@@ -458,68 +463,42 @@ export class PriceRepository {
     const result = await prisma.price.findMany({
       where,
       include: {
-        currencyType: true,
+        CurrencyType: true,
       },
     });
 
     return result.map((price) => ({
-      id: price.id,
-      name: price.name,
-      value: price.amount?.toNumber() || 0,
-      description: price.description,
-      createdAt: price.createdAt,
-      updatedAt: price.updatedAt,
-      CurrencyType: price.currencyType,
+      ...price,
+      CurrencyType: price.CurrencyType,
     }));
   }
 
-  async findById(id: number): Promise<any | null> {
+  async findById(id: number): Promise<PriceWithCurrencyType | null> {
     const result = await prisma.price.findUnique({
       where: { id },
       include: {
-        currencyType: true,
+        CurrencyType: true,
       },
     });
 
     if (!result) return null;
 
     return {
-      id: result.id,
-      name: result.name,
-      value: result.amount?.toNumber() || 0,
-      description: result.description,
-      createdAt: result.createdAt,
-      updatedAt: result.updatedAt,
-      CurrencyType: result.currencyType,
+      ...result,
+      CurrencyType: result.CurrencyType,
     };
   }
 
-  async create(data: any): Promise<any> {
-    const { value, CurrencyType, ...rest } = data;
-
+  async create(data: Prisma.PriceCreateInput): Promise<PriceWithCurrencyType> {
     const result = await prisma.price.create({
-      data: {
-        ...rest,
-        amount: value,
-        currencyType: CurrencyType
-          ? {
-              connect: { id: CurrencyType.id },
-            }
-          : undefined,
-      },
+      data,
       include: {
-        currencyType: true,
+        CurrencyType: true,
       },
     });
-
     return {
-      id: result.id,
-      name: result.name,
-      value: result.amount?.toNumber() || 0,
-      description: result.description,
-      createdAt: result.createdAt,
-      updatedAt: result.updatedAt,
-      CurrencyType: result.currencyType,
+      ...result,
+      CurrencyType: result.CurrencyType,
     };
   }
 }

@@ -1,6 +1,21 @@
-import { AFPInstitution, DataTables, GenericDataMap, HealthInstitution, Role, Seniority } from "@/interface/common";
+import type { AFPInstitution, HealthInstitution, Role, Seniority } from "@prisma/client";
 import { createSlice } from "@reduxjs/toolkit";
 import type { PayloadAction } from "@reduxjs/toolkit";
+
+// Definición local de DataTables y GenericDataMap
+export enum DataTables {
+  AFPInstitution = 'AFPInstitution',
+  JobTitle = 'JobTitle',
+  HealthInstitution = 'HealthInstitution',
+  Role = 'Role',
+  Seniority = 'Seniority',
+  Price = 'Price',
+  CurrencyType = 'CurrencyType',
+}
+
+export type GenericDataMap = {
+  [key in DataTables]?: unknown[];
+};
 
 interface DataState {
   list: GenericDataMap;

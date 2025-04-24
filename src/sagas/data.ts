@@ -1,70 +1,55 @@
-/* eslint-disable */
-// @ts-nocheck
 import { all, put, call, takeEvery } from "redux-saga/effects";
 import * as ReducerData from "@/lib/features/data";
-import {
-  AFPInstitution,
-  DataTables,
-  HealthInstitution,
-  JobTitle,
-  Role,
-  Seniority,
-  CurrencyType,
-} from "@/interface/common";
+import { DataTables } from "@/lib/features/data";
+import { ApiResponse, FetchSagaGenerator } from "@/types/saga";
+import type { 
+  AFPInstitution, 
+  HealthInstitution, 
+  JobTitle, 
+  Role, 
+  Seniority, 
+  Price, 
+  CurrencyType 
+} from "@prisma/client";
 
-const mapSelectData: { [key: string]: string } = {
-  [DataTables.AFPInstitution]: "*",
-  [DataTables.JobTitle]: "*",
-  [DataTables.HealthInstitution]: "*",
-  [DataTables.Role]: "*",
-  [DataTables.Seniority]: "*",
-  [DataTables.Price]: `
-        id,
-        name,
-        value,
-        CurrencyType (
-                id,
-                name
-            )
-    `,
+// Tipo para el precio con sus relaciones
+type PriceWithCurrency = Price & {
+  CurrencyType: CurrencyType | null;
 };
 
-type DataResponse = {
-  data: (AFPInstitution | HealthInstitution | Role | Seniority | JobTitle | CurrencyType)[];
-};
+// Tipo unión para todos los tipos de datos posibles
+type DataModels = 
+  | AFPInstitution 
+  | HealthInstitution 
+  | JobTitle 
+  | Role 
+  | Seniority 
+  | PriceWithCurrency;
 
-function* fetchData(action: { type: string; payload: DataTables }) {
+function* fetchData(action: { type: string; payload: DataTables }): FetchSagaGenerator<DataModels[]> {
   try {
     console.log(`Fetching ${action.payload} data...`);
 
-    const fetchEffect = yield call(() =>
-      fetch("/api/db/select", {
-        method: "POST",
+    const response = yield call(() =>
+      fetch(`/api/data/${action.payload}`, {
+        method: "GET",
         headers: {
           "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          table: action.payload,
-          conditions: [],
-        }),
+        }
       })
     );
 
-    const response: Response = fetchEffect;
-    const jsonEffect = yield call(() => response.json());
-    const responseData: DataResponse = jsonEffect;
+    const result = yield call(() => (response as Response).json());
 
-    if (!response.ok) {
-      console.error(`Error fetching ${action.payload} data:`, responseData);
-      yield put(ReducerData.fetchError(action.payload));
-      return;
+    if (!(response as Response).ok) {
+      throw new Error((result as ApiResponse<unknown>).message || `Error fetching ${action.payload} data`);
     }
 
-    console.log(`${action.payload} data fetched successfully:`, responseData?.data?.length || 0, "records");
+    console.log(`${action.payload} data fetched successfully:`, (result as ApiResponse<DataModels[]>)?.data?.length || 0, "records");
 
     yield put(
       ReducerData.fetchSuccessfull({
-        list: responseData.data || [],
+        list: (result as ApiResponse<DataModels[]>).data || [],
         table: action.payload,
       })
     );

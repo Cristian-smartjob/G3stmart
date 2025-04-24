@@ -1,12 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { fetch } from "@/lib/features/data";
+import { DataTables, fetch, GenericDataMap } from "@/lib/features/data";
 import { useAppDispatch } from "@/lib/hook";
 import { useSelector } from "react-redux";
-import { DataTables, GenericDataMap } from "@/interface/common";
 import { RootState } from "@/lib/store";
 import DataItemRow from "../Table/DataItemRow";
+import type { AFPInstitution } from "@prisma/client";
 
 import Tabbar from "../core/Tabbar";
 import { SidebarItem } from "@/interface/ui";
@@ -32,7 +32,7 @@ export default function GenericDataTable({ title, type }: Props) {
     (state) => state.data.isLoadingData
   );
   const genericErrorDataMap = useSelector<RootState, { [key: string]: boolean }>((state) => state.data.errorData || {});
-  const afpInstitutions = genericDataMap[type] || [];
+  const afpInstitutions: AFPInstitution[] = (genericDataMap[type] as AFPInstitution[]) || [];
   const isLoading = genericIsLoadingDataMap[type] || false;
   const hasError = genericErrorDataMap[type] || false;
   const [currentPage, setCurrentPage] = useState(1);

@@ -1,30 +1,9 @@
 import { prisma } from "../connection/prisma";
-import type { Prisma, Client } from "../prisma/index";
+import type { Prisma, Client, Contact } from "@prisma/client";
 import { FilterCondition } from "../types/database.types";
 
-export interface ContactWithRelations {
-  id: number;
-  name: string;
-  email: string | null;
-  phone: string | null;
-  clientId: number | null;
-  createdAt: Date | null;
-  updatedAt: Date | null;
-  client?: Client | null;
-}
-
-export interface Contact {
-  id: number;
-  name: string;
-  email: string | null;
-  phone: string | null;
-  clientId: number | null;
-  createdAt: Date | null;
-  updatedAt: Date | null;
-}
-
 export class ContactRepository {
-  async findWithClient(conditions: FilterCondition[] = []): Promise<ContactWithRelations[]> {
+  async findWithClient(conditions: FilterCondition[] = []): Promise<(Contact & { client: Client | null })[]> {
     const where: Record<string, unknown> = {};
 
     conditions.forEach((condition) => {
@@ -75,68 +54,22 @@ export class ContactRepository {
         client: true,
       },
     });
-
-    return result.map((contact) => ({
-      id: contact.id,
-      name: contact.name,
-      email: contact.email,
-      phone: contact.phone,
-      clientId: contact.clientId,
-      createdAt: contact.createdAt,
-      updatedAt: contact.updatedAt,
-      client: contact.client,
-    }));
+    return result;
   }
 
   async findAll(): Promise<Contact[]> {
-    const result = await prisma.contact.findMany();
-    return result.map((contact) => ({
-      id: contact.id,
-      name: contact.name,
-      email: contact.email,
-      phone: contact.phone,
-      clientId: contact.clientId,
-      createdAt: contact.createdAt,
-      updatedAt: contact.updatedAt,
-    }));
+    return prisma.contact.findMany();
   }
 
-  async findById(id: number): Promise<ContactWithRelations | null> {
-    const result = await prisma.contact.findUnique({
+  async findById(id: number): Promise<(Contact & { client: Client | null }) | null> {
+    return prisma.contact.findUnique({
       where: { id },
-      include: {
-        client: true,
-      },
+      include: { client: true },
     });
-
-    if (!result) return null;
-
-    return {
-      id: result.id,
-      name: result.name,
-      email: result.email,
-      phone: result.phone,
-      clientId: result.clientId,
-      createdAt: result.createdAt,
-      updatedAt: result.updatedAt,
-      client: result.client,
-    };
   }
 
   async create(data: Omit<Prisma.ContactCreateInput, "client">): Promise<Contact> {
-    const result = await prisma.contact.create({
-      data,
-    });
-
-    return {
-      id: result.id,
-      name: result.name,
-      email: result.email,
-      phone: result.phone,
-      clientId: result.clientId,
-      createdAt: result.createdAt,
-      updatedAt: result.updatedAt,
-    };
+    return prisma.contact.create({ data });
   }
 
   async update(id: number, data: Prisma.ContactUpdateInput): Promise<Contact> {
@@ -148,6 +81,7 @@ export class ContactRepository {
     return {
       id: result.id,
       name: result.name,
+      lastName: result.lastName,
       email: result.email,
       phone: result.phone,
       clientId: result.clientId,
@@ -157,18 +91,6 @@ export class ContactRepository {
   }
 
   async delete(id: number): Promise<Contact> {
-    const result = await prisma.contact.delete({
-      where: { id },
-    });
-
-    return {
-      id: result.id,
-      name: result.name,
-      email: result.email,
-      phone: result.phone,
-      clientId: result.clientId,
-      createdAt: result.createdAt,
-      updatedAt: result.updatedAt,
-    };
+    return prisma.contact.delete({ where: { id } });
   }
 }
