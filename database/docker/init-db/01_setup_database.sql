@@ -41,6 +41,7 @@ CREATE TABLE "public"."Client" (
     "rut" VARCHAR(20),
     "address" TEXT,
     "company_name" VARCHAR(255),
+    "margin_percentage" DECIMAL(10,2) DEFAULT 0.00,
     "created_at" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
@@ -172,8 +173,8 @@ CREATE TABLE "public"."PreInvoice" (
     "reject_note" TEXT,
     "oc_amount" DECIMAL(12,2),
     "edp_number" VARCHAR(50),
-    "completedBy" VARCHAR(255),
-    "completedAt" TIMESTAMP WITH TIME ZONE,
+    "completed_by" VARCHAR(255),
+    "completed_at" TIMESTAMP WITH TIME ZONE,
     "created_at" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
@@ -223,25 +224,25 @@ INSERT INTO "public"."CurrencyType" ("id", "name", "symbol", "created_at", "upda
 ('3', 'UF', 'UF', '2025-02-11 15:10:09.698662+00', '2025-02-11 15:10:09.698662');
 
 -- Client data
-INSERT INTO "public"."Client" ("id", "name", "created_at", "updated_at", "currency_type_id", "billable_day", "rut", "address", "company_name") VALUES 
-('12', 'Falabella Tecnología', '2025-02-11 14:14:50.827646+00', '2025-02-11 14:14:50.827646', '1', '20', '77.261.280-K', 'Av. Presidente Riesco 5435, piso 10, Las Condes, Santiago', 'Falabella Tecnología SpA'), 
-('13', 'Cencosud', '2025-02-11 14:15:14.019188+00', '2025-02-11 14:15:14.019188', '1', '30', '93.834.000-5', 'Av. Kennedy 9001, Las Condes, Santiago', 'Cencosud S.A.'), 
-('14', 'Sonda', '2025-02-11 14:15:40.376192+00', '2025-02-11 14:15:40.376192', '1', '30', '83.628.100-4', 'Av. Providencia 1760, Providencia, Santiago', 'SONDA S.A.'), 
-('15', 'BCI', '2025-02-11 14:16:01.130814+00', '2025-02-11 14:16:01.130814', '1', '30', '97.006.000-6', 'Av. El Golf 125, Las Condes, Santiago', 'Banco de Crédito e Inversiones'), 
-('16', 'FID Seguros', '2025-02-11 14:16:27.886445+00', '2025-02-11 14:16:27.886445', '1', '30', '76.732.306-8', 'Av. Apoquindo 3600, piso 12, Las Condes, Santiago', 'FID Chile Seguros Generales S.A.'), 
-('17', 'Sodimac', '2025-02-11 14:16:54.714902+00', '2025-02-11 14:16:54.714902', '1', '30', '96.792.430-K', 'Av. Presidente Eduardo Frei Montalva 3092, Renca, Santiago', 'Sodimac S.A.'), 
-('18', 'Logística Internacional', '2025-02-11 14:17:18.652575+00', '2025-02-11 14:17:18.652575', '1', '30', '76.344.250-0', 'Av. Américo Vespucio Norte 1561, Vitacura, Santiago', 'Logística Internacional Chile S.A.'), 
-('19', 'Falabella Financiero / Microsoft', '2025-02-11 14:17:51.578031+00', '2025-02-11 14:17:51.578031', '1', '30', '76.046.822-5', 'Av. Isidora Goyenechea 2800, Las Condes, Santiago', 'Falabella Financiero S.A.'), 
-('20', 'Falabella Financiero', '2025-02-11 14:18:18.445523+00', '2025-02-11 14:18:18.445523', '1', '30', '76.046.822-5', 'Av. Isidora Goyenechea 2800, Las Condes, Santiago', 'Falabella Financiero S.A.'), 
-('21', 'WOM', '2025-02-11 14:18:41.206556+00', '2025-02-11 14:18:41.206556', '1', '30', '78.921.690-8', 'Av. Apoquindo 4501, Las Condes, Santiago', 'WOM S.A.'), 
-('22', 'IKEA', '2025-02-11 14:19:00.920972+00', '2025-02-11 14:19:00.920972', '1', '30', '77.176.958-K', 'Av. Presidente Riesco 5335, Las Condes, Santiago', 'IKEA Chile SpA'), 
-('23', 'SMU', '2025-02-11 14:19:41.461263+00', '2025-02-11 14:19:41.461263', '1', '30', '76.012.676-4', 'Av. Cerro Colorado 5240, Las Condes, Santiago', 'SMU S.A.'), 
-('24', 'Falabella Tecnología / Retail', '2025-02-11 14:20:13.393392+00', '2025-02-11 14:20:13.393392', '1', '30', '77.261.280-K', 'Av. Presidente Riesco 5435, piso 10, Las Condes, Santiago', 'Falabella Tecnología SpA'), 
-('25', 'Banco Internacional', '2025-02-11 14:21:26.150416+00', '2025-02-11 14:21:26.150416', '1', '30', '97.011.000-3', 'Av. Apoquindo 6550, Las Condes, Santiago', 'Banco Internacional'), 
-('26', 'ITAU', '2025-02-11 14:21:41.714317+00', '2025-02-11 14:21:41.714317', '1', '30', '76.645.030-K', 'Av. Apoquindo 3457, Las Condes, Santiago', 'Itaú Corpbanca'), 
-('27', 'Ernest&Young', '2025-02-11 14:22:00.091132+00', '2025-02-11 14:22:00.091132', '1', '30', '77.802.430-6', 'Av. Isidora Goyenechea 2800, piso 2, Las Condes, Santiago', 'Ernst & Young Servicios Profesionales de Auditoría y Asesorías Limitada'), 
-('28', 'Copec', '2025-02-11 14:22:21.829893+00', '2025-02-11 14:22:21.829893', '1', '30', '99.520.000-7', 'Av. Apoquindo 2929, Las Condes, Santiago', 'Compañía de Petróleos de Chile COPEC S.A.'), 
-('29', 'Mall Plaza', '2025-02-11 14:22:38.68039+00', '2025-02-11 14:22:38.68039', '1', '30', '96.795.700-K', 'Av. Américo Vespucio Norte 1737, Huechuraba, Santiago', 'Plaza S.A.');
+INSERT INTO "public"."Client" ("id", "name", "created_at", "updated_at", "currency_type_id", "billable_day", "rut", "address", "company_name", "margin_percentage") VALUES 
+('12', 'Falabella Tecnología', '2025-02-11 14:14:50.827646+00', '2025-02-11 14:14:50.827646', '1', '20', '77.261.280-K', 'Av. Presidente Riesco 5435, piso 10, Las Condes, Santiago', 'Falabella Tecnología SpA', 10.00), 
+('13', 'Cencosud', '2025-02-11 14:15:14.019188+00', '2025-02-11 14:15:14.019188', '1', '30', '93.834.000-5', 'Av. Kennedy 9001, Las Condes, Santiago', 'Cencosud S.A.', 10.00), 
+('14', 'Sonda', '2025-02-11 14:15:40.376192+00', '2025-02-11 14:15:40.376192', '1', '30', '83.628.100-4', 'Av. Providencia 1760, Providencia, Santiago', 'SONDA S.A.', 10.00), 
+('15', 'BCI', '2025-02-11 14:16:01.130814+00', '2025-02-11 14:16:01.130814', '1', '30', '97.006.000-6', 'Av. El Golf 125, Las Condes, Santiago', 'Banco de Crédito e Inversiones', 10.00), 
+('16', 'FID Seguros', '2025-02-11 14:16:27.886445+00', '2025-02-11 14:16:27.886445', '1', '30', '76.732.306-8', 'Av. Apoquindo 3600, piso 12, Las Condes, Santiago', 'FID Chile Seguros Generales S.A.', 10.00), 
+('17', 'Sodimac', '2025-02-11 14:16:54.714902+00', '2025-02-11 14:16:54.714902', '1', '30', '96.792.430-K', 'Av. Presidente Eduardo Frei Montalva 3092, Renca, Santiago', 'Sodimac S.A.', 10.00), 
+('18', 'Logística Internacional', '2025-02-11 14:17:18.652575+00', '2025-02-11 14:17:18.652575', '1', '30', '76.344.250-0', 'Av. Américo Vespucio Norte 1561, Vitacura, Santiago', 'Logística Internacional Chile S.A.', 10.00), 
+('19', 'Falabella Financiero / Microsoft', '2025-02-11 14:17:51.578031+00', '2025-02-11 14:17:51.578031', '1', '30', '76.046.822-5', 'Av. Isidora Goyenechea 2800, Las Condes, Santiago', 'Falabella Financiero S.A.', 10.00), 
+('20', 'Falabella Financiero', '2025-02-11 14:18:18.445523+00', '2025-02-11 14:18:18.445523', '1', '30', '76.046.822-5', 'Av. Isidora Goyenechea 2800, Las Condes, Santiago', 'Falabella Financiero S.A.', 10.00), 
+('21', 'WOM', '2025-02-11 14:18:41.206556+00', '2025-02-11 14:18:41.206556', '1', '30', '78.921.690-8', 'Av. Apoquindo 4501, Las Condes, Santiago', 'WOM S.A.', 10.00), 
+('22', 'IKEA', '2025-02-11 14:19:00.920972+00', '2025-02-11 14:19:00.920972', '1', '30', '77.176.958-K', 'Av. Presidente Riesco 5335, Las Condes, Santiago', 'IKEA Chile SpA', 10.00), 
+('23', 'SMU', '2025-02-11 14:19:41.461263+00', '2025-02-11 14:19:41.461263', '1', '30', '76.012.676-4', 'Av. Cerro Colorado 5240, Las Condes, Santiago', 'SMU S.A.', 10.00), 
+('24', 'Falabella Tecnología / Retail', '2025-02-11 14:20:13.393392+00', '2025-02-11 14:20:13.393392', '1', '30', '77.261.280-K', 'Av. Presidente Riesco 5435, piso 10, Las Condes, Santiago', 'Falabella Tecnología SpA', 10.00), 
+('25', 'Banco Internacional', '2025-02-11 14:21:26.150416+00', '2025-02-11 14:21:26.150416', '1', '30', '97.011.000-3', 'Av. Apoquindo 6550, Las Condes, Santiago', 'Banco Internacional', 10.00), 
+('26', 'ITAU', '2025-02-11 14:21:41.714317+00', '2025-02-11 14:21:41.714317', '1', '30', '76.645.030-K', 'Av. Apoquindo 3457, Las Condes, Santiago', 'Itaú Corpbanca', 10.00), 
+('27', 'Ernest&Young', '2025-02-11 14:22:00.091132+00', '2025-02-11 14:22:00.091132', '1', '30', '77.802.430-6', 'Av. Isidora Goyenechea 2800, piso 2, Las Condes, Santiago', 'Ernst & Young Servicios Profesionales de Auditoría y Asesorías Limitada', 10.00), 
+('28', 'Copec', '2025-02-11 14:22:21.829893+00', '2025-02-11 14:22:21.829893', '1', '30', '99.520.000-7', 'Av. Apoquindo 2929, Las Condes, Santiago', 'Compañía de Petróleos de Chile COPEC S.A.', 10.00), 
+('29', 'Mall Plaza', '2025-02-11 14:22:38.68039+00', '2025-02-11 14:22:38.68039', '1', '30', '96.795.700-K', 'Av. Américo Vespucio Norte 1737, Huechuraba, Santiago', 'Plaza S.A.', 10.00);
 
 -- HealthInstitution data
 INSERT INTO "public"."HealthInstitution" ("id", "name", "created_at", "updated_at") VALUES 
@@ -414,26 +415,28 @@ INSERT INTO "public"."Contact" ("id", "name", "last_name", "email", "phone", "cl
 ('28', 'Gonzalo', 'Araya', 'gonzalo.araya@mallplaza.cl', '+56977889900', '29', '2025-02-11 15:10:09.698662+00', '2025-02-11 15:10:09.698662');
 
 -- PreInvoice data
-INSERT INTO "public"."PreInvoice" ("id", "client_id", "contact_id", "total", "status", "oc_number", "hes_number", "invoice_number", "month", "year", "value", "reject_note", "oc_amount", "edp_number", "completedBy", "completedAt", "created_at", "updated_at") VALUES 
+INSERT INTO "public"."PreInvoice" ("id", "client_id", "contact_id", "total", "status", "oc_number", "hes_number", "invoice_number",
+ "month", "year", "value", "reject_note", "oc_amount", "edp_number", "completed_by", "completed_at", 
+ "created_at", "updated_at") VALUES 
 -- Falabella Tecnología (client_id: 12)
-(1, 12, 1, 2500000.00, 'DOWNLOADED', 'OC-001-2023', 'HES-001', null, 3, 2023, 2500000.00, null, null, null, null, null, '2023-03-15 10:10:09.698662+00', '2023-03-15 10:10:09.698662'),
-(2, 12, 1, 2800000.00, 'PENDING', 'OC-002-2023', 'HES-002', null, 4, 2023, 2800000.00, null, null, null, null, null, '2023-04-10 11:15:09.698662+00', '2023-04-10 11:15:09.698662'),
+(1, 12, 1, 2500000.00, 'DOWNLOADED', null, null, null, 3, 2023, 2500000.00, null, null, null, null, null, '2023-03-15 10:10:09.698662+00', '2023-03-15 10:10:09.698662'),
+(2, 12, 1, 2800000.00, 'PENDING', null, null, null, 4, 2023, 2800000.00, null, null, null, null, null, '2023-04-10 11:15:09.698662+00', '2023-04-10 11:15:09.698662'),
 
 -- Cencosud (client_id: 13)
 (3, 13, 2, 3200000.00, 'COMPLETED', 'OC-003-2023', 'HES-003', 'INV-001-2023', 5, 2023, 3200000.00, null, 3200000.00, 'EDP-001', 'Jorge Acosta', '2023-05-25 14:30:00.000000+00', '2023-05-20 09:30:09.698662+00', '2023-05-25 14:30:00.000000+00'),
-(4, 13, 2, 3500000.00, 'PENDING', 'OC-004-2023', 'HES-004', null, 6, 2023, 3500000.00, null, null, null, null, null, '2023-06-05 14:20:09.698662+00', '2023-06-05 14:20:09.698662'),
+(4, 13, 2, 3500000.00, 'PENDING', null, null, null, 6, 2023, 3500000.00, null, null, null, null, null, '2023-06-05 14:20:09.698662+00', '2023-06-05 14:20:09.698662'),
 
 -- Sonda (client_id: 14)
-(5, 14, 3, 2800000.00, 'REJECTED', 'OC-005-2023', 'HES-005', null, 7, 2023, 2800000.00, 'Missing documentation', null, null, null, null, '2023-07-12 16:45:09.698662+00', '2023-07-12 16:45:09.698662'),
-(6, 14, 3, 3100000.00, 'DOWNLOADED', 'OC-006-2023', 'HES-006', null, 8, 2023, 3100000.00, null, null, null, null, null, '2023-08-03 10:25:09.698662+00', '2023-08-03 10:25:09.698662'),
+(5, 14, 3, 2800000.00, 'REJECTED',null, null, null, 7, 2023, 2800000.00, 'Missing documentation', null, null, null, null, '2023-07-12 16:45:09.698662+00', '2023-07-12 16:45:09.698662'),
+(6, 14, 3, 3100000.00, 'DOWNLOADED', null, null, null, 8, 2023, 3100000.00, null, null, null, null, null, '2023-08-03 10:25:09.698662+00', '2023-08-03 10:25:09.698662'),
 
 -- BCI (client_id: 15)
-(7, 15, 4, 1900000.00, 'PENDING', 'OC-007-2023', 'HES-007', null, 9, 2023, 1900000.00, null, null, null, null, null, '2023-09-18 13:40:09.698662+00', '2023-09-18 13:40:09.698662'),
+(7, 15, 4, 1900000.00, 'PENDING', null, null,null, 9, 2023, 1900000.00, null, null, null, null, null, '2023-09-18 13:40:09.698662+00', '2023-09-18 13:40:09.698662'),
 (8, 15, 4, 2200000.00, 'COMPLETED', 'OC-008-2024', 'HES-008', 'INV-002-2023', 1, 2024, 2200000.00, null, 2200000.00, 'EDP-002', 'María González', '2024-01-28 11:45:00.000000+00', '2024-01-22 09:15:09.698662+00', '2024-01-28 11:45:00.000000+00'),
 
 -- FID Seguros (client_id: 16)
-(9, 16, 5, 3500000.00, 'PENDING', 'OC-009-2024', 'HES-009', null, 2, 2024, 3500000.00, null, null, null, null, null, '2024-02-14 11:30:09.698662+00', '2024-02-14 11:30:09.698662'),
-(10, 16, 5, 3800000.00, 'DOWNLOADED', 'OC-010-2025', 'HES-010', null, 2, 2025, 3800000.00, null, null, null, null, null, '2025-02-27 14:21:25.008077+00', '2025-02-27 14:21:25.008077');
+(9, 16, 5, 3500000.00, 'PENDING', null, null, null, 2, 2024, 3500000.00, null, null, null, null, null, '2024-02-14 11:30:09.698662+00', '2024-02-14 11:30:09.698662'),
+(10, 16, 5, 3800000.00, 'DOWNLOADED', null, null, null, 2, 2025, 3800000.00, null, null, null, null, null, '2025-02-27 14:21:25.008077+00', '2025-02-27 14:21:25.008077');
 
 -- PreInvoiceDetail data
 INSERT INTO "public"."PreInvoiceDetail" ("id", "pre_invoice_id", "person_id", "status", "value", "currency_type", "billable_days", "leave_days", "total_consume_days", "created_at", "updated_at") VALUES 

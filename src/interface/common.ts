@@ -10,6 +10,7 @@ export interface Client {
   rut?: string | null;
   address?: string | null;
   companyName?: string | null;
+  marginPercentage?: number | Decimal | null;
   createdAt?: Date | null;
   updatedAt?: Date | null;
   currencyType?: {
@@ -45,7 +46,6 @@ export interface PreInvoice {
   month?: number;
   year?: number;
   value?: number | Decimal;
-  marginPercentage?: number | Decimal | null;
   rejectNote?: string | null;
   ocAmount?: number | Decimal | null;
   edpNumber?: string | null;
@@ -87,7 +87,6 @@ export interface PreInvoiceUpdate {
   invoiceNumber?: string;
   rejectNote?: string;
   ocAmount?: number;
-  marginPercentage?: number;
   edpNumber?: string;
   completedBy?: string;
   completedAt?: Date;

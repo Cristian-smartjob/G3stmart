@@ -82,7 +82,6 @@ async function mapToDomainModel(dbPreInvoice: PreInvoiceWithRelations): Promise<
     month: dbPreInvoice.month,
     year: dbPreInvoice.year,
     value: Number(dbPreInvoice.value),
-    marginPercentage: dbPreInvoice.marginPercentage !== null ? Number(dbPreInvoice.marginPercentage) : null,
     rejectNote: dbPreInvoice.rejectNote || "",
     client,
     contact,
@@ -90,42 +89,80 @@ async function mapToDomainModel(dbPreInvoice: PreInvoiceWithRelations): Promise<
 }
 
 export async function fetchPreInvoices(): Promise<PreInvoice[]> {
-  try {
-    const preInvoicesData = await preInvoiceRepository.findWithRelations();
+  const preInvoices = await prisma.preInvoice.findMany({
+    select: {
+      id: true,
+      status: true,
+      month: true,
+      year: true,
+      value: true,
+      total: true,
+      invoiceNumber: true,
+      ocNumber: true,
+      hesNumber: true,
+      rejectNote: true,
+      ocAmount: true,
+      edpNumber: true,
+      completedBy: true,
+      completedAt: true,
+      client: {
+        select: {
+          id: true,
+          name: true,
+          marginPercentage: true,
+        },
+      },
+      contact: {
+        select: {
+          id: true,
+          name: true,
+          lastName: true,
+        },
+      },
+    },
+  });
 
-    if (!preInvoicesData || preInvoicesData.length === 0) {
-      return []; // Retornamos un array vacío en lugar de fallar
-    }
-
-    // Como el mapeo ahora es asíncrono, necesitamos usar Promise.all
-    const mappedPreInvoices = await Promise.all(
-      preInvoicesData.map(async (item) => {
-        try {
-          return await mapToDomainModel(item);
-        } catch (err) {
-          console.error(`Error mapeando prefactura ${item.id}:`, err);
-          // Retornamos un objeto básico para evitar que falle toda la operación
-          return {
-            id: item.id,
-            status: item.status || "PENDING",
-            ocNumber: "",
-            hesNumber: "",
-            invoiceNumber: "",
-            month: item.month,
-            year: item.year,
-            value: Number(item.value) || 0,
-            client: { id: 0, name: "Error de datos" },
-            contact: { id: 0, name: "Error de datos" },
-          } as PreInvoice;
+  // Transformar los datos numéricos para garantizar compatibilidad
+  return preInvoices.map((dbPreInvoice) => {
+    // Convertir Client de Prisma a nuestra interfaz Client
+    const client = dbPreInvoice.client
+      ? {
+          id: dbPreInvoice.client.id,
+          name: dbPreInvoice.client.name,
+          marginPercentage: dbPreInvoice.client.marginPercentage ? Number(dbPreInvoice.client.marginPercentage) : null,
         }
-      })
-    );
+      : undefined;
 
-    return mappedPreInvoices;
-  } catch (error) {
-    console.error("Error fetching preInvoices:", error);
-    throw new Error("No se pudieron cargar las prefacturas");
-  }
+    // Convertir Contact de Prisma a nuestra interfaz Contact
+    const contact = dbPreInvoice.contact
+      ? {
+          id: dbPreInvoice.contact.id,
+          name: dbPreInvoice.contact.name,
+          lastName: dbPreInvoice.contact.lastName || undefined, // Convertir null a undefined
+        }
+      : undefined;
+
+    return {
+      id: dbPreInvoice.id,
+      clientId: dbPreInvoice.client?.id || null,
+      client,
+      contactId: dbPreInvoice.contact?.id || null,
+      contact,
+      status: dbPreInvoice.status,
+      month: dbPreInvoice.month,
+      year: dbPreInvoice.year,
+      value: dbPreInvoice.value !== null ? Number(dbPreInvoice.value) : undefined,
+      total: dbPreInvoice.total !== null ? Number(dbPreInvoice.total) : undefined,
+      invoiceNumber: dbPreInvoice.invoiceNumber,
+      ocNumber: dbPreInvoice.ocNumber,
+      hesNumber: dbPreInvoice.hesNumber,
+      rejectNote: dbPreInvoice.rejectNote,
+      ocAmount: dbPreInvoice.ocAmount !== null ? Number(dbPreInvoice.ocAmount) : null,
+      edpNumber: dbPreInvoice.edpNumber,
+      completedBy: dbPreInvoice.completedBy,
+      completedAt: dbPreInvoice.completedAt,
+    };
+  });
 }
 
 export async function createPreInvoice(data: PreinvoiceForm): Promise<PreInvoice> {
@@ -142,9 +179,8 @@ export async function createPreInvoice(data: PreinvoiceForm): Promise<PreInvoice
     const contactId = data.contact_id ? Number(data.contact_id) : undefined;
     const month = Number(data.month);
     const year = Number(data.year);
-    const marginPercentage = data.margin_percentage !== undefined ? Number(data.margin_percentage) : undefined;
 
-    console.log("Datos procesados:", { clientId, contactId, month, year, marginPercentage });
+    console.log("Datos procesados:", { clientId, contactId, month, year });
 
     // Obtener todos los smarters/people para agregarlos como detalles
     const allPeople = await prisma.people.findMany({
@@ -218,7 +254,6 @@ export async function createPreInvoice(data: PreinvoiceForm): Promise<PreInvoice
           month: month,
           year: year,
           value: totalValue,
-          marginPercentage: marginPercentage,
           client: {
             connect: { id: clientId },
           },

@@ -356,7 +356,7 @@ export default function PreinvoceDetail() {
           </header>
 
           <div className="border-b border-b-gray-900/10 lg:border-t lg:border-t-gray-900/5">
-            <dl className="mx-auto grid max-w-7xl grid-cols-1 sm:grid-cols-3 lg:grid-cols-5 lg:px-2 xl:px-0">
+            <dl className="mx-auto grid max-w-7xl grid-cols-1 sm:grid-cols-3 lg:grid-cols-4 lg:px-2 xl:px-0">
               <PreInvoceStat name="Total a facturar" value={`${formatCurrency(total)}`} statIdx={0} />
               <PreInvoceStat
                 name="Número factura"
@@ -373,7 +373,7 @@ export default function PreinvoceDetail() {
                 value={activePreInvoice?.ocNumber === null ? "" : `${activePreInvoice?.ocNumber}`}
                 statIdx={3}
               />
-              <PreInvoceStat
+              {/* <PreInvoceStat
                 name="Margen (%)"
                 value={
                   activePreInvoice?.marginPercentage === null || activePreInvoice?.marginPercentage === undefined
@@ -381,7 +381,7 @@ export default function PreinvoceDetail() {
                     : `${Number(activePreInvoice.marginPercentage)}%`
                 }
                 statIdx={4}
-              />
+              /> */}
             </dl>
           </div>
 

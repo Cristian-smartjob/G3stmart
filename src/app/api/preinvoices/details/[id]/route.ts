@@ -1,22 +1,22 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/infrastructure/database/connection/prisma";
 
-type Params = {
-  params: {
-    id: string;
-  };
-};
+// Define el tipo de parámetros esperados
+interface Params {
+  id: string;
+}
 
-export async function GET(_request: Request, { params }: Params) {
+export async function GET(request: Request, context: { params: Promise<Params> }) {
   try {
-    const { id } = params;
-    const preInvoiceId = Number(id);
-    
+    // Esperar a que se resuelva la promesa de params
+    const params = await context.params;
+    const preInvoiceId = Number(params.id);
+
     console.log(`API: Buscando detalles para prefactura ID ${preInvoiceId}`);
-    
+
     const details = await prisma.preInvoiceDetail.findMany({
       where: {
-        preInvoiceId
+        preInvoiceId,
       },
       select: {
         id: true,
@@ -35,22 +35,34 @@ export async function GET(_request: Request, { params }: Params) {
             jobTitle: {
               select: {
                 id: true,
-                name: true
-              }
-            }
-          }
-        }
-      }
+                name: true,
+              },
+            },
+          },
+        },
+      },
     });
 
-    console.log(`API: Se encontraron ${details.length} detalles para prefactura ID ${preInvoiceId}`);
-    
-    return NextResponse.json({ data: details }, { status: 200 });
+    // Serializar valores Decimal a Number
+    const serializedDetails = details.map((detail) => ({
+      ...detail,
+      value: detail.value ? Number(detail.value) : null,
+      billableDays: detail.billableDays ? Number(detail.billableDays) : null,
+      leaveDays: detail.leaveDays ? Number(detail.leaveDays) : null,
+      totalConsumeDays: detail.totalConsumeDays ? Number(detail.totalConsumeDays) : null,
+      // También asegurarse de que cualquier valor anidado esté serializado
+      person: detail.person
+        ? {
+            ...detail.person,
+          }
+        : null,
+    }));
+
+    console.log(`API: Se encontraron ${serializedDetails.length} detalles para prefactura ID ${preInvoiceId}`);
+
+    return NextResponse.json({ data: serializedDetails }, { status: 200 });
   } catch (error) {
     console.error(`Error fetching pre-invoice details:`, error);
-    return NextResponse.json(
-      { message: "Error fetching pre-invoice details" },
-      { status: 500 }
-    );
+    return NextResponse.json({ message: "Error fetching pre-invoice details" }, { status: 500 });
   }
-} 
+}

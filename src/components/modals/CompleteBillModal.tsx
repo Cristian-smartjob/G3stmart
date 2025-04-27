@@ -83,12 +83,13 @@ export default function CompleteBillModal({ isOpen, setIsOpen, preinvoiceId }: P
 
   // Verificar si el monto excede el margen permitido
   const validateMargin = useCallback(() => {
-    // Si no hay datos de factura o el margen no está definido, no se puede validar.
+    // Si no hay datos de factura o el cliente no tiene margen definido, no se puede validar.
     // Consideramos el margen válido para no bloquear innecesariamente.
     if (
       !invoiceData ||
-      invoiceData.marginPercentage === null ||
-      invoiceData.marginPercentage === undefined ||
+      !invoiceData.client ||
+      invoiceData.client.marginPercentage === null ||
+      invoiceData.client.marginPercentage === undefined ||
       invoiceData.value === null ||
       invoiceData.value === undefined
     ) {
@@ -103,7 +104,7 @@ export default function CompleteBillModal({ isOpen, setIsOpen, preinvoiceId }: P
 
     // Convertir valores a números, asegurando valores predeterminados
     const baseValue = Number(invoiceData.value);
-    const marginPercent = Number(invoiceData.marginPercentage || 0);
+    const marginPercent = Number(invoiceData.client.marginPercentage || 0);
     const ocAmountValue = formData.ocAmount !== "" ? Number(formData.ocAmount) : null; // null si está vacío
     console.log("ocAmountValue:", ocAmountValue);
 
@@ -142,9 +143,6 @@ export default function CompleteBillModal({ isOpen, setIsOpen, preinvoiceId }: P
     if (errorMessage !== validationError) {
       setValidationError(errorMessage);
     }
-
-    // No necesitamos actualizar maxAllowedAmount aquí, era para la validación anterior.
-    // if (maxValue !== maxAllowedAmount) { setMaxAllowedAmount(maxValue); }
 
     return isValid;
   }, [
@@ -236,7 +234,7 @@ export default function CompleteBillModal({ isOpen, setIsOpen, preinvoiceId }: P
     if (isOpen && preinvoiceId) {
       validateMargin();
     }
-  }, [formData.ocAmount, invoiceData?.marginPercentage, isOpen, preinvoiceId, validateMargin]);
+  }, [formData.ocAmount, invoiceData?.client?.marginPercentage, isOpen, preinvoiceId, validateMargin]);
 
   // Agregar un useEffect para inicializar la validación
   useEffect(() => {
@@ -335,11 +333,11 @@ export default function CompleteBillModal({ isOpen, setIsOpen, preinvoiceId }: P
 
   // Mostrar información del margen
   const marginInfo =
-    invoiceData?.marginPercentage !== null && invoiceData?.marginPercentage !== undefined
+    invoiceData?.client?.marginPercentage !== null && invoiceData?.client?.marginPercentage !== undefined
       ? `${
-          typeof invoiceData.marginPercentage === "object"
-            ? Number(invoiceData.marginPercentage.toString())
-            : Number(invoiceData.marginPercentage)
+          typeof invoiceData.client.marginPercentage === "object"
+            ? Number(invoiceData.client.marginPercentage.toString())
+            : Number(invoiceData.client.marginPercentage)
         }%`
       : "No definido";
 

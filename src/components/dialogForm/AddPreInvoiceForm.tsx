@@ -1,49 +1,72 @@
 "use client";
-import Selector from "../core/Selector";
-// Definir las interfaces que necesitamos localmente si no se pueden importar
-interface Client {
-  id: number;
-  name: string;
-  billableDay?: number | null;
-  billable_day?: number | null;
-  // Propiedades adicionales genéricas
-  [key: string]: number | string | null | undefined;
-}
-
-interface Contact {
-  id: number;
-  name: string;
-  last_name?: string;
-  lastName?: string;
-  client?: Client;
-  Client?: Client;
-  clientId?: number;
-  // Propiedades adicionales genéricas
-  [key: string]: number | string | Client | null | undefined;
-}
-
+// Eliminamos los imports no utilizados
 import { useEffect, useState } from "react";
 import { createPreInvoice } from "@/app/actions/preInvoices";
-import SimpleSelector from "../core/SimpleSelector";
-import { Formik, FormikHelpers } from "formik";
-import { SelectorItem } from "@/interface/ui";
+import { Formik, FieldProps } from "formik";
 import { months } from "@/utils/constants";
 import { PreinvoiceForm } from "@/interface/form";
 import * as Yup from "yup";
 import ErrorAlert from "../core/ErrorAlert";
 import { useRouter } from "next/navigation";
+import { Field } from "formik";
 
-// Inicializamos con un objeto vacío pero con propiedades definidas para evitar valores null
-const initialValues: PreinvoiceForm = {
-  client_id: undefined,
-  contact_id: undefined,
-  month: undefined,
-  year: undefined,
-  billable_day: undefined,
-  margin_percentage: undefined,
+// Definir interfaces para los tipos
+interface Client {
+  id: number;
+  name: string;
+}
+
+interface Contact {
+  id: number;
+  name: string;
+}
+
+interface Option {
+  value: number;
+  label: string;
+}
+
+// Componente AutocompleteField tipado
+interface AutocompleteFieldProps extends FieldProps {
+  options: Option[];
+  placeholder: string;
+  onChange: (option: Option | undefined) => void;
+  value?: Option;
+  className: string;
+}
+
+const AutocompleteField = ({ field, options, placeholder, onChange, value, className }: AutocompleteFieldProps) => {
+  return (
+    <select
+      {...field}
+      className={className}
+      value={value ? value.value : ""}
+      onChange={(e) => {
+        const selectedOption = options.find((option) => option.value.toString() === e.target.value);
+        if (onChange) {
+          onChange(selectedOption);
+        }
+      }}
+    >
+      <option value="">{placeholder}</option>
+      {options.map((option) => (
+        <option key={option.value} value={option.value}>
+          {option.label}
+        </option>
+      ))}
+    </select>
+  );
 };
 
 const currentYear = new Date().getFullYear();
+const currentMonth = new Date().getMonth() + 1;
+
+const initialValues: PreinvoiceForm = {
+  client_id: undefined,
+  contact_id: undefined,
+  month: currentMonth,
+  year: currentYear,
+};
 
 const validationSchema = Yup.object({
   client_id: Yup.number().required("Debes seleccionar un cliente"),
@@ -52,15 +75,18 @@ const validationSchema = Yup.object({
   year: Yup.number().required("Debes debes seleccionar un año"),
 });
 
-const data = Array(3)
-  .fill(null)
-  .map((item, index) => ({
-    id: index + 1,
-    label: `${currentYear - 1 + index}`,
-    value: currentYear - 1 + index,
-  }));
+// Transformar los meses a objetos con value y label para el selector
+const monthOptions: Option[] = months.map((monthName, index) => ({
+  value: index + 1,
+  label: monthName,
+}));
 
-const dataMonths = months.map((item, index) => ({ id: index, label: item, value: item }));
+const yearOptions: Option[] = Array(3)
+  .fill(null)
+  .map((_, index) => ({
+    value: currentYear - 1 + index,
+    label: `${currentYear - 1 + index}`,
+  }));
 
 interface Props {
   onSave: () => void;
@@ -70,43 +96,30 @@ export default function AddPreInvoiceForm({ onSave }: Props) {
   const router = useRouter();
   const [clients, setClients] = useState<Client[]>([]);
   const [contacts, setContacts] = useState<Contact[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isLoadingClient, setIsLoadingClient] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Cargar clientes y contactos desde el servidor
   useEffect(() => {
     const loadClients = async () => {
-      setIsLoadingClient(true);
       try {
-        // En una implementación real, usaríamos server actions para esto
-        // Esto es solo un placeholder
         const response = await fetch("/api/clients");
         const result = await response.json();
-        // Extraer los datos del objeto respuesta
         setClients(result.data || []);
       } catch (error) {
         console.error("Error cargando clientes:", error);
         setClients([]);
-      } finally {
-        setIsLoadingClient(false);
       }
     };
 
     const loadContacts = async () => {
-      setIsLoading(true);
       try {
-        // En una implementación real, usaríamos server actions para esto
-        // Esto es solo un placeholder
         const response = await fetch("/api/contacts");
         const result = await response.json();
-        // Extraer los datos del objeto respuesta
         setContacts(result.data || []);
       } catch (error) {
         console.error("Error cargando contactos:", error);
         setContacts([]);
-      } finally {
-        setIsLoading(false);
       }
     };
 
@@ -114,42 +127,21 @@ export default function AddPreInvoiceForm({ onSave }: Props) {
     loadContacts();
   }, []);
 
-  // Función para obtener la propiedad adecuada del cliente independientemente de su estructura
-  const getClientId = (contact: Contact): number | undefined => {
-    // Intentar acceder a las diferentes formas en que podría estar disponible el ID del cliente
-    if (contact.client?.id) return contact.client.id;
-    if (contact.Client?.id) return contact.Client.id;
-    if (contact.clientId) return contact.clientId;
-    return undefined;
-  };
-
   // Función para manejar el envío del formulario
-  const handleFormSubmit = async (values: PreinvoiceForm, { setSubmitting }: FormikHelpers<PreinvoiceForm>) => {
-    setFormError(null);
-    setSubmitting(true);
-
+  const handleSubmit = async (values: PreinvoiceForm) => {
+    setIsSubmitting(true);
     try {
-      // Verificar que tenemos todos los datos necesarios
-      if (!values.client_id || !values.contact_id || !values.month || !values.year) {
-        console.error("Faltan datos requeridos en el formulario:", values);
-        setFormError("Por favor completa todos los campos requeridos.");
-        return;
-      }
-
-      // Asegurarnos de que los datos son números
-      const formData: PreinvoiceForm = {
-        client_id: Number(values.client_id),
-        contact_id: Number(values.contact_id),
-        month: Number(values.month),
-        year: Number(values.year),
-        billable_day: values.billable_day ? Number(values.billable_day) : undefined,
-        margin_percentage: values.margin_percentage ? Number(values.margin_percentage) : undefined,
+      // Preparamos los datos para enviar
+      const postData = {
+        client_id: values.client_id,
+        contact_id: values.contact_id,
+        month: values.month,
+        year: values.year,
       };
 
-      console.log("Enviando datos de prefactura:", formData);
-      await createPreInvoice(formData);
-      console.log("Prefactura creada exitosamente");
-      onSave();
+      await createPreInvoice(postData);
+      if (onSave) onSave();
+      router.push("/preinvoice");
     } catch (error: unknown) {
       console.error("Error creating preInvoice:", error);
 
@@ -168,7 +160,7 @@ export default function AddPreInvoiceForm({ onSave }: Props) {
 
       setFormError(errorMessage);
     } finally {
-      setSubmitting(false);
+      setIsSubmitting(false);
     }
   };
 
@@ -237,9 +229,9 @@ export default function AddPreInvoiceForm({ onSave }: Props) {
           validationSchema={validationSchema}
           validateOnChange={true}
           validateOnBlur={true}
-          onSubmit={handleFormSubmit}
+          onSubmit={handleSubmit}
         >
-          {({ values, errors, setFieldValue, isSubmitting, handleSubmit, touched }) => (
+          {({ values, errors, setFieldValue, isSubmitting: formikIsSubmitting, handleSubmit, touched }) => (
             <form className="px-4 sm:px-6 lg:col-start-1 lg:row-start-1" onSubmit={handleSubmit}>
               <div className="mx-auto max-w-lg lg:max-w-none">
                 <section aria-labelledby="contact-info-heading">
@@ -248,42 +240,62 @@ export default function AddPreInvoiceForm({ onSave }: Props) {
                   </h2>
 
                   <div className="mt-6">
-                    <Selector
-                      title="Cliente"
-                      isLoading={isLoadingClient}
-                      items={(clients || []).map((item) => ({ id: item.id, label: item.name }))}
-                      onChange={(item: SelectorItem | null) => {
-                        if (item !== null) {
-                          const client = clients.find((it) => it.id === item.id);
-                          setFieldValue("client_id", item.id);
-                          // Manejo flexible para diferentes formatos de propiedad
-                          setFieldValue("billable_day", client?.billableDay || client?.billable_day);
-                        }
+                    <Field
+                      name="client_id"
+                      component={AutocompleteField}
+                      options={clients.map((client) => ({
+                        value: client.id,
+                        label: client.name,
+                      }))}
+                      placeholder="Seleccione un cliente"
+                      onChange={(option?: Option) => {
+                        setFieldValue("client_id", option?.value);
+                        // Limpiar contacto cuando cambia el cliente
+                        setFieldValue("contact_id", undefined);
                       }}
+                      value={
+                        clients
+                          .filter((client) => client.id === values.client_id)
+                          .map((client) => ({
+                            value: client.id,
+                            label: client.name,
+                          }))[0]
+                      }
+                      className={`block w-full border ${
+                        touched.client_id && errors.client_id ? "border-red-500" : "border-gray-300"
+                      } rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm`}
                     />
                     {touched.client_id && errors.client_id && (
-                      <p className="mt-1 text-sm text-red-600">{errors.client_id}</p>
+                      <p className="mt-2 text-sm text-red-600">{errors.client_id}</p>
                     )}
                   </div>
 
                   <div className="mt-6">
-                    <Selector
-                      title="Contraparte (debes selecionar un cliente)"
-                      isLoading={isLoading}
-                      items={(contacts || [])
-                        .filter((item) => getClientId(item) === values.client_id)
-                        .map((item) => ({
-                          id: item.id,
-                          label: `${item.name} ${item.lastName || item.last_name || ""}`,
-                        }))}
-                      onChange={(item: SelectorItem | null) => {
-                        if (item !== null) {
-                          setFieldValue("contact_id", item.id);
-                        }
+                    <Field
+                      name="contact_id"
+                      component={AutocompleteField}
+                      options={contacts.map((contact) => ({
+                        value: contact.id,
+                        label: contact.name,
+                      }))}
+                      placeholder="Seleccione un contacto"
+                      onChange={(option?: Option) => {
+                        setFieldValue("contact_id", option?.value);
                       }}
+                      value={
+                        contacts
+                          .filter((contact) => contact.id === values.contact_id)
+                          .map((contact) => ({
+                            value: contact.id,
+                            label: contact.name,
+                          }))[0]
+                      }
+                      className={`block w-full border ${
+                        touched.contact_id && errors.contact_id ? "border-red-500" : "border-gray-300"
+                      } rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm`}
                     />
                     {touched.contact_id && errors.contact_id && (
-                      <p className="mt-1 text-sm text-red-600">{errors.contact_id}</p>
+                      <p className="mt-2 text-sm text-red-600">{errors.contact_id}</p>
                     )}
                   </div>
 
@@ -291,49 +303,39 @@ export default function AddPreInvoiceForm({ onSave }: Props) {
                     <p>Mes / año facturación</p>
                     <div className=" grid grid-cols-2 gap-4">
                       <div className="p-2">
-                        <SimpleSelector
-                          title="Mes"
-                          items={dataMonths}
-                          value={dataMonths.find((item) => item.id === (values.month || 0) - 1) || null}
-                          onChange={(item: SelectorItem) => {
-                            setFieldValue("month", item.id + 1);
-                          }}
-                        />
+                        <Field
+                          name="month"
+                          component="select"
+                          className={`block w-full border ${
+                            touched.month && errors.month ? "border-red-500" : "border-gray-300"
+                          } rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm`}
+                        >
+                          <option value="">Seleccione un mes</option>
+                          {monthOptions.map((month) => (
+                            <option key={month.value} value={month.value}>
+                              {month.label}
+                            </option>
+                          ))}
+                        </Field>
                         {touched.month && errors.month && <p className="mt-1 text-sm text-red-600">{errors.month}</p>}
                       </div>
                       <div className="p-2">
-                        <SimpleSelector
-                          title="Año"
-                          items={data}
-                          value={data.find((item) => item.value === values.year) || null}
-                          onChange={(item: SelectorItem) => {
-                            setFieldValue("year", item.value);
-                          }}
-                        />
+                        <Field
+                          name="year"
+                          component="select"
+                          className={`block w-full border ${
+                            touched.year && errors.year ? "border-red-500" : "border-gray-300"
+                          } rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm`}
+                        >
+                          <option value="">Seleccione un año</option>
+                          {yearOptions.map((year) => (
+                            <option key={year.value} value={year.value}>
+                              {year.label}
+                            </option>
+                          ))}
+                        </Field>
                         {touched.year && errors.year && <p className="mt-1 text-sm text-red-600">{errors.year}</p>}
                       </div>
-                    </div>
-                  </div>
-
-                  <div className="mt-6">
-                    <label htmlFor="margin_percentage" className="block text-sm font-medium text-gray-700">
-                      Porcentaje de margen (%)
-                    </label>
-                    <div className="mt-1">
-                      <input
-                        type="number"
-                        name="margin_percentage"
-                        id="margin_percentage"
-                        min="0"
-                        max="100"
-                        step="0.01"
-                        placeholder="0.00"
-                        className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                        value={values.margin_percentage || ""}
-                        onChange={(e) => {
-                          setFieldValue("margin_percentage", e.target.value ? parseFloat(e.target.value) : undefined);
-                        }}
-                      />
                     </div>
                   </div>
                 </section>
@@ -349,10 +351,10 @@ export default function AddPreInvoiceForm({ onSave }: Props) {
                 <div className="mt-10 border-t border-gray-200 pt-6 sm:flex sm:items-center sm:justify-between">
                   <button
                     type="submit"
-                    disabled={isSubmitting || Object.keys(errors).length > 0}
+                    disabled={isSubmitting || formikIsSubmitting || Object.keys(errors).length > 0}
                     className="w-full rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-50 sm:order-last sm:ml-6 sm:w-auto disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {isSubmitting ? "Guardando..." : "Guardar"}
+                    {isSubmitting || formikIsSubmitting ? "Guardando..." : "Guardar"}
                   </button>
                   <p className="mt-4 text-center text-sm text-gray-500 sm:mt-0 sm:text-left"></p>
                 </div>

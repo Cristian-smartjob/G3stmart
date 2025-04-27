@@ -2,16 +2,16 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/infrastructure/database/connection/prisma";
 import { Prisma } from "@prisma/client";
 
-type Params = {
-  params: {
-    id: string;
-  };
-};
+// Define el tipo de parámetros esperados
+interface Params {
+  id: string;
+}
 
-export async function PUT(request: Request, { params }: Params) {
+export async function PUT(request: Request, context: { params: Promise<Params> }) {
   try {
-    const { id } = params;
-    const numericId = Number(id);
+    // Esperar a que se resuelva la promesa de params
+    const params = await context.params;
+    const numericId = Number(params.id);
 
     console.log(`API: Actualizando el estado de la prefactura ID ${numericId}`);
 
@@ -52,9 +52,17 @@ export async function PUT(request: Request, { params }: Params) {
       data: updateData,
     });
 
-    console.log(`API: Prefactura actualizada correctamente:`, updatedPreInvoice);
+    // Convertir valores Decimal a Number para evitar problemas de serialización
+    const serializedPreInvoice = {
+      ...updatedPreInvoice,
+      value: updatedPreInvoice.value ? Number(updatedPreInvoice.value) : null,
+      total: updatedPreInvoice.total ? Number(updatedPreInvoice.total) : null,
+      ocAmount: updatedPreInvoice.ocAmount ? Number(updatedPreInvoice.ocAmount) : null,
+    };
 
-    return NextResponse.json({ data: updatedPreInvoice }, { status: 200 });
+    console.log(`API: Prefactura actualizada correctamente:`, serializedPreInvoice);
+
+    return NextResponse.json({ data: serializedPreInvoice }, { status: 200 });
   } catch (error) {
     console.error(`Error actualizando el estado de la prefactura:`, error);
     return NextResponse.json({ message: "Error al actualizar el estado de la prefactura" }, { status: 500 });
