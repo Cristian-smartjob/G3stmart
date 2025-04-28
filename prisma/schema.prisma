@@ -34,21 +34,21 @@ model CurrencyType {
 }
 
 model Client {
-  id             Int           @id @default(autoincrement())
-  name           String        @db.VarChar(255)
-  currencyTypeId Int?          @map("currency_type_id")
-  billableDay    Decimal?      @default(0) @map("billable_day") @db.Decimal(10, 2)
-  rut            String?       @db.VarChar(20)
-  address        String?
-  companyName    String?       @map("company_name") @db.VarChar(255)
-  marginPercentage Decimal?    @default(10.00) @map("margin_percentage") @db.Decimal(10, 2)
-  createdAt      DateTime?     @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt      DateTime?     @default(now()) @map("updated_at") @db.Timestamptz(6)
-  currencyType   CurrencyType? @relation(fields: [currencyTypeId], references: [id])
-  contacts       Contact[]
-  people         People[]
-  preInvoices    PreInvoice[]
-  projects       Project[]
+  id               Int           @id @default(autoincrement())
+  name             String        @db.VarChar(255)
+  currencyTypeId   Int?          @map("currency_type_id")
+  billableDay      Decimal?      @default(0) @map("billable_day") @db.Decimal(10, 2)
+  rut              String?       @db.VarChar(20)
+  address          String?
+  companyName      String?       @map("company_name") @db.VarChar(255)
+  marginPercentage Decimal?      @default(10.00) @map("margin_percentage") @db.Decimal(10, 2)
+  createdAt        DateTime?     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime?     @default(now()) @map("updated_at") @db.Timestamptz(6)
+  currencyType     CurrencyType? @relation(fields: [currencyTypeId], references: [id])
+  contacts         Contact[]
+  people           People[]
+  preInvoices      PreInvoice[]
+  projects         Project[]
 
   @@map("Client")
 }
@@ -153,67 +153,67 @@ model Price {
 }
 
 model People {
-  id                  Int                @id @default(autoincrement())
-  name                String             @db.VarChar(255)
-  lastName            String             @map("last_name") @db.VarChar(255)
-  dni                 String?            @db.VarChar(50)
-  corporateName       String?            @map("corporate_name") @db.VarChar(50)
-  corporateEmail      String?            @map("corporate_email") @db.VarChar(255)
-  contractType        String?            @map("contract_type") @db.VarChar(30)
-  contractStart       DateTime?          @map("contract_start") @db.Date
-  contractEnd         DateTime?          @map("contract_end") @db.Date
-  contractClientEnd   DateTime?          @map("contract_client_end") @db.Date
-  roleId              Int?               @map("role_id")
-  isActive            Boolean?           @map("is_active")
-  causal              String?            @db.VarChar(255)
-  reason              String?            @db.VarChar(255)
-  clientId            Int?               @map("client_id")
-  remote              String?            @db.VarChar(50)
-  jobTitleId          Int?               @map("job_title_id")
-  seniorityId         Int?               @map("seniority_id")
-  technicalStacksId   Int?               @map("technical_stacks_id")
-  salesManager        String?            @map("sales_manager") @db.VarChar(80)
-  searchManager       String?            @map("search_manager") @db.VarChar(80)
-  deliveryManager     String?            @map("delivery_manager") @db.VarChar(80)
-  administrativeArea  String?            @map("administrative_area_level_1") @db.VarChar(255)
-  leader              String?            @db.VarChar(150)
-  leaderMail          String?            @map("leader_mail") @db.VarChar(150)
-  leaderPhone         String?            @map("leader_phone") @db.VarChar(50)
-  birth               DateTime?          @db.Date
-  phone               String?            @db.VarChar(50)
-  email               String?            @db.VarChar(255)
-  address             String?
-  sublocality         String?            @db.VarChar(255)
-  locality            String?            @db.VarChar(255)
-  country             String?            @db.VarChar(100)
-  nationality         String?            @db.VarChar(100)
-  afpInstitutionId    Int?               @map("afp_institution_id")
-  healthInstitutionId Int?               @map("health_institution_id")
-  bank                String?            @db.VarChar(100)
-  accountNumber       Int?               @map("account_number")
-  salaryCurrencyTypeId Int?              @map("salary_currency_type_id")
-  netSalary           Decimal?           @map("net_salary") @db.Decimal(12, 2)
-  feeCurrencyTypeId   Int?               @map("fee_currency_type_id")
-  serviceFee          Decimal?           @map("service_fee") @db.Decimal(12, 2)
-  fee                 Boolean?
-  billableDay         Int?               @map("billable_day")
-  laptopCurrencyTypeId Int?              @map("laptop_currency_type_id")
-  laptopBonus         Decimal?           @map("laptop_bonus") @db.Decimal(12, 2)
-  comment             String?            @db.VarChar(255)
-  createdAt           DateTime?          @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt           DateTime?          @default(now()) @map("updated_at") @db.Timestamptz(6)
-  leaveDays           LeaveDays[]
-  afpInstitution      AFPInstitution?    @relation(fields: [afpInstitutionId], references: [id])
-  client              Client?            @relation(fields: [clientId], references: [id])
-  salaryCurrencyType  CurrencyType?      @relation("SalaryCurrencyType", fields: [salaryCurrencyTypeId], references: [id])
-  feeCurrencyType     CurrencyType?      @relation("FeeCurrencyType", fields: [feeCurrencyTypeId], references: [id])
-  laptopCurrencyType  CurrencyType?      @relation("LaptopCurrencyType", fields: [laptopCurrencyTypeId], references: [id])
-  healthInstitution   HealthInstitution? @relation(fields: [healthInstitutionId], references: [id])
-  jobTitle            JobTitle?          @relation(fields: [jobTitleId], references: [id])
-  role                Role?              @relation(fields: [roleId], references: [id])
-  seniority           Seniority?         @relation(fields: [seniorityId], references: [id])
-  technicalStacks     TechnicalsStacks?  @relation(fields: [technicalStacksId], references: [id])
-  preInvoiceDetails   PreInvoiceDetail[]
+  id                   Int                @id @default(autoincrement())
+  name                 String             @db.VarChar(255)
+  lastName             String             @map("last_name") @db.VarChar(255)
+  dni                  String?            @db.VarChar(50)
+  corporateName        String?            @map("corporate_name") @db.VarChar(50)
+  corporateEmail       String?            @map("corporate_email") @db.VarChar(255)
+  contractType         String?            @map("contract_type") @db.VarChar(30)
+  contractStart        DateTime?          @map("contract_start") @db.Date
+  contractEnd          DateTime?          @map("contract_end") @db.Date
+  contractClientEnd    DateTime?          @map("contract_client_end") @db.Date
+  roleId               Int?               @map("role_id")
+  isActive             Boolean?           @map("is_active")
+  causal               String?            @db.VarChar(255)
+  reason               String?            @db.VarChar(255)
+  clientId             Int?               @map("client_id")
+  remote               String?            @db.VarChar(50)
+  jobTitleId           Int?               @map("job_title_id")
+  seniorityId          Int?               @map("seniority_id")
+  technicalStacksId    Int?               @map("technical_stacks_id")
+  salesManager         String?            @map("sales_manager") @db.VarChar(80)
+  searchManager        String?            @map("search_manager") @db.VarChar(80)
+  deliveryManager      String?            @map("delivery_manager") @db.VarChar(80)
+  administrativeArea   String?            @map("administrative_area_level_1") @db.VarChar(255)
+  leader               String?            @db.VarChar(150)
+  leaderMail           String?            @map("leader_mail") @db.VarChar(150)
+  leaderPhone          String?            @map("leader_phone") @db.VarChar(50)
+  birth                DateTime?          @db.Date
+  phone                String?            @db.VarChar(50)
+  email                String?            @db.VarChar(255)
+  address              String?
+  sublocality          String?            @db.VarChar(255)
+  locality             String?            @db.VarChar(255)
+  country              String?            @db.VarChar(100)
+  nationality          String?            @db.VarChar(100)
+  afpInstitutionId     Int?               @map("afp_institution_id")
+  healthInstitutionId  Int?               @map("health_institution_id")
+  bank                 String?            @db.VarChar(100)
+  accountNumber        Int?               @map("account_number")
+  salaryCurrencyTypeId Int?               @map("salary_currency_type_id")
+  netSalary            Decimal?           @map("net_salary") @db.Decimal(12, 2)
+  feeCurrencyTypeId    Int?               @map("fee_currency_type_id")
+  serviceFee           Decimal?           @map("service_fee") @db.Decimal(12, 2)
+  fee                  Boolean?
+  billableDay          Int?               @map("billable_day")
+  laptopCurrencyTypeId Int?               @map("laptop_currency_type_id")
+  laptopBonus          Decimal?           @map("laptop_bonus") @db.Decimal(12, 2)
+  comment              String?            @db.VarChar(255)
+  createdAt            DateTime?          @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt            DateTime?          @default(now()) @map("updated_at") @db.Timestamptz(6)
+  leaveDays            LeaveDays[]
+  afpInstitution       AFPInstitution?    @relation(fields: [afpInstitutionId], references: [id])
+  client               Client?            @relation(fields: [clientId], references: [id])
+  salaryCurrencyType   CurrencyType?      @relation("SalaryCurrencyType", fields: [salaryCurrencyTypeId], references: [id])
+  feeCurrencyType      CurrencyType?      @relation("FeeCurrencyType", fields: [feeCurrencyTypeId], references: [id])
+  laptopCurrencyType   CurrencyType?      @relation("LaptopCurrencyType", fields: [laptopCurrencyTypeId], references: [id])
+  healthInstitution    HealthInstitution? @relation(fields: [healthInstitutionId], references: [id])
+  jobTitle             JobTitle?          @relation(fields: [jobTitleId], references: [id])
+  role                 Role?              @relation(fields: [roleId], references: [id])
+  seniority            Seniority?         @relation(fields: [seniorityId], references: [id])
+  technicalStacks      TechnicalsStacks?  @relation(fields: [technicalStacksId], references: [id])
+  preInvoiceDetails    PreInvoiceDetail[]
 
   @@map("People")
 }

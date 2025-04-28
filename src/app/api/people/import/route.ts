@@ -163,6 +163,7 @@ export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
     const file = formData.get("file") as File;
+    const preview = formData.get("preview") === "true";
 
     if (!file) {
       return NextResponse.json({ error: "No se ha proporcionado ningún archivo" }, { status: 400 });
@@ -215,13 +216,24 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Procesar las filas válidas
+    // Si es preview, solo devolver la validación y preview
+    if (preview) {
+      return NextResponse.json({
+        success: true,
+        errors: [],
+        preview: data.slice(0, 10),
+        totalRows: data.length,
+      });
+    }
+
+    // Procesar las filas válidas (solo si no es preview)
     const results = await processRows(validRows);
 
     return NextResponse.json({
       success: true,
       processed: results.processed,
       failed: results.failed,
+      duplicated: results.duplicated,
       preview: data.slice(0, 10),
       totalRows: data.length,
     });
@@ -234,9 +246,124 @@ export async function POST(request: NextRequest) {
 async function processRows(rows: Record<string, unknown>[]) {
   const processed: number[] = [];
   const failed: { row: number; error: string }[] = [];
+  const duplicated: { row: number; dni: string }[] = [];
+
+  // Función auxiliar para hacer debug de valores
+  const debugValue = (value: unknown): string => {
+    if (value === null) return "null";
+    if (value === undefined) return "undefined";
+    if (typeof value === "string") return `"${value}"`;
+    return String(value);
+  };
+
+  console.log(`🔄 Iniciando procesamiento de ${rows.length} filas...`);
+
+  // Primero verificamos todos los DNIs para detectar duplicados en la base de datos
+  const dniToCheck = new Map<number, string>(); // Mapa de rowIndex -> dni
 
   for (let i = 0; i < rows.length; i++) {
+    const rowIndex = i + 2; // Excel comienza en 1 y la primera fila es cabecera
     const row = rows[i];
+    const dni = row["dni"] as string;
+
+    if (dni && dni.trim() !== "") {
+      dniToCheck.set(rowIndex, dni);
+    }
+  }
+
+  console.log(`📋 Verificando ${dniToCheck.size} DNIs para detectar duplicados...`);
+
+  // Verificar todos los DNIs en una sola consulta
+  if (dniToCheck.size > 0) {
+    const dnisToVerify = Array.from(dniToCheck.values());
+
+    console.log(`🔎 DNIs a verificar: ${JSON.stringify(dnisToVerify)}`);
+
+    try {
+      // Verificar conexión a la base de datos
+      try {
+        await prisma.$queryRaw`SELECT 1`;
+        console.log("✅ Conexión a la base de datos verificada");
+      } catch (connectError) {
+        console.error("❌ Error de conexión a la base de datos:", connectError);
+        throw new Error("No se pudo conectar a la base de datos");
+      }
+
+      // Verificar si la tabla 'People' existe y tiene registros
+      try {
+        const peopleCount = await prisma.people.count();
+        console.log(`📊 La tabla People contiene ${peopleCount} registros en total`);
+      } catch (countError) {
+        console.error("❌ Error al contar registros en la tabla People:", countError);
+      }
+
+      // Verificar DNIs duplicados
+      const existingPeople = await prisma.people.findMany({
+        where: {
+          dni: {
+            in: dnisToVerify,
+            mode: "default", // Modo exacto de búsqueda
+          },
+        },
+        select: {
+          id: true,
+          dni: true,
+          name: true,
+          lastName: true,
+        },
+      });
+
+      // Validación extra para asegurar que los resultados son correctos
+      const validExistingPeople = existingPeople.filter(
+        (person) => person && person.dni && dnisToVerify.includes(person.dni)
+      );
+
+      console.log(`🔍 Encontrados ${validExistingPeople.length} DNIs duplicados en la base de datos.`);
+
+      if (validExistingPeople.length > 0) {
+        console.log(
+          `📝 Detalles de DNIs encontrados en la base de datos: ${JSON.stringify(
+            validExistingPeople.map((p) => p.dni)
+          )}`
+        );
+      } else {
+        console.log(`✅ No se encontraron DNIs duplicados en la base de datos. Todos los registros son nuevos.`);
+      }
+
+      // Crear un mapa de DNIs existentes para búsqueda rápida
+      const existingDNIs = new Map();
+      validExistingPeople.forEach((person) => {
+        if (person.dni) {
+          existingDNIs.set(person.dni, person);
+          console.log(`📌 DNI "${person.dni}" ya existe en la base de datos con ID ${person.id}`);
+        }
+      });
+
+      // Marcar los duplicados
+      let newDniCount = 0;
+      for (const [rowIndex, dni] of dniToCheck.entries()) {
+        if (existingDNIs.has(dni)) {
+          const person = existingDNIs.get(dni);
+          console.log(
+            `⚠️ DNI duplicado en fila ${rowIndex}: "${dni}" - ID existente: ${person.id} (${person.name} ${person.lastName})`
+          );
+          duplicated.push({ row: rowIndex, dni });
+        } else {
+          console.log(`✓ DNI "${dni}" en fila ${rowIndex} es nuevo, no existe en la base de datos`);
+          newDniCount++;
+        }
+      }
+
+      console.log(`🔢 Resumen de verificación: ${newDniCount} DNIs nuevos, ${duplicated.length} DNIs duplicados`);
+    } catch (error) {
+      console.error("❌ Error al verificar DNIs duplicados:", error);
+    }
+  }
+
+  // Ahora procesamos cada fila
+  for (let i = 0; i < rows.length; i++) {
+    const row = rows[i];
+    const rowIndex = i + 2; // Excel comienza en 1 y la primera fila es cabecera
 
     // Para la primera fila, mostrar todas las claves disponibles
     if (i === 0) {
@@ -250,8 +377,17 @@ async function processRows(rows: Record<string, unknown>[]) {
     );
 
     if (isEmpty) {
-      console.log(`Omitiendo fila ${i + 2} por estar vacía`);
+      console.log(`⏩ Omitiendo fila ${rowIndex} por estar vacía`);
       continue; // Saltar al siguiente ciclo
+    }
+
+    // Verificar si el DNI ya fue marcado como duplicado
+    const dni = row["dni"] as string;
+    const isDuplicate = duplicated.some((item) => item.row === rowIndex);
+
+    if (isDuplicate) {
+      console.log(`➡️ Omitiendo procesamiento de fila ${rowIndex} por DNI "${dni}" duplicado.`);
+      continue; // Saltar al siguiente registro
     }
 
     try {
@@ -646,7 +782,7 @@ async function processRows(rows: Record<string, unknown>[]) {
         `Valores encontrados: searchManager="${searchManagerValue}", deliveryManager="${deliveryManagerValue}"`
       );
 
-      // Crear registro de persona - Sin especificar ID explícitamente
+      // Crear registro de persona
       try {
         await prisma.people.create({
           data: {
@@ -699,22 +835,32 @@ async function processRows(rows: Record<string, unknown>[]) {
             comment: (row["comment"] as string) || null,
           },
         });
-        processed.push(i + 2);
+        console.log(
+          `✅ Persona creada exitosamente en fila ${rowIndex}: ${name} ${lastName} (DNI: ${debugValue(dni)})`
+        );
+        processed.push(rowIndex); // Añadir a procesados
       } catch (createError) {
-        console.error(`Error al crear persona en fila ${i + 2}:`, createError);
+        console.error(`❌ Error al crear persona en fila ${rowIndex}:`, createError);
         failed.push({
-          row: i + 2,
+          row: rowIndex,
           error: createError instanceof Error ? createError.message : "Error al crear persona",
         });
       }
     } catch (error: unknown) {
-      console.error(`Error al procesar fila ${i + 2}:`, error);
+      console.error(`❌ Error al procesar fila ${rowIndex}:`, error);
       failed.push({
-        row: i + 2,
+        row: rowIndex,
         error: error instanceof Error ? error.message : "Error desconocido",
       });
     }
   }
 
-  return { processed, failed };
+  console.log(`📊 Resumen final de importación:
+    - Filas procesadas: ${processed.length}
+    - Filas duplicadas: ${duplicated.length}
+    - Filas con errores: ${failed.length}
+    - Total filas analizadas: ${rows.length}
+  `);
+
+  return { processed, failed, duplicated };
 }

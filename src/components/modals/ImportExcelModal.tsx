@@ -20,6 +20,7 @@ type ImportResult = {
   success: boolean;
   processed?: number[];
   failed?: { row: number; error: string }[];
+  duplicated?: { row: number; dni: string }[];
   errors?: ValidationError[];
   preview?: Record<string, unknown>[];
   totalRows?: number;
@@ -50,6 +51,7 @@ const ImportExcelModal = ({ isOpen, onClose }: ImportExcelModalProps) => {
     try {
       const formData = new FormData();
       formData.append("file", file);
+      formData.append("preview", "true");
 
       const response = await window.fetch("/api/people/import", {
         method: "POST",
@@ -261,10 +263,21 @@ const ImportExcelModal = ({ isOpen, onClose }: ImportExcelModalProps) => {
                 </svg>
               </div>
               <div className="ml-3">
-                <p className="text-sm font-medium text-green-800">¡La importación se ha completado con éxito!</p>
+                <p className="text-sm font-medium text-green-800">
+                  {(importResult.processed?.length || 0) > 0
+                    ? "¡La importación se ha completado con éxito!"
+                    : importResult.duplicated?.length === importResult.totalRows
+                    ? "No se procesaron nuevos registros. Todos los registros ya existían en la base de datos."
+                    : "La operación se completó, pero no se procesaron nuevos registros."}
+                </p>
                 <ul className="mt-2 text-sm text-green-700">
                   <li>Total de filas procesadas: {importResult.processed?.length || 0}</li>
                   <li>Total de filas con errores: {importResult.failed?.length || 0}</li>
+                  <li>
+                    Total de filas duplicadas: {importResult.duplicated?.length || 0}
+                    {importResult.duplicated?.length ? " (ya existentes en la base de datos)" : ""}
+                  </li>
+                  <li>Total de filas analizadas: {importResult.totalRows || 0}</li>
                 </ul>
               </div>
             </div>
@@ -315,6 +328,28 @@ const ImportExcelModal = ({ isOpen, onClose }: ImportExcelModalProps) => {
                 ))}
                 {importResult.failed.length > 10 && (
                   <li className="text-gray-600">...y {importResult.failed.length - 10} errores más</li>
+                )}
+              </ul>
+            </div>
+          </div>
+        )}
+
+        {importResult.duplicated && importResult.duplicated.length > 0 && (
+          <div className="mt-4">
+            <h3 className="text-sm font-medium text-gray-700 mb-2">
+              {importResult.processed?.length
+                ? "DNIs ya existentes (omitidos durante la importación):"
+                : "Todos los DNIs ya existen en la base de datos:"}
+            </h3>
+            <div className="bg-yellow-50 p-3 rounded-md border border-yellow-200 max-h-40 overflow-y-auto text-xs">
+              <ul className="list-disc pl-5">
+                {importResult.duplicated.slice(0, 10).map((item, index) => (
+                  <li key={index} className="text-gray-600 mb-1">
+                    Fila {item.row}: DNI &ldquo;{item.dni}&rdquo;
+                  </li>
+                ))}
+                {importResult.duplicated.length > 10 && (
+                  <li className="text-gray-600">...y {importResult.duplicated.length - 10} DNIs duplicados más</li>
                 )}
               </ul>
             </div>
