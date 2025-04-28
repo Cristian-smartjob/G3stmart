@@ -120,30 +120,53 @@ CREATE TABLE "public"."Price" (
 );
 
 CREATE TABLE "public"."People" (
-        "id" SERIAL PRIMARY KEY,
-        "name" VARCHAR(255) NOT NULL,
-        "last_name" VARCHAR(255) NOT NULL,
-    "email" VARCHAR(255),
-    "corporate_email" VARCHAR(255),
-    "role_id" INTEGER REFERENCES "public"."Role"("id") ON DELETE SET NULL ON UPDATE CASCADE,
+    "id" SERIAL PRIMARY KEY,
+    "name" VARCHAR(255) NOT NULL,
+    "last_name" VARCHAR(255) NOT NULL,
     "dni" VARCHAR(50),
+    "corporate_name" VARCHAR(50),
+    "corporate_email" VARCHAR(255),
+    "contract_type" VARCHAR(30),
+    "contract_start" DATE,
+    "contract_end" DATE,
+    "contract_client_end" DATE,
+    "role_id" INTEGER REFERENCES "public"."Role"("id") ON DELETE SET NULL ON UPDATE CASCADE,
+    "is_active" BOOLEAN,
+    "causal" VARCHAR(255),
+    "reason" VARCHAR(255),
+    "client_id" INTEGER REFERENCES "public"."Client"("id") ON DELETE SET NULL ON UPDATE CASCADE,
+    "remote" VARCHAR(50),
+    "job_title_id" INTEGER REFERENCES "public"."JobTitle"("id") ON DELETE SET NULL ON UPDATE CASCADE,
+    "seniority_id" INTEGER REFERENCES "public"."Seniority"("id") ON DELETE SET NULL ON UPDATE CASCADE,
+    "technical_stacks_id" INTEGER REFERENCES "public"."TechnicalsStacks"("id") ON DELETE SET NULL ON UPDATE CASCADE,
+    "sales_manager" VARCHAR(80),
+    "search_manager" VARCHAR(80),
+    "delivery_manager" VARCHAR(80),
+    "administrative_area_level_1" VARCHAR(255),
+    "leader" VARCHAR(150),
+    "leader_mail" VARCHAR(150),
+    "leader_phone" VARCHAR(50),
+    "birth" DATE,
+    "phone" VARCHAR(50),
+    "email" VARCHAR(255),
     "address" TEXT,
     "sublocality" VARCHAR(255),
     "locality" VARCHAR(255),
-    "administrative_area_level_1" VARCHAR(255),
-        "country" VARCHAR(100),
+    "country" VARCHAR(100),
     "nationality" VARCHAR(100),
     "afp_institution_id" INTEGER REFERENCES "public"."AFPInstitution"("id") ON DELETE SET NULL ON UPDATE CASCADE,
     "health_institution_id" INTEGER REFERENCES "public"."HealthInstitution"("id") ON DELETE SET NULL ON UPDATE CASCADE,
-    "seniority_id" INTEGER REFERENCES "public"."Seniority"("id") ON DELETE SET NULL ON UPDATE CASCADE,
+    "bank" VARCHAR(100),
+    "account_number" INTEGER,
+    "salary_currency_type_id" INTEGER REFERENCES "public"."CurrencyType"("id") ON DELETE SET NULL ON UPDATE CASCADE,
     "net_salary" DECIMAL(12,2),
-    "currency_type_id" INTEGER REFERENCES "public"."CurrencyType"("id") ON DELETE SET NULL ON UPDATE CASCADE,
-    "job_title_id" INTEGER REFERENCES "public"."JobTitle"("id") ON DELETE SET NULL ON UPDATE CASCADE,
-    "fee" DECIMAL(12,2),
-    "birth" DATE,
-    "client_id" INTEGER REFERENCES "public"."Client"("id") ON DELETE SET NULL ON UPDATE CASCADE,
-    "phone" VARCHAR(50),
-    "billable_day" DECIMAL(10,2) DEFAULT 8.0,
+    "fee_currency_type_id" INTEGER REFERENCES "public"."CurrencyType"("id") ON DELETE SET NULL ON UPDATE CASCADE,
+    "service_fee" DECIMAL(12,2),
+    "fee" BOOLEAN,
+    "billable_day" INTEGER,
+    "laptop_currency_type_id" INTEGER REFERENCES "public"."CurrencyType"("id") ON DELETE SET NULL ON UPDATE CASCADE,
+    "laptop_bonus" DECIMAL(12,2),
+    "comment" VARCHAR(255),
     "created_at" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
@@ -343,27 +366,27 @@ INSERT INTO "public"."Price" ("id", "name", "description", "value", "currency_ty
 ('3', 'Engineer Level 3', 'Ingeniero Senior', '3000000', '1', '2025-01-28 03:08:08.983869+00', '2025-01-28 03:08:08.983869');
 
 -- People data
-INSERT INTO "public"."People" ("id", "name", "last_name", "email", "corporate_email", "role_id", "dni", "address", "sublocality", "locality", "administrative_area_level_1", "country", "nationality", "afp_institution_id", "health_institution_id", "seniority_id", "net_salary", "currency_type_id", "job_title_id", "fee", "birth", "client_id", "phone", "billable_day", "created_at", "updated_at") VALUES 
+INSERT INTO "public"."People" ("id", "name", "last_name", "dni", "corporate_name", "corporate_email", "contract_type", "contract_start", "contract_end", "contract_client_end", "role_id", "is_active", "causal", "reason", "client_id", "remote", "job_title_id", "seniority_id", "technical_stacks_id", "sales_manager", "search_manager", "delivery_manager", "administrative_area_level_1", "leader", "leader_mail", "leader_phone", "birth", "phone", "email", "address", "sublocality", "locality", "country", "nationality", "afp_institution_id", "health_institution_id", "bank", "account_number", "salary_currency_type_id", "net_salary", "fee_currency_type_id", "service_fee", "fee", "billable_day", "laptop_currency_type_id", "laptop_bonus", "comment", "created_at", "updated_at") VALUES 
 -- Falabella Tecnología (client_id: 12)
-(1, 'Juan', 'Pérez', 'juan.perez@gmail.com', 'jperez@smartjob.cl', 1, '12345678-9', 'Calle 1 #123', 'Santiago Centro', 'Santiago', 'Región Metropolitana', 'Chile', 'Chilena', 1, 1, 1, 1000000, 1, 1, 500000, '1990-01-01', 12, '+56912345678', 8.0, '2025-02-11 15:10:09.698662+00', '2025-02-11 15:10:09.698662'),
-(2, 'María', 'González', 'maria.gonzalez@gmail.com', 'mgonzalez@smartjob.cl', 2, '87654321-0', 'Calle 2 #456', 'Providencia', 'Santiago', 'Región Metropolitana', 'Chile', 'Chilena', 2, 2, 2, 1200000, 1, 2, 600000, '1991-02-02', 12, '+56987654321', 8.0, '2025-02-11 15:10:09.698662+00', '2025-02-11 15:10:09.698662'),
-(3, 'Pedro', 'Rodríguez', 'pedro.rodriguez@gmail.com', 'prodriguez@smartjob.cl', 3, '23456789-1', 'Calle 3 #789', 'Las Condes', 'Santiago', 'Región Metropolitana', 'Chile', 'Chilena', 3, 3, 3, 1500000, 1, 3, 750000, '1992-03-03', 12, '+56923456789', 8.0, '2025-02-11 15:10:09.698662+00', '2025-02-11 15:10:09.698662'),
+(1, 'Juan', 'Pérez', '12345678-9', 'Falabella Tecnología', 'jperez@smartjob.cl', 'Contrato a Tiempo Completo', '2025-02-01', '2025-02-28', '2025-03-15', 1, true, 'Vacaciones', 'Vacaciones', 12, 'Remoto', 1, 1, 1, 'Gerente de Ventas', 'Gerente de Búsqueda', 'Gerente de Entrega', 'Región Metropolitana', 'Juan Pérez', 'jperez@falabella.com', '+56912345678', '1990-01-01', '+56912345678', 'juan.perez@gmail.com', 'Calle 1 #123', 'Santiago Centro', 'Santiago', 'Chile', 'Chilena', 1, 1, 'Banco de Chile', 123456789, 1, 1000000, 1, 500000, true, 8.0, 1, 500000, 'Comentario de Juan Pérez', '2025-02-11 15:10:09.698662+00', '2025-02-11 15:10:09.698662'),
+(2, 'María', 'González', '87654321-0', 'Falabella Tecnología', 'mgonzalez@smartjob.cl', 'Contrato a Tiempo Completo', '2025-02-01', '2025-02-28', '2025-03-15', 2, true, 'Enfermedad', 'Enfermedad', 12, 'Remoto', 2, 2, 2, 'Gerente de Ventas', 'Gerente de Búsqueda', 'Gerente de Entrega', 'Región Metropolitana', 'María González', 'mgonzalez@falabella.com', '+56987654321', '1991-02-02', '+56987654321', 'maria.gonzalez@gmail.com', 'Calle 2 #456', 'Providencia', 'Santiago', 'Chile', 'Chilena', 2, 2, 'Banco de Estado', 234567890, 1, 1200000, 1, 600000, true, 8.0, 1, 600000, 'Comentario de María González', '2025-02-11 15:10:09.698662+00', '2025-02-11 15:10:09.698662'),
+(3, 'Pedro', 'Rodríguez', '23456789-1', 'Falabella Tecnología', 'prodriguez@smartjob.cl', 'Contrato a Tiempo Completo', '2025-02-01', '2025-02-28', '2025-03-15', 3, true, 'Vacaciones', 'Vacaciones', 12, 'Remoto', 3, 3, 3, 'Gerente de Ventas', 'Gerente de Búsqueda', 'Gerente de Entrega', 'Región Metropolitana', 'Pedro Rodríguez', 'prodriguez@falabella.com', '+56923456789', '1992-03-03', '+56923456789', 'pedro.rodriguez@gmail.com', 'Calle 3 #789', 'Las Condes', 'Santiago', 'Chile', 'Chileno', 3, 3, 'Banco de Crédito e Inversiones', 345678901, 1, 1500000, 1, 750000, true, 8.0, 1, 750000, 'Comentario de Pedro Rodríguez', '2025-02-11 15:10:09.698662+00', '2025-02-11 15:10:09.698662'),
 
 -- Cencosud (client_id: 13)
-(4, 'Ana', 'Martínez', 'ana.martinez@gmail.com', 'amartinez@smartjob.cl', 2, '34567890-2', 'Calle 4 #101', 'Las Condes', 'Santiago', 'Región Metropolitana', 'Chile', 'Chilena', 4, 4, 2, 1100000, 1, 4, 550000, '1993-04-04', 13, '+56934567890', 8.0, '2025-02-11 15:10:09.698662+00', '2025-02-11 15:10:09.698662'),
-(5, 'Carlos', 'López', 'carlos.lopez@gmail.com', 'clopez@smartjob.cl', 2, '45678901-3', 'Calle 5 #202', 'Providencia', 'Santiago', 'Región Metropolitana', 'Chile', 'Chilena', 5, 5, 2, 1300000, 1, 5, 650000, '1994-05-05', 13, '+56945678901', 8.0, '2025-02-11 15:10:09.698662+00', '2025-02-11 15:10:09.698662'),
+(4, 'Ana', 'Martínez', '34567890-2', 'Cencosud', 'amartinez@smartjob.cl', 'Contrato a Tiempo Completo', '2025-02-01', '2025-02-28', '2025-03-15', 2, true, 'Vacaciones', 'Vacaciones', 13, 'Remoto', 4, 2, 4, 'Gerente de Ventas', 'Gerente de Búsqueda', 'Gerente de Entrega', 'Región Metropolitana', 'Ana Martínez', 'amartinez@cencosud.com', '+56934567890', '1993-04-04', '+56934567890', 'ana.martinez@gmail.com', 'Calle 4 #101', 'Las Condes', 'Santiago', 'Chile', 'Chilena', 4, 4, 'Banco de Chile', 456789012, 1, 1100000, 1, 550000, true, 8.0, 1, 550000, 'Comentario de Ana Martínez', '2025-02-11 15:10:09.698662+00', '2025-02-11 15:10:09.698662'),
+(5, 'Carlos', 'López', '45678901-3', 'Cencosud', 'clopez@smartjob.cl', 'Contrato a Tiempo Completo', '2025-02-01', '2025-02-28', '2025-03-15', 2, true, 'Vacaciones', 'Vacaciones', 13, 'Remoto', 5, 2, 5, 'Gerente de Ventas', 'Gerente de Búsqueda', 'Gerente de Entrega', 'Región Metropolitana', 'Carlos López', 'clopez@cencosud.com', '+56945678901', '1994-05-05', '+56945678901', 'carlos.lopez@gmail.com', 'Calle 5 #202', 'Providencia', 'Santiago', 'Chile', 'Chileno', 5, 5, 'Banco de Chile', 567890123, 1, 1300000, 1, 650000, true, 8.0, 1, 650000, 'Comentario de Carlos López', '2025-02-11 15:10:09.698662+00', '2025-02-11 15:10:09.698662'),
 
 -- Sonda (client_id: 14)
-(6, 'Laura', 'Sánchez', 'laura.sanchez@gmail.com', 'lsanchez@smartjob.cl', 2, '56789012-4', 'Calle 6 #303', 'Las Condes', 'Santiago', 'Región Metropolitana', 'Chile', 'Chilena', 6, 6, 2, 1400000, 1, 6, 700000, '1995-06-06', 14, '+56956789012', 8.0, '2025-02-11 15:10:09.698662+00', '2025-02-11 15:10:09.698662'),
-(7, 'Roberto', 'García', 'roberto.garcia@gmail.com', 'rgarcia@smartjob.cl', 2, '67890123-5', 'Calle 7 #404', 'Providencia', 'Santiago', 'Región Metropolitana', 'Chile', 'Chilena', 7, 7, 2, 1600000, 1, 7, 800000, '1996-07-07', 14, '+56967890123', 8.0, '2025-02-11 15:10:09.698662+00', '2025-02-11 15:10:09.698662'),
+(6, 'Laura', 'Sánchez', '56789012-4', 'SONDA', 'lsanchez@smartjob.cl', 'Contrato a Tiempo Completo', '2025-02-01', '2025-02-28', '2025-03-15', 2, true, 'Vacaciones', 'Vacaciones', 14, 'Remoto', 6, 2, 6, 'Gerente de Ventas', 'Gerente de Búsqueda', 'Gerente de Entrega', 'Región Metropolitana', 'Laura Sánchez', 'lsanchez@sonda.com', '+56956789012', '1995-06-06', '+56956789012', 'laura.sanchez@gmail.com', 'Calle 6 #303', 'Las Condes', 'Santiago', 'Chile', 'Chilena', 6, 6, 'Banco de Chile', 678901234, 1, 1400000, 1, 700000, true, 8.0, 1, 700000, 'Comentario de Laura Sánchez', '2025-02-11 15:10:09.698662+00', '2025-02-11 15:10:09.698662'),
+(7, 'Roberto', 'García', '67890123-5', 'SONDA', 'rgarcia@smartjob.cl', 'Contrato a Tiempo Completo', '2025-02-01', '2025-02-28', '2025-03-15', 2, true, 'Enfermedad', 'Enfermedad', 14, 'Remoto', 7, 2, 7, 'Gerente de Ventas', 'Gerente de Búsqueda', 'Gerente de Entrega', 'Región Metropolitana', 'Roberto García', 'rgarcia@sonda.com', '+56967890123', '1996-07-07', '+56967890123', 'roberto.garcia@gmail.com', 'Calle 7 #404', 'Providencia', 'Santiago', 'Chile', 'Chileno', 7, 7, 'Banco de Chile', 789012345, 1, 1600000, 1, 800000, true, 8.0, 1, 800000, 'Comentario de Roberto García', '2025-02-11 15:10:09.698662+00', '2025-02-11 15:10:09.698662'),
 
 -- BCI (client_id: 15)
-(8, 'Sofía', 'Fernández', 'sofia.fernandez@gmail.com', 'sfernandez@smartjob.cl', 2, '78901234-6', 'Calle 8 #505', 'Las Condes', 'Santiago', 'Región Metropolitana', 'Chile', 'Chilena', 8, 8, 2, 1700000, 1, 8, 850000, '1997-08-08', 15, '+56978901234', 8.0, '2025-02-11 15:10:09.698662+00', '2025-02-11 15:10:09.698662'),
-(9, 'Diego', 'Torres', 'diego.torres@gmail.com', 'dtorres@smartjob.cl', 2, '89012345-7', 'Calle 9 #606', 'Providencia', 'Santiago', 'Región Metropolitana', 'Chile', 'Chilena', 1, 1, 2, 1800000, 1, 9, 900000, '1998-09-09', 15, '+56989012345', 8.0, '2025-02-11 15:10:09.698662+00', '2025-02-11 15:10:09.698662'),
+(8, 'Sofía', 'Fernández', '78901234-6', 'Banco de Crédito e Inversiones', 'sfernandez@smartjob.cl', 'Contrato a Tiempo Completo', '2025-02-01', '2025-02-28', '2025-03-15', 2, true, 'Vacaciones', 'Vacaciones', 15, 'Remoto', 8, 2, 8, 'Gerente de Ventas', 'Gerente de Búsqueda', 'Gerente de Entrega', 'Región Metropolitana', 'Sofía Fernández', 'sofia.fernandez@bci.cl', '+56978901234', '1997-08-08', '+56978901234', 'sofia.fernandez@gmail.com', 'Calle 8 #505', 'Las Condes', 'Santiago', 'Chile', 'Chilena', 8, 8, 'Banco de Chile', 890123456, 1, 1700000, 1, 850000, true, 8.0, 1, 850000, 'Comentario de Sofía Fernández', '2025-02-11 15:10:09.698662+00', '2025-02-11 15:10:09.698662'),
+(9, 'Diego', 'Torres', '89012345-7', 'Banco de Crédito e Inversiones', 'dtorres@smartjob.cl', 'Contrato a Tiempo Completo', '2025-02-01', '2025-02-28', '2025-03-15', 2, true, 'Enfermedad', 'Enfermedad', 15, 'Remoto', 9, 2, 1, 'Gerente de Ventas', 'Gerente de Búsqueda', 'Gerente de Entrega', 'Región Metropolitana', 'Diego Torres', 'dtorres@bci.cl', '+56989012345', '1998-09-09', '+56989012345', 'diego.torres@gmail.com', 'Calle 9 #606', 'Providencia', 'Santiago', 'Chile', 'Chileno', 1, 1, 'Banco de Chile', 901234567, 1, 1800000, 1, 900000, true, 8, 1, 900000, 'Comentario de Diego Torres', '2025-02-11 15:10:09.698662+00', '2025-02-11 15:10:09.698662'),
 
 -- FID Seguros (client_id: 16)
-(10, 'Valentina', 'Silva', 'valentina.silva@gmail.com', 'vsilva@smartjob.cl', 2, '90123456-8', 'Calle 10 #707', 'Las Condes', 'Santiago', 'Región Metropolitana', 'Chile', 'Chilena', 2, 2, 2, 1900000, 1, 10, 950000, '1999-10-10', 16, '+56990123456', 8.0, '2025-02-11 15:10:09.698662+00', '2025-02-11 15:10:09.698662'),
-(11, 'Cosme', 'Fulanito', 'cosme.fulanito@gmail.com', 'cfulanito@smartjob.cl', 2, '01234567-9', 'Calle 11 #808', 'Providencia', 'Santiago', 'Región Metropolitana', 'Chile', 'Chilena', 3, 3, 2, 2000000, 1, 11, 1000000, '2000-11-11', 16, '+56901234567', 8.0, '2025-02-11 15:10:09.698662+00', '2025-02-11 15:10:09.698662');
+(10, 'Valentina', 'Silva', '90123456-8', 'FID Chile Seguros Generales S.A.', 'vsilva@smartjob.cl', 'Contrato a Tiempo Completo', '2025-02-01', '2025-02-28', '2025-03-15', 2, true, 'Vacaciones', 'Vacaciones', 16, 'Remoto', 10, 2, 2, 'Gerente de Ventas', 'Gerente de Búsqueda', 'Gerente de Entrega', 'Región Metropolitana', 'Valentina Silva', 'vsilva@fidseguros.cl', '+56990123456', '1999-10-10', '+56990123456', 'valentina.silva@gmail.com', 'Calle 10 #707', 'Las Condes', 'Santiago', 'Chile', 'Chilena', 2, 2, 'Banco de Chile', 901234567, 1, 1900000, 1, 950000, true, 8.0, 1, 950000, 'Comentario de Valentina Silva', '2025-02-11 15:10:09.698662+00', '2025-02-11 15:10:09.698662'),
+(11, 'Cosme', 'Fulanito', '01234567-9', 'FID Chile Seguros Generales S.A.', 'cfulanito@smartjob.cl', 'Contrato a Tiempo Completo', '2025-02-01', '2025-02-28', '2025-03-15', 2, true, 'Vacaciones', 'Vacaciones', 16, 'Remoto', 11, 2, 3, 'Gerente de Ventas', 'Gerente de Búsqueda', 'Gerente de Entrega', 'Región Metropolitana', 'Cosme Fulanito', 'cfulanito@fidseguros.cl', '+56901234567', '2000-11-11', '+56901234567', 'cosme.fulanito@gmail.com', 'Calle 11 #808', 'Providencia', 'Santiago', 'Chile', 'Chileno', 3, 3, 'Banco de Chile', 012345678, 1, 2000000, 1, 1000000, true, 8.0, 1, 1000000, 'Comentario de Cosme Fulanito', '2025-02-11 15:10:09.698662+00', '2025-02-11 15:10:09.698662');
 
 -- Holidays data
 INSERT INTO "public"."Holidays" ("id", "date", "name", "created_at", "updated_at") VALUES 

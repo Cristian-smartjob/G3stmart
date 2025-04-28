@@ -15,18 +15,7 @@ import FilterPeople from "../dialog/FilterPeople";
 import GenericModal from "../modals/GenericModal";
 import MainTable from "../Table/MainTable";
 import TableSkeleton from "../core/TableSkeleton";
-import type { People, JobTitle, Client as ClientModel, Role, AFPInstitution, HealthInstitution, Seniority, CurrencyType } from "@prisma/client";
-
-// Definir el tipo de PeopleWithAllRelations según lo que necesitamos
-type PeopleWithAllRelations = People & {
-  jobTitle: JobTitle | null;
-  client: ClientModel | null;
-  role: Role | null;
-  afpInstitution: AFPInstitution | null;
-  healthInstitution: HealthInstitution | null;
-  seniority: Seniority | null;
-  currencyType: CurrencyType | null;
-};
+import { PeopleWithAllRelations } from "@/types/people";
 
 const header = [
   "Empresa",

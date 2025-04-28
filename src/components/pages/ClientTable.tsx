@@ -39,6 +39,8 @@ export default function ClientTable() {
   }, [dispatch]);
 
   const handleClick = () => {
+    setSelectClient(null);
+    setEditMode(false);
     setShowDialog(true);
   };
 
@@ -61,7 +63,7 @@ export default function ClientTable() {
   return (
     <div>
       <GenericModal isOpen={showDialog} onClose={handlerClose}>
-        <AddClientForm onSave={handlerClose} isEditMode={isEditMode} />
+        <AddClientForm onSave={handlerClose} isEditMode={isEditMode} selectedClient={selectClient} />
       </GenericModal>
 
       <DeleteModal
