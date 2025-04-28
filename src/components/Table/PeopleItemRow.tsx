@@ -1,17 +1,7 @@
 "use client";
 
-import type { People, JobTitle, Client as ClientModel, Role, AFPInstitution, HealthInstitution, Seniority, CurrencyType } from "@prisma/client";
-
-// Definir el tipo de PeopleWithAllRelations según lo que necesitamos
-type PeopleWithAllRelations = People & {
-  jobTitle: JobTitle | null;
-  client: ClientModel | null;
-  role: Role | null;
-  afpInstitution: AFPInstitution | null;
-  healthInstitution: HealthInstitution | null;
-  seniority: Seniority | null;
-  currencyType: CurrencyType | null;
-};
+import { PeopleWithAllRelations } from "@/types/people";
+import type { Client as ClientModel } from "@prisma/client";
 
 interface Props {
   item: PeopleWithAllRelations;
@@ -23,6 +13,13 @@ export default function PeopleItemRow({ item, onActionPress }: Props) {
   const handlerClick = () => {
     onActionPress(item);
   };
+
+  // Función para formatear la fecha
+  const formatDate = (date: Date | null | undefined) => {
+    if (!date) return "No especificada";
+    return new Date(date).toLocaleDateString();
+  };
+
   return (
     <tr
       className="border-b dark:border-gray-700 hover:bg-gray-200 dark:hover:bg-gray-700 cursor-pointer transition"
@@ -53,10 +50,10 @@ export default function PeopleItemRow({ item, onActionPress }: Props) {
         {item.phone}
       </td>
       <td className="px-4 py-3" onClick={handlerClick}>
-        12/12/2025
+        {formatDate(item.contractStart)}
       </td>
       <td className="px-4 py-3" onClick={handlerClick}>
-        12/12/2025
+        {formatDate(item.contractEnd)}
       </td>
     </tr>
   );

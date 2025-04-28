@@ -17,11 +17,10 @@ type ApiResponse<T> = {
 };
 
 // Generador tipado para añadir cliente
-function* addNewClient(action: { type: string; payload: ClientForm }): Generator<
-  CallEffect<unknown> | PutEffect<ReturnType<typeof ReducerClient.createSuccessfull>>,
-  void,
-  unknown
-> {
+function* addNewClient(action: {
+  type: string;
+  payload: ClientForm;
+}): Generator<CallEffect<unknown> | PutEffect<ReturnType<typeof ReducerClient.createSuccessfull>>, void, unknown> {
   try {
     const response = yield call(() =>
       fetch("/api/clients", {
@@ -44,9 +43,48 @@ function* addNewClient(action: { type: string; payload: ClientForm }): Generator
   }
 }
 
+// Generador tipado para actualizar un cliente
+function* updateClient(action: {
+  type: string;
+  payload: ClientForm;
+}): Generator<
+  | CallEffect<unknown>
+  | PutEffect<ReturnType<typeof ReducerClient.updateSuccessfull> | ReturnType<typeof ReducerClient.fetch>>,
+  void,
+  unknown
+> {
+  try {
+    if (!action.payload.id) {
+      throw new Error("Client ID is required for update");
+    }
+
+    const response = yield call(() =>
+      fetch(`/api/clients/${action.payload.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(action.payload),
+      })
+    );
+
+    if (!(response as Response).ok) {
+      const errorData = yield call(() => (response as Response).json());
+      throw new Error((errorData as ApiResponse<unknown>).message || "Error updating client");
+    }
+
+    yield put(ReducerClient.updateSuccessfull(action.payload.id as number));
+    // Recargar la lista después de actualizar
+    yield put(ReducerClient.fetch());
+  } catch (e) {
+    console.error("Error updating client:", e);
+  }
+}
+
 // Generador tipado para obtener clientes
 function* fetchClient(): Generator<
-  CallEffect<unknown> | PutEffect<ReturnType<typeof ReducerClient.fetchSuccessfull> | ReturnType<typeof ReducerClient.fetchError>>,
+  | CallEffect<unknown>
+  | PutEffect<ReturnType<typeof ReducerClient.fetchSuccessfull> | ReturnType<typeof ReducerClient.fetchError>>,
   void,
   unknown
 > {
@@ -74,13 +112,20 @@ function* fetchClient(): Generator<
 }
 
 function* fetchClientAction() {
-  yield takeLatest([ReducerClient.fetch, ReducerClient.createSuccessfull], fetchClient);
+  yield takeLatest(
+    [ReducerClient.fetch, ReducerClient.createSuccessfull, ReducerClient.updateSuccessfull],
+    fetchClient
+  );
 }
 
 function* addNewClientAction() {
   yield takeLatest(ReducerClient.create.type, addNewClient);
 }
 
+function* updateClientAction() {
+  yield takeLatest(ReducerClient.update.type, updateClient);
+}
+
 export default function* clientsActions() {
-  yield all([fetchClientAction(), addNewClientAction()]);
+  yield all([fetchClientAction(), addNewClientAction(), updateClientAction()]);
 }

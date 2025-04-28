@@ -10,6 +10,7 @@ import type {
   LeaveDays,
   People,
   CurrencyType,
+  TechnicalsStacks,
 } from "@prisma/client";
 import { FilterCondition } from "../types/database.types";
 
@@ -58,15 +59,20 @@ export class PeopleRepository {
     return result;
   }
 
-  async findWithAllJoins(conditions: FilterCondition[] = []): Promise<(People & {
-    jobTitle: JobTitle | null;
-    client: Client | null;
-    role: Role | null;
-    afpInstitution: AFPInstitution | null;
-    healthInstitution: HealthInstitution | null;
-    seniority: Seniority | null;
-    currencyType: CurrencyType | null;
-  })[]> {
+  async findWithAllJoins(conditions: FilterCondition[] = []): Promise<
+    (People & {
+      jobTitle: JobTitle | null;
+      client: Client | null;
+      role: Role | null;
+      afpInstitution: AFPInstitution | null;
+      healthInstitution: HealthInstitution | null;
+      seniority: Seniority | null;
+      salaryCurrencyType: CurrencyType | null;
+      feeCurrencyType: CurrencyType | null;
+      laptopCurrencyType: CurrencyType | null;
+      technicalStacks: TechnicalsStacks | null;
+    })[]
+  > {
     const where: Record<string, unknown> = {};
 
     conditions.forEach((condition) => {
@@ -109,7 +115,10 @@ export class PeopleRepository {
         afpInstitution: true,
         healthInstitution: true,
         seniority: true,
-        currencyType: true,
+        salaryCurrencyType: true,
+        feeCurrencyType: true,
+        laptopCurrencyType: true,
+        technicalStacks: true,
       },
     });
     return result;
@@ -119,15 +128,22 @@ export class PeopleRepository {
     return prisma.people.findMany();
   }
 
-  async findById(id: number): Promise<People & {
-    client: Client | null;
-    jobTitle: JobTitle | null;
-    role: Role | null;
-    seniority: Seniority | null;
-    afpInstitution: AFPInstitution | null;
-    healthInstitution: HealthInstitution | null;
-    leaveDays: LeaveDays[];
-  } | null> {
+  async findById(id: number): Promise<
+    | (People & {
+        client: Client | null;
+        jobTitle: JobTitle | null;
+        role: Role | null;
+        seniority: Seniority | null;
+        afpInstitution: AFPInstitution | null;
+        healthInstitution: HealthInstitution | null;
+        salaryCurrencyType: CurrencyType | null;
+        feeCurrencyType: CurrencyType | null;
+        laptopCurrencyType: CurrencyType | null;
+        technicalStacks: TechnicalsStacks | null;
+        leaveDays: LeaveDays[];
+      })
+    | null
+  > {
     return prisma.people.findUnique({
       where: { id },
       include: {
@@ -137,6 +153,10 @@ export class PeopleRepository {
         seniority: true,
         afpInstitution: true,
         healthInstitution: true,
+        salaryCurrencyType: true,
+        feeCurrencyType: true,
+        laptopCurrencyType: true,
+        technicalStacks: true,
         leaveDays: true,
       },
     });
@@ -157,10 +177,7 @@ export class PeopleRepository {
   async findByName(name: string): Promise<People[]> {
     return prisma.people.findMany({
       where: {
-        OR: [
-          { name: { contains: name, mode: "insensitive" } },
-          { lastName: { contains: name, mode: "insensitive" } },
-        ],
+        OR: [{ name: { contains: name, mode: "insensitive" } }, { lastName: { contains: name, mode: "insensitive" } }],
       },
     });
   }

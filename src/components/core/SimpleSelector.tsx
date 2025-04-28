@@ -1,28 +1,28 @@
-'use client'
+"use client";
 
-import { Label, Listbox, ListboxButton, ListboxOption, ListboxOptions } from '@headlessui/react'
-import { ChevronUpDownIcon } from '@heroicons/react/16/solid'
-import { CheckIcon } from '@heroicons/react/20/solid'
-import { SelectorItem } from '@/interface/ui'
+import { Label, Listbox, ListboxButton, ListboxOption, ListboxOptions } from "@headlessui/react";
+import { ChevronUpDownIcon } from "@heroicons/react/16/solid";
+import { CheckIcon } from "@heroicons/react/20/solid";
+import { SelectorItem } from "@/interface/ui";
 
 interface Props {
-    title: String;
-    items: SelectorItem[];
-    onChange: (item: SelectorItem) => void;
-    value: SelectorItem | null;
+  title: string;
+  items: SelectorItem[];
+  onChange: (item: SelectorItem) => void;
+  value: SelectorItem | null;
 }
 
 export default function SimpleSelector({ title, items, value, onChange }: Props) {
-  
   return (
     <Listbox value={value} onChange={onChange}>
       <Label className="block text-sm/6 font-medium text-gray-900">{title}</Label>
       <div className="relative mt-2">
         <ListboxButton className="grid w-full cursor-default grid-cols-1 rounded-md bg-white py-1.5 pl-3 pr-2 text-left text-gray-900 outline outline-1 -outline-offset-1 outline-gray-300 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6">
-          {value !== null ? 
-          (<span className="col-start-1 row-start-1 truncate pr-6">{value.label}</span>):
-          (<span className="col-start-1 row-start-1 truncate pr-6">Nada seleccionado</span>)
-}
+          {value !== null ? (
+            <span className="col-start-1 row-start-1 truncate pr-6">{value.label}</span>
+          ) : (
+            <span className="col-start-1 row-start-1 truncate pr-6">Nada seleccionado</span>
+          )}
           <ChevronUpDownIcon
             aria-hidden="true"
             className="col-start-1 row-start-1 size-5 self-center justify-self-end text-gray-500 sm:size-4"
@@ -49,5 +49,5 @@ export default function SimpleSelector({ title, items, value, onChange }: Props)
         </ListboxOptions>
       </div>
     </Listbox>
-  )
+  );
 }

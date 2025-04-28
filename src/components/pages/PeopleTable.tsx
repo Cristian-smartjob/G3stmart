@@ -8,25 +8,15 @@ import { useSelector } from "react-redux";
 import { RootState } from "@/lib/store";
 import PeopleItemRow from "../Table/PeopleItemRow";
 import AddPeopleForm from "../dialogForm/AddPeopleForm";
-import { PlusIcon, FunnelIcon } from "@heroicons/react/24/outline";
+import { PlusIcon, FunnelIcon, ArrowUpTrayIcon } from "@heroicons/react/24/outline";
 import AssignProjectModal from "../modals/AssignProjectModal";
 import GenericDialog from "../dialog/GenericDialog";
 import FilterPeople from "../dialog/FilterPeople";
 import GenericModal from "../modals/GenericModal";
+import ImportExcelModal from "../modals/ImportExcelModal";
 import MainTable from "../Table/MainTable";
 import TableSkeleton from "../core/TableSkeleton";
-import type { People, JobTitle, Client as ClientModel, Role, AFPInstitution, HealthInstitution, Seniority, CurrencyType } from "@prisma/client";
-
-// Definir el tipo de PeopleWithAllRelations según lo que necesitamos
-type PeopleWithAllRelations = People & {
-  jobTitle: JobTitle | null;
-  client: ClientModel | null;
-  role: Role | null;
-  afpInstitution: AFPInstitution | null;
-  healthInstitution: HealthInstitution | null;
-  seniority: Seniority | null;
-  currencyType: CurrencyType | null;
-};
+import { PeopleWithAllRelations } from "@/types/people";
 
 const header = [
   "Empresa",
@@ -61,6 +51,7 @@ export default function PeopleTable() {
   const [currentPage, setCurrentPage] = useState(1);
   const [showDialog, setShowDialog] = useState(false);
   const [showFilterDialog, setShowFilterDialog] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [selectedSmarter, setSelectedSmarter] = useState<PeopleWithAllRelations | undefined>(undefined);
   const [query, setQuery] = useState("");
@@ -82,12 +73,20 @@ export default function PeopleTable() {
     setShowFilterDialog(true);
   };
 
+  const handleClickImport = () => {
+    setShowImportModal(true);
+  };
+
   const handlerClose = () => {
     setShowDialog(false);
   };
 
   const handlerCloseFilter = () => {
     setShowFilterDialog(false);
+  };
+
+  const handlerCloseImport = () => {
+    setShowImportModal(false);
   };
 
   const handleActionPress = (item: PeopleWithAllRelations) => {
@@ -104,6 +103,8 @@ export default function PeopleTable() {
       <GenericDialog isShow={showFilterDialog} onClose={handlerCloseFilter}>
         <FilterPeople />
       </GenericDialog>
+
+      <ImportExcelModal isOpen={showImportModal} onClose={handlerCloseImport} />
 
       <AssignProjectModal isOpen={isOpen} setIsOpen={setIsOpen} smarter={selectedSmarter} />
 
@@ -153,6 +154,14 @@ export default function PeopleTable() {
           </div>
           <div className="w-full md:w-auto flex flex-col md:flex-row space-y-2 md:space-y-0 items-stretch md:items-center justify-end md:space-x-3 flex-shrink-0">
             <div className="flex items-center space-x-3 w-full md:w-auto">
+              <button
+                id="importExcelButton"
+                onClick={handleClickImport}
+                className="w-full md:w-auto flex items-center justify-center py-2 px-4 text-sm font-medium text-gray-900 focus:outline-none bg-white rounded-lg border border-gray-200 hover:bg-gray-100 hover:text-primary-700 focus:z-10 focus:ring-4 focus:ring-gray-200 dark:focus:ring-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700"
+                type="button"
+              >
+                <ArrowUpTrayIcon className="h-4 w-4" /> <span className="ml-2">Cargar Excel de Smarters</span>
+              </button>
               <button
                 id="actionsDropdownButton"
                 onClick={handleClick}

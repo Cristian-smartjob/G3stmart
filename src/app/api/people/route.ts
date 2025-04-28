@@ -11,16 +11,16 @@ export async function GET() {
         afpInstitution: true,
         healthInstitution: true,
         seniority: true,
-        currencyType: true,
-      }
+        salaryCurrencyType: true,
+        feeCurrencyType: true,
+        laptopCurrencyType: true,
+        technicalStacks: true,
+      },
     });
 
     return NextResponse.json({ data: people }, { status: 200 });
   } catch (error) {
     console.error("Error fetching people:", error);
-    return NextResponse.json(
-      { message: "Error fetching people data" },
-      { status: 500 }
-    );
+    return NextResponse.json({ message: "Error fetching people data" }, { status: 500 });
   }
-} 
+}

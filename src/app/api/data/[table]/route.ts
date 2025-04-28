@@ -8,10 +8,11 @@ type Params = {
   };
 };
 
-export async function GET(_request: Request, { params }: Params) {
+export async function GET(request: Request, context: Params) {
   try {
-    const { table } = params;
-    
+    // Acceder a los params de forma segura en Next.js 13/14
+    const { table } = context.params;
+
     let data;
     switch (table) {
       case DataTables.AFPInstitution:
@@ -32,23 +33,20 @@ export async function GET(_request: Request, { params }: Params) {
       case DataTables.Price:
         data = await prisma.price.findMany({
           include: {
-            CurrencyType: true
-          }
+            CurrencyType: true,
+          },
         });
         break;
+      case DataTables.CurrencyType:
+        data = await prisma.currencyType.findMany();
+        break;
       default:
-        return NextResponse.json(
-          { message: `Invalid table name: ${table}` },
-          { status: 400 }
-        );
+        return NextResponse.json({ message: `Invalid table name: ${table}` }, { status: 400 });
     }
 
     return NextResponse.json({ data }, { status: 200 });
   } catch (error) {
-    console.error(`Error fetching ${params.table} data:`, error);
-    return NextResponse.json(
-      { message: `Error fetching ${params.table} data` },
-      { status: 500 }
-    );
+    console.error(`Error fetching data:`, error);
+    return NextResponse.json({ message: `Error fetching data` }, { status: 500 });
   }
-} 
+}

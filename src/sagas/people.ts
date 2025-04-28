@@ -1,65 +1,29 @@
-import { takeLatest, all, put, call, CallEffect, PutEffect } from "redux-saga/effects";
+import { takeLatest, all, put, call, Effect } from "redux-saga/effects";
 import * as ReducerUser from "@/lib/features/users";
-import type {
-  People,
-  JobTitle,
-  Client,
-  Role,
-  AFPInstitution,
-  HealthInstitution,
-  Seniority,
-  CurrencyType,
-} from "@prisma/client";
+import { PeopleWithAllRelations } from "@/types/people";
 
-// Definir el tipo de PeopleWithAllRelations según lo que necesitamos
-type PeopleWithAllRelations = People & {
-  jobTitle: JobTitle | null;
-  client: Client | null;
-  role: Role | null;
-  afpInstitution: AFPInstitution | null;
-  healthInstitution: HealthInstitution | null;
-  seniority: Seniority | null;
-  currencyType: CurrencyType | null;
-};
-
-type ApiResponse = {
+interface ApiResponse {
   data: PeopleWithAllRelations[];
   message?: string;
-};
+}
 
-// Tipar el generador con los tipos correctos
-function* fetchPeople(): Generator<
-  | CallEffect<unknown>
-  | PutEffect<ReturnType<typeof ReducerUser.fetchSuccessfull> | ReturnType<typeof ReducerUser.fetchError>>,
-  void,
-  unknown
-> {
+function* fetchUsers(): Generator<Effect, void, unknown> {
   try {
-    const response = yield call(() =>
-      fetch("/api/people", {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      })
-    );
+    const response = (yield call(fetch, "/api/people")) as Response;
 
-    const result = yield call(() => (response as Response).json());
-
-    if (!(response as Response).ok) {
-      throw new Error((result as ApiResponse).message || "Error fetching People data");
+    if (!response.ok) {
+      throw new Error("Error fetching people");
     }
 
-    yield put(ReducerUser.fetchSuccessfull((result as ApiResponse).data));
+    const result = (yield call([response, "json"])) as ApiResponse;
+    yield put(ReducerUser.fetchSuccessfull(result.data));
   } catch {
     yield put(ReducerUser.fetchError());
   }
 }
 
-function* fetchPeopleAction() {
-  yield takeLatest([ReducerUser.fetch], fetchPeople);
+function* PeopleSaga() {
+  yield all([takeLatest(ReducerUser.fetch.type, fetchUsers)]);
 }
 
-export default function* peopleAction() {
-  yield all([fetchPeopleAction()]);
-}
+export default PeopleSaga;
