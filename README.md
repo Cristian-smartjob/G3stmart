@@ -1,88 +1,57 @@
 # G3stmart
 
-A project management application for SmartJob.
+A project‐management app for SmartJob built with Next.js, PostgreSQL and TypeScript.
 
-## Getting Started
+---
 
-Follow these steps to set up and run the project locally:
+## 📋 Prerequisites
 
-### 1. Database Setup
+- **Node.js** ≥ 16
+- **npm** ≥ 8
+- **Docker** & **Docker Compose**  
+- **Git**
 
-#### Using Docker Desktop
+---
 
-1. Create a `.env` file in the `database/docker` directory with the following variables:
+## 🚀 One-Step Setup
 
-```bash
-# Values on develop
+We’ve provided two helper scripts—one for macOS/Linux and one for Windows—that will:
+
+1. Clone the repo  
+2. Create the `.env`  
+3. Bring up the database  
+4. Install dependencies  
+5. Generate Prisma client  
+6. Seed the database  
+7. Start the dev server
+
+# 1. Clone & enter repo
+git clone https://github.com/your-org/g3stmart.git
+cd g3stmart
+
+
+# 2. Create .env
+cat > .env <<EOF
+DATABASE_URL=postgresql://admin:g3smartjob@localhost:5432/g3stmart
+EOF
+
+# 2. Create .env
+cat > database/docker/.env <<EOF
 POSTGRES_USER=admin
 POSTGRES_PASSWORD=g3smartjob
 POSTGRES_DB=g3stmart
-```
+EOF
 
-2. Use one of the following commands to manage the database:
 
-```bash
-# Initialize database for the first time (creates and starts container)
-npm run db:init
 
-# Start the database container
-npm run db:start
+# 3. Start database
+cd database/docker
+docker compose --env-file .env -p g3stmart up -d
 
-# Stop the database container
-npm run db:stop
-
-# Restart the database container
-npm run db:restart
-
-# View database logs
-npm run db:logs
-
-# Clean database (stops container and removes volumes)
-npm run db:clean
-```
-
-The database will be automatically initialized with the required schema and sample data.
-
-### 2. Install Dependencies
-
-Install the project dependencies:
-
-```bash
+# 4. Install deps & generate Prisma client
+cd ../..
 npm install
-```
-
-### 3. Prisma Setup
-
-After installing dependencies, you need to set up Prisma:
-
-```bash
-# Generate Prisma Client
 npx prisma generate
-```
 
-Note: If you're using the Docker setup with init-db script, DO NOT run `prisma migrate dev` or `prisma migrate reset` as this will override the database initialization script. The database schema is already set up by the init-db script.
-
-### 4. Run the Development Server
-
-After setting up the database and installing dependencies, start the development server:
-
-```bash
+# 5. Run dev server
 npm run dev
-```
-
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the application.
-
-## Features
-
-- Client management
-- People management
-- Project tracking
-- Leave days tracking
-- Pre-invoice generation
-
-## Technologies
-
-- Next.js
-- PostgreSQL
-- TypeScript
-- Docker
