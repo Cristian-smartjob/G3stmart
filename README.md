@@ -30,12 +30,12 @@ git clone https://github.com/your-org/g3stmart.git
 cd g3stmart
 
 
-# 2. Create .env
+# 2. Create .env at /
 cat > .env <<EOF
 DATABASE_URL=postgresql://admin:g3smartjob@localhost:5432/g3stmart
 EOF
 
-# 2. Create .env
+# 3. Create .env at database/docker
 cat > database/docker/.env <<EOF
 POSTGRES_USER=admin
 POSTGRES_PASSWORD=g3smartjob
@@ -44,14 +44,14 @@ EOF
 
 
 
-# 3. Start database
+# 4. Start database
 cd database/docker
 docker compose --env-file .env -p g3stmart up -d
 
-# 4. Install deps & generate Prisma client
+# 5. Install deps & generate Prisma client
 cd ../..
 npm install
 npx prisma generate
 
-# 5. Run dev server
+# 6. Run dev server
 npm run dev
