@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import * as XLSX from "xlsx";
+import * as ExcelJS from "exceljs";
 import { PrismaClient } from "@prisma/client";
 import { z } from "zod";
 
@@ -114,11 +114,10 @@ const ExcelRowSchema = z.object({
     .nullable()
     .transform((v) => (v === null ? "" : v)),
   laptop_bonus: z.any().optional(),
-  comment: z
-    .string()
+  comment: z.any()
     .optional()
     .nullable()
-    .transform((v) => (v === null ? "" : v)),
+    .transform((v) => v === null ? "" : String(v)),
 });
 
 type ValidationError = {
@@ -176,9 +175,49 @@ export async function POST(request: NextRequest) {
 
     // Leer el archivo Excel
     const buffer = await file.arrayBuffer();
-    const workbook = XLSX.read(buffer, { type: "array", dateNF: "yyyy-mm-dd" });
-    const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-    const data = XLSX.utils.sheet_to_json(worksheet, { raw: false, dateNF: "yyyy-mm-dd" }) as Record<string, unknown>[];
+    const workbook = new ExcelJS.Workbook();
+    await workbook.xlsx.load(buffer);
+    
+    const worksheet = workbook.worksheets[0];
+    const data: Record<string, unknown>[] = [];
+
+    // Convertir la hoja de cálculo a JSON
+    worksheet.eachRow((row, rowNumber) => {
+      if (rowNumber === 1) return; // Saltar la fila de encabezados
+      
+      const rowData: Record<string, unknown> = {};
+      row.eachCell((cell, colNumber) => {
+        const header = worksheet.getRow(1).getCell(colNumber).value as string;
+        let value = cell.value;
+
+        // Convertir tipos de datos según el campo
+        if (header === 'has_vat') {
+          // Convertir a string
+          value = value ? 'true' : 'false';
+        } else if (header === 'dni') {
+          // Convertir a string
+          value = value ? String(value) : '';
+        } else if (header === 'salary' || header === 'service_fee' || header === 'laptop_bonus') {
+          // Convertir a número
+          value = value ? Number(value) : null;
+        } else if (header === 'account_number') {
+          // Convertir a número
+          value = value ? Number(String(value).replace(/\D/g, '')) : null;
+        } else if (header === 'start_date' || header === 'end_date' || header === 'client_end_date' || header === 'birth_date') {
+          // Convertir fechas
+          if (value instanceof Date) {
+            value = value.toISOString().split('T')[0];
+          } else if (typeof value === 'number') {
+            // Si es un número (fecha de Excel), convertirlo a fecha
+            const date = new Date((value - 25569) * 86400 * 1000);
+            value = date.toISOString().split('T')[0];
+          }
+        }
+
+        rowData[header] = value;
+      });
+      data.push(rowData);
+    });
 
     // Validar datos
     const validationErrors: ValidationError[] = [];
@@ -784,57 +823,89 @@ async function processRows(rows: Record<string, unknown>[]) {
 
       // Crear registro de persona
       try {
+        const personData = {
+          name,
+          lastName,
+          dni: (row["dni"] as string) || null,
+          corporateName: (row["company"] as string) || null,
+          corporateEmail: (row["corporate_email"] as string) || null,
+          contractType: (row["contract_type"] as string) || null,
+          contractStart,
+          contractEnd,
+          contractClientEnd,
+          roleId: 2, // Default role_id
+          isActive,
+          causal: (row["causal"] as string) || null,
+          reason: (row["reason"] as string) || null,
+          clientId,
+          remote: (row["work_mode"] as string) || null,
+          jobTitleId,
+          seniorityId,
+          technicalStacksId,
+          salesManager: (row["sales_manager"] as string) || null,
+          searchManager: (searchManagerValue as string) || null,
+          deliveryManager: (deliveryManagerValue as string) || null,
+          leader: (row["leader"] as string) || null,
+          leaderMail: (row["leader_email"] as string) || null,
+          leaderPhone: (row["leader_phone"] as string) || null,
+          birth: birthDate,
+          phone: (row["phone"] as string) || null,
+          email: (row["email"] as string) || null,
+          address: (row["address"] as string) || null,
+          sublocality: (row["district"] as string) || null,
+          locality: (row["city"] as string) || null,
+          country: (row["country"] as string) || null,
+          nationality: (row["nationality"] as string) || null,
+          afpInstitutionId,
+          healthInstitutionId,
+          bank: (row["bank"] as string) || null,
+          accountNumber: row["account_number"] 
+            ? typeof row["account_number"] === 'string' 
+              ? parseInt(row["account_number"].replace(/\D/g, "")) 
+              : Number(row["account_number"])
+            : null,
+          salaryCurrencyTypeId,
+          netSalary: row["salary"] 
+            ? typeof row["salary"] === 'string' 
+              ? parseFloat(row["salary"].replace(/,/g, "")) 
+              : Number(row["salary"])
+            : null,
+          feeCurrencyTypeId,
+          serviceFee: row["service_fee"] 
+            ? typeof row["service_fee"] === 'string' 
+              ? parseFloat(row["service_fee"].replace(/,/g, "")) 
+              : Number(row["service_fee"])
+            : null,
+          fee,
+          billableDay: 30, // Default value
+          laptopCurrencyTypeId,
+          laptopBonus: row["laptop_bonus"] 
+            ? typeof row["laptop_bonus"] === 'string' 
+              ? parseFloat(row["laptop_bonus"].replace(/,/g, "")) 
+              : Number(row["laptop_bonus"])
+            : null,
+          comment: row["comment"] !== null && row["comment"] !== undefined ? String(row["comment"]) : null,
+        };
+
+        // Verificar si ya existe una persona con el mismo DNI
+        if (personData.dni) {
+          const existingPerson = await prisma.people.findFirst({
+            where: {
+              dni: personData.dni,
+            },
+          });
+
+          if (existingPerson) {
+            console.log(`⚠️ Persona con DNI ${personData.dni} ya existe en la base de datos`);
+            duplicated.push({ row: rowIndex, dni: personData.dni });
+            continue;
+          }
+        }
+
         await prisma.people.create({
-          data: {
-            name,
-            lastName,
-            dni: (row["dni"] as string) || null,
-            corporateName: (row["company"] as string) || null,
-            corporateEmail: (row["corporate_email"] as string) || null,
-            contractType: (row["contract_type"] as string) || null,
-            contractStart,
-            contractEnd,
-            contractClientEnd,
-            roleId: 2, // Default role_id
-            isActive,
-            causal: (row["causal"] as string) || null,
-            reason: (row["reason"] as string) || null,
-            clientId,
-            remote: (row["work_mode"] as string) || null,
-            jobTitleId,
-            seniorityId,
-            technicalStacksId,
-            salesManager: (row["sales_manager"] as string) || null,
-            searchManager: (searchManagerValue as string) || null,
-            deliveryManager: (deliveryManagerValue as string) || null,
-            leader: (row["leader"] as string) || null,
-            leaderMail: (row["leader_email"] as string) || null,
-            leaderPhone: (row["leader_phone"] as string) || null,
-            birth: birthDate,
-            phone: (row["phone"] as string) || null,
-            email: (row["email"] as string) || null,
-            address: (row["address"] as string) || null,
-            sublocality: (row["district"] as string) || null,
-            locality: (row["city"] as string) || null,
-            country: (row["country"] as string) || null,
-            nationality: (row["nationality"] as string) || null,
-            afpInstitutionId,
-            healthInstitutionId,
-            bank: (row["bank"] as string) || null,
-            accountNumber: row["account_number"]
-              ? parseInt((row["account_number"] as string).replace(/\D/g, ""))
-              : null,
-            salaryCurrencyTypeId,
-            netSalary: row["salary"] ? parseFloat((row["salary"] as string).replace(/,/g, "")) : null,
-            feeCurrencyTypeId,
-            serviceFee: row["service_fee"] ? parseFloat((row["service_fee"] as string).replace(/,/g, "")) : null,
-            fee,
-            billableDay: 30, // Default value
-            laptopCurrencyTypeId,
-            laptopBonus: row["laptop_bonus"] ? parseFloat((row["laptop_bonus"] as string).replace(/,/g, "")) : null,
-            comment: (row["comment"] as string) || null,
-          },
+          data: personData,
         });
+
         console.log(
           `✅ Persona creada exitosamente en fila ${rowIndex}: ${name} ${lastName} (DNI: ${debugValue(dni)})`
         );

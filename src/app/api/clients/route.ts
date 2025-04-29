@@ -29,7 +29,7 @@ export async function GET() {
       marginPercentage: client.marginPercentage ? Number(client.marginPercentage) : null,
     }));
 
-    console.log("Clients data from API:", serializedClients);
+    // console.log("Clients data from API:", serializedClients);
     return NextResponse.json({ data: serializedClients }, { status: 200 });
   } catch (error) {
     console.error("Error fetching clients:", error);

@@ -171,11 +171,22 @@ const ImportExcelModal = ({ isOpen, onClose }: ImportExcelModalProps) => {
           <div className="mb-6 p-4 bg-red-50 rounded-md border border-red-200">
             <h3 className="text-sm font-medium text-red-800 mb-2">Se encontraron errores en los datos:</h3>
             <ul className="text-xs text-red-700 list-disc pl-5 max-h-40 overflow-y-auto">
-              {importResult.errors.slice(0, 10).map((error, index) => (
-                <li key={index}>
-                  Fila {error.row}: {error.field} - {error.message}
-                </li>
-              ))}
+              {importResult.errors.slice(0, 10).map((error, index) => {
+                // Obtener el valor que causó el error
+                const errorRow = previewData[error.row - 2]; // -2 porque la primera fila es el encabezado y Excel comienza en 1
+                const errorValue = errorRow ? errorRow[error.field] : "No disponible";
+                const valueType = typeof errorValue;
+                
+                return (
+                  <li key={index} className="mb-1">
+                    <span className="font-semibold">Fila {error.row}:</span> Campo {error.field} - {error.message}
+                    <br />
+                    <span className="text-gray-600">
+                      Valor actual: {String(errorValue)} (tipo: {valueType})
+                    </span>
+                  </li>
+                );
+              })}
               {importResult.errors.length > 10 && <li>...y {importResult.errors.length - 10} errores más</li>}
             </ul>
           </div>
@@ -303,11 +314,22 @@ const ImportExcelModal = ({ isOpen, onClose }: ImportExcelModalProps) => {
                 <p className="text-sm font-medium text-red-800">Se han encontrado errores durante la importación.</p>
                 {importResult.errors && (
                   <ul className="mt-2 text-sm text-red-700 list-disc pl-5 max-h-40 overflow-y-auto">
-                    {importResult.errors.slice(0, 5).map((error, index) => (
-                      <li key={index}>
-                        Fila {error.row}: {error.field} - {error.message}
-                      </li>
-                    ))}
+                    {importResult.errors.slice(0, 5).map((error, index) => {
+                      // Obtener el valor que causó el error
+                      const errorRow = previewData?.[error.row - 2];
+                      const errorValue = errorRow ? errorRow[error.field] : "No disponible";
+                      const valueType = typeof errorValue;
+                      
+                      return (
+                        <li key={index} className="mb-1">
+                          <span className="font-semibold">Fila {error.row}:</span> Campo {error.field} - {error.message}
+                          <br />
+                          <span className="text-gray-600">
+                            Valor actual: {String(errorValue)} (tipo: {valueType})
+                          </span>
+                        </li>
+                      );
+                    })}
                     {importResult.errors.length > 5 && <li>...y {importResult.errors.length - 5} errores más</li>}
                   </ul>
                 )}
