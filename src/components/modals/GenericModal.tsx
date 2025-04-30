@@ -1,6 +1,5 @@
 'use client'
 
-import { People } from '@/interface/common';
 import { Dialog, DialogBackdrop, DialogPanel } from '@headlessui/react'
 import React from 'react';
 

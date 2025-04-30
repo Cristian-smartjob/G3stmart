@@ -1,19 +1,12 @@
 import {  DialogTitle } from '@headlessui/react'
-import {  AssignedProject  } from '@/interface/common'
 import { Formik } from 'formik';
 import { CalendarIcon } from '@heroicons/react/24/outline'
-import { useEffect, useState } from 'react';
+import {  useState } from 'react';
 import { useAppDispatch } from '@/lib/hook';
-import * as Yup from 'yup';
-import ErrorAlert from '../core/ErrorAlert'
 import { assign } from '@/lib/features/leaveDays';
 import { Datepicker, Label } from "flowbite-react"
 import { calcularDiasHabiles } from '@/utils/date';
 
-const validationSchema = Yup.object({
-  project_id: Yup.string().required('Debes elegir un proyecto'),
-  price_id: Yup.string().required('Debes elegir un precio'),
-});
 
 
 interface Props {
@@ -50,7 +43,7 @@ export default function AddAsignedProjectForm({ title, smarterId, setIsOpen }: P
  
       <Formik
        initialValues={initialValues}
-       onSubmit={(values, { setSubmitting }) => {
+       onSubmit={(values) => {
         
 
         dispatch(assign({
@@ -66,7 +59,6 @@ export default function AddAsignedProjectForm({ title, smarterId, setIsOpen }: P
      >
        {({
         values,
-         errors,
          handleSubmit,
          setFieldValue
        }) => (

@@ -1,6 +1,11 @@
 import { prisma } from "../connection/prisma";
 import type { Prisma, Client, Contact } from "@prisma/client";
-import { FilterCondition } from "../types/database.types";
+
+interface FilterCondition {
+  column: string;
+  operator: string;
+  value: string | number | boolean | unknown[];
+}
 
 export class ContactRepository {
   async findWithClient(conditions: FilterCondition[] = []): Promise<(Contact & { client: Client | null })[]> {

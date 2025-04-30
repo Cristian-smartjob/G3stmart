@@ -5,7 +5,7 @@ import { XMarkIcon } from '@heroicons/react/24/outline'
 
 interface Props {
     isShow: boolean;
-    title?: String;
+    title?: string;
     onClose: () => void;
     children: React.ReactNode;
 }

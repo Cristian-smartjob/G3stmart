@@ -280,7 +280,7 @@ export async function createPreInvoice(data: PreinvoiceForm): Promise<PreInvoice
             status: "ASSIGN", // Estado inicial (antes era "PENDING")
             personId: person.id,
             preInvoiceId: createdPreInvoice.id,
-            value: person.fee || 0,
+            value: Number(person.fee) || 0,
             billableDays: person.billableDay || 0,
             leaveDays: 0,
             totalConsumeDays: person.billableDay || 0,

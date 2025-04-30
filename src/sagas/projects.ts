@@ -68,11 +68,18 @@ function* fetchProjects(): FetchSagaGenerator<ProjectWithClient[]> {
       );
     }
 
-    yield put(
-      ReducerProject.fetchSuccessfull(
-        (result as ApiResponse<ProjectWithClient[]>).data
-      )
-    );
+    const transformedData = (result as ApiResponse<ProjectWithClient[]>).data.map(project => ({
+      ...project,
+      description: project.description || undefined,
+      status: project.status || '',
+      startDate: project.startDate || undefined,
+      endDate: project.endDate || undefined,
+      clientId: project.clientId || undefined,
+      createdAt: project.createdAt || new Date(),
+      updatedAt: project.updatedAt || new Date()
+    }));
+    
+    yield put(ReducerProject.fetchSuccessfull(transformedData));
   } catch (e) {
     console.log("error", e);
     yield put(ReducerProject.fetchError());
@@ -84,7 +91,7 @@ function* fetchProjectsAction() {
 }
 
 function* addAssignedProjectAction() {
-  yield takeLatest([ReducerProject.assign], addAssignedProject);
+  yield takeLatest("projects/assign", addAssignedProject);
 }
 
 export default function* projectsAction() {

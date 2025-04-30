@@ -1,17 +1,14 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/infrastructure/database/connection/prisma";
 import { DataTables } from "@/lib/features/data";
 
-type Params = {
-  params: {
-    table: string;
-  };
-};
-
-export async function GET(request: Request, context: Params) {
+export async function GET(request: NextRequest) {
   try {
-    // Acceder a los params de forma segura en Next.js 13/14
-    const { table } = context.params;
+    const table = request.url.split('/').pop();
+    
+    if (!table) {
+      return NextResponse.json({ message: "Table name is required" }, { status: 400 });
+    }
 
     let data;
     switch (table) {

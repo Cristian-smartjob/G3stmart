@@ -72,7 +72,11 @@ export default function ProjectsTable(){
           <ProjectsTableHeader />
           <Table.Body className="divide-y">
             {projects.map(item => (
-              <ClientItemRow key={item.id} item={item} />
+              <ClientItemRow 
+                key={item.id} 
+                item={item} 
+                onPressItem={() => {}} 
+              />
             ))}
           </Table.Body>
         </Table>

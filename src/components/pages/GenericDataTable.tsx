@@ -88,7 +88,14 @@ export default function GenericDataTable({ title, type }: Props) {
             )}
 
             {afpInstitutions.map((item) => (
-              <DataItemRow key={item.id} item={item} />
+              <DataItemRow 
+                key={item.id} 
+                item={{
+                  ...item,
+                  createdAt: item.createdAt || undefined,
+                  updatedAt: item.updatedAt || undefined
+                }} 
+              />
             ))}
           </>
         </MainTable>

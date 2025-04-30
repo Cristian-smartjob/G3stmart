@@ -12,7 +12,6 @@ import TabSelector, { Selector } from "../core/TabSelector";
 import Peoplesalary from "../form/steps/PeopleSalary";
 import PeopleSmarter from "../form/steps/PeopleSmarter";
 import PeopleContact from "../form/steps/PeopleContact";
-import ErrorAlert from "../core/ErrorAlert";
 
 const initialValues: PeopleForm = {};
 
@@ -27,7 +26,6 @@ const tabs: Selector[] = [
 export default function AddPeopleForm() {
   const dispatch = useAppDispatch();
   const [menu, setMenu] = useState(1);
-  const [errors, setErrors] = useState<string | null>(null);
 
   const formik = useFormik({
     initialValues: initialValues,
@@ -113,12 +111,6 @@ export default function AddPeopleForm() {
             {menu === 4 ? <PeopleImposition /> : null}
 
             {menu === 5 ? <Peoplesalary /> : null}
-
-            {errors !== null ? (
-              <div className="mt-4">
-                <ErrorAlert message={errors} />
-              </div>
-            ) : null}
 
             <div className="mt-10 border-t border-gray-200 pt-6 sm:flex sm:items-center sm:justify-between">
               <button

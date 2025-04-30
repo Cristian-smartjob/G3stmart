@@ -1,3 +1,4 @@
+import { ComboBoxItem } from "@/interface/ui";
 
 
 interface Props {

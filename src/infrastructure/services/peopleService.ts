@@ -58,8 +58,8 @@ export class PeopleService {
     if (personData.administrativeArea !== undefined) data.administrativeArea = personData.administrativeArea;
     if (personData.country !== undefined) data.country = personData.country;
     if (personData.nationality !== undefined) data.nationality = personData.nationality;
-    if (personData.netSalary !== undefined) data.netSalary = new Prisma.Decimal(personData.netSalary);
-    if (personData.fee !== undefined) data.fee = new Prisma.Decimal(personData.fee);
+    if (personData.netSalary !== undefined) data.netSalary = personData.netSalary;
+    if (personData.fee !== undefined) data.fee = Boolean(personData.fee);
     if (personData.birth !== undefined) data.birth = personData.birth;
     if (personData.phone !== undefined) data.phone = personData.phone;
     if (personData.billableDay !== undefined) data.billableDay = personData.billableDay;
@@ -77,7 +77,7 @@ export class PeopleService {
       data.seniority = { connect: { id: personData.seniorityId } };
     }
     if (personData.currencyTypeId) {
-      data.currencyType = { connect: { id: personData.currencyTypeId } };
+      data.feeCurrencyType = { connect: { id: personData.currencyTypeId } };
     }
     if (personData.jobTitleId) {
       data.jobTitle = { connect: { id: personData.jobTitleId } };
@@ -130,8 +130,8 @@ export class PeopleService {
     if (personData.administrativeArea !== undefined) data.administrativeArea = personData.administrativeArea;
     if (personData.country !== undefined) data.country = personData.country;
     if (personData.nationality !== undefined) data.nationality = personData.nationality;
-    if (personData.netSalary !== undefined) data.netSalary = new Prisma.Decimal(personData.netSalary);
-    if (personData.fee !== undefined) data.fee = new Prisma.Decimal(personData.fee);
+    if (personData.netSalary !== undefined) data.netSalary = personData.netSalary;
+    if (personData.fee !== undefined) data.fee = Boolean(personData.fee);
     if (personData.birth !== undefined) data.birth = personData.birth;
     if (personData.phone !== undefined) data.phone = personData.phone;
     if (personData.billableDay !== undefined) data.billableDay = personData.billableDay;
@@ -153,7 +153,7 @@ export class PeopleService {
       data.seniority = personData.seniorityId ? { connect: { id: personData.seniorityId } } : { disconnect: true };
     }
     if (personData.currencyTypeId !== undefined) {
-      data.currencyType = personData.currencyTypeId
+      data.feeCurrencyType = personData.currencyTypeId
         ? { connect: { id: personData.currencyTypeId } }
         : { disconnect: true };
     }

@@ -9,7 +9,7 @@ import { prisma } from "../connection/prisma";
 export function getModelFromTableName(tableName: string): unknown {
   const modelName = tableName.toLowerCase();
 
-  const prismaAny = prisma as Record<string, unknown>;
+  const prismaAny = (prisma as unknown) as Record<string, unknown>;
   if (!prismaAny[modelName]) {
     throw new Error(`Model ${tableName} not found in Prisma schema`);
   }

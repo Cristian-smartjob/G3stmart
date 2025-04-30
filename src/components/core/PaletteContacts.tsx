@@ -26,9 +26,7 @@ const people = [
   },
 ]
 
-const recent = [people[5], people[4], people[2], people[10], people[16]]
-
-function classNames(...classes) {
+function classNames(...classes: (string | boolean | undefined)[]) {
   return classes.filter(Boolean).join(' ')
 }
 
@@ -70,9 +68,9 @@ console.log('filteredPeople', filteredPeople)
           className="mx-auto max-w-3xl transform divide-y divide-gray-100 overflow-hidden rounded-xl bg-white shadow-2xl ring-1 ring-black/5 transition-all data-[closed]:scale-95 data-[closed]:opacity-0 data-[enter]:duration-300 data-[leave]:duration-200 data-[enter]:ease-out data-[leave]:ease-in"
         >
           <Combobox
-            onChange={(person) => {
+            onChange={(person: typeof people[0]) => {
               if (person) {
-                window.location = person.url
+                window.location.href = person.url
               }
             }}
           >
@@ -97,7 +95,7 @@ console.log('filteredPeople', filteredPeople)
                     <div
                       className={classNames(
                         'max-h-96 min-w-0 flex-auto scroll-py-4 overflow-y-auto px-6 py-4',
-                        activeOption && 'sm:h-96',
+                        !!activeOption && 'sm:h-96',
                       )}
                     >
                       {query === '' && (
@@ -162,7 +160,7 @@ console.log('filteredPeople', filteredPeople)
                   <div className="px-6 py-14 text-center text-sm sm:px-14">
                     <UsersIcon className="mx-auto size-6 text-gray-400" aria-hidden="true" />
                     <p className="mt-4 font-semibold text-gray-900">No people found</p>
-                    <p className="mt-2 text-gray-500">We couldn’t find anything with that term. Please try again.</p>
+                    <p className="mt-2 text-gray-500">We couldn&apos;t find anything with that term. Please try again.</p>
                   </div>
                 )}
               </>

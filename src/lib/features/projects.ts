@@ -1,4 +1,4 @@
-import { AssignedProject, Project } from '@/interface/common';
+import {  Project } from '@/interface/common';
 import { createSlice } from '@reduxjs/toolkit';
 import type { PayloadAction } from '@reduxjs/toolkit';
 
@@ -16,10 +16,10 @@ const projectsSlice = createSlice({
   name: 'projects',
   initialState,
   reducers: {
-    assign(state, action: PayloadAction<AssignedProject>){
+    assign(){
 
     },
-    assignSuccessfull(state){
+    assignSuccessfull(){
 
     },
     fetch(state){

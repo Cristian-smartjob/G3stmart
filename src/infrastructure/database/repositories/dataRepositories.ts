@@ -9,7 +9,12 @@ import type {
   CurrencyType,
   Price,
 } from "@prisma/client";
-import { FilterCondition } from "../types/database.types";
+
+interface FilterCondition {
+  column: string;
+  operator: string;
+  value: string | number | boolean | unknown[];
+}
 
 export interface PriceWithCurrencyType extends Price {
   CurrencyType: CurrencyType | null;
