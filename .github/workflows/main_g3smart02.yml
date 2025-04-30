@@ -70,11 +70,11 @@ jobs:
 
       - name: initialize db
         env:
-          POSTGRES_HOST=${{ secrets.POSTGRES_HOST }}
-          POSTGRES_PORT=${{ secrets.POSTGRES_PORT }}
-          POSTGRES_DB=${{ secrets.POSTGRES_DB }}
-          POSTGRES_USER=${{ secrets.POSTGRES_USER }}
-          POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
+          POSTGRES_HOST: ${{secrets.POSTGRES_HOST}}
+          POSTGRES_PORT: ${{secrets.POSTGRES_PORT}}
+          POSTGRES_DB : ${{secrets.POSTGRES_DB}}
+          POSTGRES_USER : ${{secrets.POSTGRES_USER}}
+          POSTGRES_PASSWORD : ${{secrets.POSTGRES_PASSWORD}}
         run: |
           npm run init-db
           
