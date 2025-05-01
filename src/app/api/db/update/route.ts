@@ -1,4 +1,4 @@
-/*import { FilterCondition } from "@/infrastructure/database/types/database.types";
+import { FilterCondition } from "@/infrastructure/database/types/database.types";
 import { NextResponse } from "next/server";
 import { executeUpdate } from "@/infrastructure/database/operations/update";
 
@@ -31,4 +31,3 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: error instanceof Error ? error.message : "Unknown error" }, { status: 500 });
   }
 }
-*/
