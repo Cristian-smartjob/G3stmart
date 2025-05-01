@@ -1,5 +1,10 @@
+
 import { NextResponse } from "next/server";
 import { executeInsert } from "@/infrastructure/database/operations/insert";
+
+/*import { NextResponse } from "next/server";
+import { executeInsert } from "@/lib/dbServer";*/
+
 
 export async function POST(request: Request) {
   try {
