@@ -2,7 +2,7 @@ import { SidebarItem } from '@/interface/ui'
 import { ChevronDownIcon } from '@heroicons/react/16/solid'
 import Link from 'next/link'
 
-function classNames(...classes) {
+function classNames(...classes: (string | boolean | undefined)[]) {
   return classes.filter(Boolean).join(' ')
 }
 

@@ -7,7 +7,7 @@ import {
 } from '@heroicons/react/24/outline'
 import { SidebarItem } from '@/interface/ui'
 
-function classNames(...classes) {
+function classNames(...classes: (string | boolean | undefined)[]) {
   return classes.filter(Boolean).join(' ')
 }
 
@@ -62,13 +62,15 @@ export default function MobileSidebar({ navigation }: Props) {
                                 'group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold',
                               )}
                             >
-                              <item.icon
-                                aria-hidden="true"
-                                className={classNames(
-                                  item.current ? 'text-indigo-600' : 'text-gray-400 group-hover:text-indigo-600',
-                                  'size-6 shrink-0',
-                                )}
-                              />
+                              {item.icon && (
+                                <item.icon
+                                  aria-hidden="true"
+                                  className={classNames(
+                                    item.current ? 'text-indigo-600' : 'text-gray-400 group-hover:text-indigo-600',
+                                    'size-6 shrink-0',
+                                  )}
+                                />
+                              )}
                               {item.name}
                             </a>
                           </li>

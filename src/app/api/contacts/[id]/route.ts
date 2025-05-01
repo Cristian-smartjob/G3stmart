@@ -1,19 +1,17 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/infrastructure/database/connection/prisma";
 
-type Params = {
-  params: {
-    id: string;
-  };
-};
-
-export async function PUT(request: Request, { params }: Params) {
+export async function PUT(request: NextRequest) {
   try {
-    const { id } = params;
+    const id = request.url.split('/').pop();
     const contactData = await request.json();
     
+    if (!id) {
+      return NextResponse.json({ message: "Contact ID is required" }, { status: 400 });
+    }
+    
     // Eliminar id del objeto de datos para evitar conflictos
-    const { id: contactId, ...data } = contactData;
+    const { ...data } = contactData;
     
     const updatedContact = await prisma.contact.update({
       where: { id: Number(id) },
@@ -30,9 +28,13 @@ export async function PUT(request: Request, { params }: Params) {
   }
 }
 
-export async function DELETE(_request: Request, { params }: Params) {
+export async function DELETE(request: NextRequest) {
   try {
-    const { id } = params;
+    const id = request.url.split('/').pop();
+    
+    if (!id) {
+      return NextResponse.json({ message: "Contact ID is required" }, { status: 400 });
+    }
     
     const deletedContact = await prisma.contact.delete({
       where: { id: Number(id) }

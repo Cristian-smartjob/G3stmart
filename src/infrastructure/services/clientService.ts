@@ -1,7 +1,10 @@
 import { clientRepository } from "../database/repositories";
 import type { Client, Contact } from "@prisma/client";
 import type { Prisma } from "@prisma/client";
-import type { ClientWithContacts } from "../database/repositories/clientRepository";
+
+type ClientWithContacts = Client & {
+  contacts: Contact[];
+};
 
 export class ClientService {
   async getAllClients(): Promise<Client[]> {

@@ -28,11 +28,16 @@ export default function PreInvoiceItemRow({ item }: Props) {
         {!item.contact ? "No asignada" : `${item.contact.name} ${item.contact.lastName || ""}`}
       </td>
       <td className="px-4 py-3">
-        {" "}
-        {item.month < 10 ? "0" : ""}
-        {item.month} / {item.year}
+        {item.month && item.year ? (
+          <>
+            {item.month < 10 ? "0" : ""}
+            {item.month} / {item.year}
+          </>
+        ) : (
+          "-"
+        )}
       </td>
-      <td className="px-4 py-3">{formatCurrency(item.value)}</td>
+      <td className="px-4 py-3">{item.value ? formatCurrency(Number(item.value)) : "-"}</td>
 
       <td className="px-4 py-3">
         {" "}

@@ -1,4 +1,3 @@
-
 import Selector from '../core/Selector'
 import { useSelector } from 'react-redux'
 import { Client } from '@/interface/common'
@@ -70,7 +69,11 @@ export default function AddProjectForm() {
          
 
               <div className="mt-6">
-                <Selector title='Cliente' items={(clients || []).map(item => ({id:item.id, label: `${item.name}`}))} />
+                <Selector 
+                  title='Cliente' 
+                  items={(clients || []).map(item => ({id:item.id, label: `${item.name}`}))}
+                  onChange={() => {}}
+                />
               </div>
 
             

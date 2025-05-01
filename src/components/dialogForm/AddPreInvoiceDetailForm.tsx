@@ -39,14 +39,9 @@ export default function AddPreInvoiceDetailForm() {
        }}
      >
        {({
-         values,
-         errors,
-         touched,
          handleChange,
          handleBlur,
          handleSubmit,
-         isSubmitting,
-         setFieldValue
        }) => (
         <form className="px-4 pb-36 sm:px-6 lg:col-start-1 lg:row-start-1 lg:px-0 lg:pb-16" onSubmit={handleSubmit}>
         <div className="mx-auto max-w-lg lg:max-w-none">

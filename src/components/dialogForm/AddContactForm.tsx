@@ -52,8 +52,6 @@ export default function AddContactForm({ onSave, isEditMode, contact = {} }: Pro
     },
   });
 
-  formik.values
-
   useEffect(() => {
     dispatch(FetchClients())
   }, [dispatch])

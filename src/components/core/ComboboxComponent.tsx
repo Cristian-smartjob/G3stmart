@@ -1,6 +1,7 @@
 'use client'
 
 
+import { ComboBoxItem } from '@/interface/ui';
 import { Combobox, ComboboxButton, ComboboxInput, ComboboxOption, ComboboxOptions, Label } from '@headlessui/react'
 import { CheckIcon, ChevronUpDownIcon } from '@heroicons/react/20/solid'
 import { useState } from 'react'

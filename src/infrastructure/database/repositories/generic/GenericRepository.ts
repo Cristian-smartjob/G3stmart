@@ -1,6 +1,11 @@
 import { prisma } from "../../connection/prisma";
-import { FilterCondition } from "../../types/database.types";
 import { snakeToCamelCase } from "../../utils/prismaUtils";
+
+interface FilterCondition {
+  column: string;
+  operator: string;
+  value: string | number | boolean | unknown[];
+}
 
 interface DynamicPrismaModel {
   findMany: (args: { where?: Record<string, unknown>; select?: Record<string, boolean> }) => Promise<unknown[]>;
@@ -73,7 +78,7 @@ export class GenericRepository<T> {
   }
 
   protected getModel(): DynamicPrismaModel {
-    const prismaAny = prisma as Record<string, unknown>;
+    const prismaAny = (prisma as unknown) as Record<string, unknown>;
 
     if (!prismaAny[this.modelName]) {
       throw new Error(`Model ${this.tableName} not found in Prisma schema`);

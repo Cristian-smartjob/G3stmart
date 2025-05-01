@@ -12,7 +12,12 @@ import type {
   CurrencyType,
   TechnicalsStacks,
 } from "@prisma/client";
-import { FilterCondition } from "../types/database.types";
+
+interface FilterCondition {
+  column: string;
+  operator: string;
+  value: string | number | boolean | unknown[];
+}
 
 export class PeopleRepository {
   async findWithJobTitle(conditions: FilterCondition[] = []): Promise<(People & { jobTitle: JobTitle | null })[]> {

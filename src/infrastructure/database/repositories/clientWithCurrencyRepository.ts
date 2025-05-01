@@ -1,6 +1,11 @@
 import { prisma } from "../connection/prisma";
 import type { Prisma, Client, CurrencyType } from "@prisma/client";
-import { FilterCondition } from "../types/database.types";
+
+interface FilterCondition {
+  column: string;
+  operator: string;
+  value: string | number | boolean | unknown[];
+}
 
 export class ClientWithCurrencyRepository {
   async findWithCurrencyType(conditions: FilterCondition[] = []): Promise<(Client & { currencyType: CurrencyType | null })[]> {

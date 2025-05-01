@@ -1,5 +1,5 @@
-import { Popover, Button } from "flowbite-react";
-import { EnvelopeIcon, PhoneIcon, PlusIcon, QuestionMarkCircleIcon } from '@heroicons/react/20/solid'
+import { Popover, } from "flowbite-react";
+import { EnvelopeIcon, PhoneIcon, QuestionMarkCircleIcon } from '@heroicons/react/20/solid'
 
 
 export default function PeoplePopOver(){

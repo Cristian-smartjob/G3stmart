@@ -5,20 +5,18 @@ import { Client } from "@/interface/common";
 import { SelectorItem } from "@/interface/ui";
 import { ContactForm } from "@/interface/form";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 interface Props {
    handleBlur: {
-           (e: React.FocusEvent<any>): void;
-           <T = string | any>(fieldOrEvent: T): T extends string ? (e: any) => void : void;
+           (e: React.FocusEvent<HTMLInputElement>): void;
+           <T = string | React.FocusEvent<HTMLInputElement>>(fieldOrEvent: T): T extends string ? (e: React.FocusEvent<HTMLInputElement>) => void : void;
        };
     handleChange: {
-        (e: React.ChangeEvent<any>): void;
-        <T = string | React.ChangeEvent<any>>(field: T): T extends React.ChangeEvent<any> ? void : (e: string | React.ChangeEvent<any>) => void;
+        (e: React.ChangeEvent<HTMLInputElement>): void;
+        <T = string | React.ChangeEvent<HTMLInputElement>>(field: T): T extends React.ChangeEvent<HTMLInputElement> ? void : (e: string | React.ChangeEvent<HTMLInputElement>) => void;
     },
     onSelectorField: (field: string, value: string | number) => void;
     values: ContactForm;
 }
- /* eslint-enable @typescript-eslint/no-explicit-any */
 
 export default function ContactPersonal({handleBlur, handleChange, onSelectorField, values}: Props){
 
@@ -85,7 +83,7 @@ export default function ContactPersonal({handleBlur, handleChange, onSelectorFie
                             name="email"
                             type="text"
                             autoComplete="text"
-                            value={values.email}
+                            value={values.email ?? ''}
                             className="block w-full rounded-md bg-white px-3 py-2 text-base text-gray-900 outline outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
                             onChange={handleChange}
                             onBlur={handleBlur}
@@ -103,7 +101,7 @@ export default function ContactPersonal({handleBlur, handleChange, onSelectorFie
                             name="phone"
                             type="text"
                             autoComplete="text"
-                            value={values.phone}
+                            value={values.phone ?? ''}
                             className="block w-full rounded-md bg-white px-3 py-2 text-base text-gray-900 outline outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
                             onChange={handleChange}
                             onBlur={handleBlur}
@@ -116,7 +114,7 @@ export default function ContactPersonal({handleBlur, handleChange, onSelectorFie
                 <Selector 
                     title='Cliente' 
                     isLoading={isLoading}
-                    items={(clients || []).map(item => ({id:item.id, label: `${item.name}`}))}
+                    items={(clients || []).map(item => ({id:item.id, label: `${item.name}`}))}
                     value={selectedClient === undefined ? null : {
                         id: selectedClient.id,
                         label: selectedClient.name

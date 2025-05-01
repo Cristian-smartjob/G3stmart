@@ -67,6 +67,7 @@ export interface PeopleForm {
 export interface ContactForm {
   id?: number;
   name?: string;
+  lastName?: string;
   email?: string | null;
   phone?: string | null;
   client_id?: number | null;

@@ -92,3 +92,16 @@ export interface PreInvoiceUpdate {
   completedAt?: Date;
   client?: Client;
 }
+
+export interface Project {
+  id: number;
+  name: string;
+  description?: string;
+  status: string;
+  createdAt: Date;
+}
+
+export interface AssignedProject {
+  projectId: number;
+  userId: number;
+}

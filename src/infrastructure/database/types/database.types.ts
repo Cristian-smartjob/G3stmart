@@ -1,8 +1,8 @@
-export type FilterCondition = {
+export interface FilterCondition {
   column: string;
   operator: string;
-  value: unknown;
-};
+  value: string | number | boolean | unknown[];
+}
 
 export interface DatabaseError {
   message: string;

@@ -1,5 +1,10 @@
+
+import { NextResponse } from "next/server";
+import { executeInsert } from "@/infrastructure/database/operations/insert";
+
 /*import { NextResponse } from "next/server";
-import { executeInsert } from "@/lib/dbServer";
+import { executeInsert } from "@/lib/dbServer";*/
+
 
 export async function POST(request: Request) {
   try {
@@ -26,4 +31,3 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: error instanceof Error ? error.message : "Unknown error" }, { status: 500 });
   }
 }
-*/

@@ -1,0 +1,6 @@
+# Ignorar archivos generados por Prisma
+**/prisma/**
+**/node_modules/
+**/.next/
+src/infrastructure/database/src/infrastructure/database/prisma/**
+src/infrastructure/database/prisma/**
