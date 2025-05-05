@@ -87,14 +87,14 @@ export default function GenericDataTable({ title, type }: Props) {
               </tr>
             )}
 
-            {afpInstitutions.map((item) => (
-              <DataItemRow 
-                key={item.id} 
+            {afpInstitutions.slice(Math.max(0, currentPage - 1) * 10, currentPage * 10).map((item) => (
+              <DataItemRow
+                key={item.id}
                 item={{
                   ...item,
                   createdAt: item.createdAt || undefined,
-                  updatedAt: item.updatedAt || undefined
-                }} 
+                  updatedAt: item.updatedAt || undefined,
+                }}
               />
             ))}
           </>
