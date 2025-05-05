@@ -48,16 +48,6 @@ export default function EnvPage() {
     <div className="p-8">
       <h1 className="text-2xl font-bold mb-4">Variables de Entorno</h1>
       <div className="bg-white shadow-md rounded-lg p-6">
-        <div className="mb-4 p-4 bg-yellow-100 rounded">
-          <p className="text-sm text-yellow-800">
-            Nota: Asegúrate de que:
-            <ul className="list-disc ml-6 mt-2">
-              <li>Tienes un archivo .env en la raíz del proyecto</li>
-              <li>Has reiniciado el servidor de desarrollo después de agregar las variables</li>
-              <li>Las variables están correctamente definidas en el archivo .env</li>
-            </ul>
-          </p>
-        </div>
         <table className="min-w-full">
           <thead>
             <tr className="bg-gray-100">
