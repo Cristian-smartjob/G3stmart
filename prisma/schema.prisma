@@ -190,7 +190,7 @@ model People {
   afpInstitutionId     Int?               @map("afp_institution_id")
   healthInstitutionId  Int?               @map("health_institution_id")
   bank                 String?            @db.VarChar(100)
-  accountNumber        Int?               @map("account_number")
+  accountNumber        String?            @map("account_number")
   salaryCurrencyTypeId Int?               @map("salary_currency_type_id")
   netSalary            Decimal?           @map("net_salary") @db.Decimal(12, 2)
   feeCurrencyTypeId    Int?               @map("fee_currency_type_id")
