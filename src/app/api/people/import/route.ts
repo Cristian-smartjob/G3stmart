@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import * as ExcelJS from "exceljs";
 import { PrismaClient } from "@prisma/client";
 import { z } from "zod";
+import type { Cell } from "exceljs";
 
 const prisma = new PrismaClient();
 
@@ -20,7 +21,10 @@ const ExcelRowSchema = z.object({
   client: z.string().optional(),
   work_mode: z.string().optional(),
   job_title: z.string().optional(),
-  seniority: z.string().optional(),
+  seniority: z
+    .string()
+    .optional()
+    .transform((v) => (typeof v === "string" ? v.trim() : v)),
   tech_stack: z.string().optional(),
   sales_manager: z.string().optional(),
   search_manager: z.string().optional(),
@@ -30,7 +34,7 @@ const ExcelRowSchema = z.object({
     .string()
     .optional()
     .nullable()
-    .transform((v) => (v === null ? "" : v)),
+    .transform((v) => (v === null ? "" : typeof v === "string" ? v.trim() : v)),
   leader_phone: z
     .string()
     .optional()
@@ -44,12 +48,14 @@ const ExcelRowSchema = z.object({
     .transform((v) => (v === null ? "" : v)),
   email: z
     .string()
+    .transform((val) => (typeof val === "string" ? val.trim() : val))
     .optional()
     .refine((val) => !val || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val), {
       message: "Formato de email inválido",
     }),
   corporate_email: z
     .string()
+    .transform((val) => (typeof val === "string" ? val.trim() : val))
     .optional()
     .refine((val) => !val || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val), {
       message: "Formato de email corporativo inválido",
@@ -83,7 +89,7 @@ const ExcelRowSchema = z.object({
     .string()
     .optional()
     .nullable()
-    .transform((v) => (v === null ? "" : v)),
+    .transform((v) => (v === null ? "" : typeof v === "string" ? v.trim() : v)),
   health: z
     .string()
     .optional()
@@ -114,10 +120,11 @@ const ExcelRowSchema = z.object({
     .nullable()
     .transform((v) => (v === null ? "" : v)),
   laptop_bonus: z.any().optional(),
-  comment: z.any()
+  comment: z
+    .any()
     .optional()
     .nullable()
-    .transform((v) => v === null ? "" : String(v)),
+    .transform((v) => (v === null ? "" : String(v))),
 });
 
 type ValidationError = {
@@ -158,6 +165,45 @@ function parseDate(dateString: string | null | undefined): Date | null {
   return date;
 }
 
+// Función para extraer texto seguro de una celda de ExcelJS
+interface RichTextPart {
+  text: string;
+}
+interface RichTextValue {
+  richText: RichTextPart[];
+}
+interface TextValue {
+  text: string;
+}
+interface FormulaValue {
+  formula: string;
+  result?: string | number;
+}
+
+function obtenerTextoCelda(celda: Cell): string {
+  const valor = celda?.value;
+  if (valor === null || valor === undefined) {
+    return "";
+  }
+  if (typeof valor === "string" || typeof valor === "number" || typeof valor === "boolean") {
+    return valor.toString();
+  }
+  // RichText
+  if (typeof valor === "object" && "richText" in valor && Array.isArray((valor as RichTextValue).richText)) {
+    return (valor as RichTextValue).richText.map((part: RichTextPart) => part.text).join("");
+  }
+  // Hyperlink o texto simple
+  if (typeof valor === "object" && "text" in valor) {
+    return (valor as TextValue).text;
+  }
+  // Fórmula
+  if (typeof valor === "object" && "formula" in valor) {
+    const formulaVal = valor as FormulaValue;
+    return formulaVal.result ? formulaVal.result.toString() : "";
+  }
+  return "";
+}
+
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
@@ -177,45 +223,40 @@ export async function POST(request: NextRequest) {
     const buffer = await file.arrayBuffer();
     const workbook = new ExcelJS.Workbook();
     await workbook.xlsx.load(buffer);
-    
+
     const worksheet = workbook.worksheets[0];
     const data: Record<string, unknown>[] = [];
 
     // Convertir la hoja de cálculo a JSON
     worksheet.eachRow((row, rowNumber) => {
       if (rowNumber === 1) return; // Saltar la fila de encabezados
-      
+
       const rowData: Record<string, unknown> = {};
       row.eachCell((cell, colNumber) => {
-        const header = worksheet.getRow(1).getCell(colNumber).value as string;
-        let value = cell.value;
-
-        // Convertir tipos de datos según el campo
-        if (header === 'has_vat') {
-          // Convertir a string
-          value = value ? 'true' : 'false';
-        } else if (header === 'dni') {
-          // Convertir a string
-          value = value ? String(value) : '';
-        } else if (header === 'salary' || header === 'service_fee' || header === 'laptop_bonus') {
-          // Convertir a número
-          value = value ? Number(value) : null;
-        } else if (header === 'account_number') {
-          // Convertir a número
-          value = value ? Number(String(value).replace(/\D/g, '')) : null;
-        } else if (header === 'start_date' || header === 'end_date' || header === 'client_end_date' || header === 'birth_date') {
-          // Convertir fechas
-          if (value instanceof Date) {
-            value = value.toISOString().split('T')[0];
-          } else if (typeof value === 'number') {
-            // Si es un número (fecha de Excel), convertirlo a fecha
-            const date = new Date((value - 25569) * 86400 * 1000);
-            value = date.toISOString().split('T')[0];
+        const headerCell = worksheet.getRow(1).getCell(colNumber);
+        let header = obtenerTextoCelda(headerCell);
+        if (typeof header !== "string" || !header) header = "";
+        let value: unknown = obtenerTextoCelda(cell);
+        if (value === null || value === undefined) value = "";
+        if (typeof value !== "string") {
+          if (typeof value === "number" || typeof value === "boolean") {
+            value = value.toString();
+          } else {
+            value = "";
           }
         }
-
         rowData[header] = value;
       });
+      // LOG extra para rastrear emails
+      if (
+        rowData["email"] !== undefined ||
+        rowData["corporate_email"] !== undefined ||
+        rowData["leader_email"] !== undefined
+      ) {
+        console.log(
+          `Fila Excel ${rowNumber}: email='${rowData["email"]}', corporate_email='${rowData["corporate_email"]}', leader_email='${rowData["leader_email"]}'`
+        );
+      }
       data.push(rowData);
     });
 
@@ -242,7 +283,17 @@ export async function POST(request: NextRequest) {
       }
     });
 
-    // Si hay errores, devolver la lista de errores
+    // Si es preview, solo devolver la validación y preview
+    if (preview) {
+      return NextResponse.json({
+        success: validationErrors.length === 0,
+        errors: validationErrors,
+        preview: data.slice(0, 10),
+        totalRows: data.length,
+      });
+    }
+
+    // Si hay errores, devolver la lista de errores (solo en import real)
     if (validationErrors.length > 0) {
       return NextResponse.json(
         {
@@ -253,16 +304,6 @@ export async function POST(request: NextRequest) {
         },
         { status: 400 }
       );
-    }
-
-    // Si es preview, solo devolver la validación y preview
-    if (preview) {
-      return NextResponse.json({
-        success: true,
-        errors: [],
-        preview: data.slice(0, 10),
-        totalRows: data.length,
-      });
     }
 
     // Procesar las filas válidas (solo si no es preview)
@@ -859,29 +900,25 @@ async function processRows(rows: Record<string, unknown>[]) {
           afpInstitutionId,
           healthInstitutionId,
           bank: (row["bank"] as string) || null,
-          accountNumber: row["account_number"] 
-            ? typeof row["account_number"] === 'string' 
-              ? parseInt(row["account_number"].replace(/\D/g, "")) 
-              : Number(row["account_number"])
-            : null,
+          accountNumber: row["account_number"] ? (row["account_number"] as string) : null,
           salaryCurrencyTypeId,
-          netSalary: row["salary"] 
-            ? typeof row["salary"] === 'string' 
-              ? parseFloat(row["salary"].replace(/,/g, "")) 
+          netSalary: row["salary"]
+            ? typeof row["salary"] === "string"
+              ? parseFloat(row["salary"].replace(/,/g, ""))
               : Number(row["salary"])
             : null,
           feeCurrencyTypeId,
-          serviceFee: row["service_fee"] 
-            ? typeof row["service_fee"] === 'string' 
-              ? parseFloat(row["service_fee"].replace(/,/g, "")) 
+          serviceFee: row["service_fee"]
+            ? typeof row["service_fee"] === "string"
+              ? parseFloat(row["service_fee"].replace(/,/g, ""))
               : Number(row["service_fee"])
             : null,
           fee,
           billableDay: 30, // Default value
           laptopCurrencyTypeId,
-          laptopBonus: row["laptop_bonus"] 
-            ? typeof row["laptop_bonus"] === 'string' 
-              ? parseFloat(row["laptop_bonus"].replace(/,/g, "")) 
+          laptopBonus: row["laptop_bonus"]
+            ? typeof row["laptop_bonus"] === "string"
+              ? parseFloat(row["laptop_bonus"].replace(/,/g, ""))
               : Number(row["laptop_bonus"])
             : null,
           comment: row["comment"] !== null && row["comment"] !== undefined ? String(row["comment"]) : null,
