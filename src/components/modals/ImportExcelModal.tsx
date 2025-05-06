@@ -167,31 +167,6 @@ const ImportExcelModal = ({ isOpen, onClose }: ImportExcelModalProps) => {
           antes de importar.
         </p>
 
-        {importResult?.errors && importResult.errors.length > 0 && (
-          <div className="mb-6 p-4 bg-red-50 rounded-md border border-red-200">
-            <h3 className="text-sm font-medium text-red-800 mb-2">Se encontraron errores en los datos:</h3>
-            <ul className="text-xs text-red-700 list-disc pl-5 max-h-40 overflow-y-auto">
-              {importResult.errors.slice(0, 10).map((error, index) => {
-                // Obtener el valor que causó el error
-                const errorRow = previewData[error.row - 2]; // -2 porque la primera fila es el encabezado y Excel comienza en 1
-                const errorValue = errorRow ? errorRow[error.field] : "No disponible";
-                const valueType = typeof errorValue;
-                
-                return (
-                  <li key={index} className="mb-1">
-                    <span className="font-semibold">Fila {error.row}:</span> Campo {error.field} - {error.message}
-                    <br />
-                    <span className="text-gray-600">
-                      Valor actual: {String(errorValue)} (tipo: {valueType})
-                    </span>
-                  </li>
-                );
-              })}
-              {importResult.errors.length > 10 && <li>...y {importResult.errors.length - 10} errores más</li>}
-            </ul>
-          </div>
-        )}
-
         <div className="overflow-x-auto mt-4 border rounded-lg">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
@@ -232,13 +207,9 @@ const ImportExcelModal = ({ isOpen, onClose }: ImportExcelModalProps) => {
           </button>
           <button
             type="button"
-            className={`px-4 py-2 text-sm font-medium text-white rounded-md ${
-              importResult?.errors && importResult.errors.length > 0
-                ? "bg-gray-400 cursor-not-allowed"
-                : "bg-blue-600 hover:bg-blue-700"
-            }`}
+            className={`px-4 py-2 text-sm font-medium text-white rounded-md ${"bg-blue-600 hover:bg-blue-700"}`}
             onClick={handleConfirmImport}
-            disabled={isLoading || (importResult?.errors && importResult.errors.length > 0)}
+            disabled={isLoading}
           >
             {isLoading ? "Importando..." : "Confirmar importación"}
           </button>
@@ -253,7 +224,8 @@ const ImportExcelModal = ({ isOpen, onClose }: ImportExcelModalProps) => {
     return (
       <div className="p-6">
         <h2 className="text-xl font-semibold mb-3">
-          {importResult.success ? "Importación completada" : "Error en la importación"}
+          Importación completada
+          {/* {importResult.success ? "Importación completada" : "Error en la importación"} */}
         </h2>
 
         {importResult.success ? (
@@ -274,68 +246,96 @@ const ImportExcelModal = ({ isOpen, onClose }: ImportExcelModalProps) => {
                 </svg>
               </div>
               <div className="ml-3">
-                <p className="text-sm font-medium text-green-800">
-                  {(importResult.processed?.length || 0) > 0
-                    ? "¡La importación se ha completado con éxito!"
-                    : importResult.duplicated?.length === importResult.totalRows
-                    ? "No se procesaron nuevos registros. Todos los registros ya existían en la base de datos."
-                    : "La operación se completó, pero no se procesaron nuevos registros."}
-                </p>
+                <p className="text-sm font-medium text-green-800">{`Importación finalizada. Resumen:`}</p>
                 <ul className="mt-2 text-sm text-green-700">
-                  <li>Total de filas procesadas: {importResult.processed?.length || 0}</li>
+                  <li>Total de filas analizadas: {importResult.totalRows || 0}</li>
+                  <li>Total de filas insertadas correctamente: {importResult.processed?.length || 0}</li>
                   <li>Total de filas con errores: {importResult.failed?.length || 0}</li>
                   <li>
                     Total de filas duplicadas: {importResult.duplicated?.length || 0}
                     {importResult.duplicated?.length ? " (ya existentes en la base de datos)" : ""}
                   </li>
-                  <li>Total de filas analizadas: {importResult.totalRows || 0}</li>
                 </ul>
               </div>
             </div>
           </div>
         ) : (
-          <div className="bg-red-50 p-4 rounded-md border border-red-200 mb-6">
-            <div className="flex">
-              <div className="flex-shrink-0">
-                <svg
-                  className="h-5 w-5 text-red-400"
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-              </div>
-              <div className="ml-3">
-                <p className="text-sm font-medium text-red-800">Se han encontrado errores durante la importación.</p>
-                {importResult.errors && (
-                  <ul className="mt-2 text-sm text-red-700 list-disc pl-5 max-h-40 overflow-y-auto">
-                    {importResult.errors.slice(0, 5).map((error, index) => {
-                      // Obtener el valor que causó el error
-                      const errorRow = previewData?.[error.row - 2];
-                      const errorValue = errorRow ? errorRow[error.field] : "No disponible";
-                      const valueType = typeof errorValue;
-                      
-                      return (
-                        <li key={index} className="mb-1">
-                          <span className="font-semibold">Fila {error.row}:</span> Campo {error.field} - {error.message}
-                          <br />
-                          <span className="text-gray-600">
-                            Valor actual: {String(errorValue)} (tipo: {valueType})
-                          </span>
-                        </li>
-                      );
-                    })}
-                    {importResult.errors.length > 5 && <li>...y {importResult.errors.length - 5} errores más</li>}
+          <>
+            <div className="bg-green-50 p-4 rounded-md border border-green-200 mb-6">
+              <div className="flex">
+                <div className="flex-shrink-0">
+                  <svg
+                    className="h-5 w-5 text-green-400"
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                </div>
+                <div className="ml-3">
+                  <p className="text-sm font-medium text-green-800">{`Importación finalizada. Resumen:`}</p>
+                  <ul className="mt-2 text-sm text-green-700">
+                    <li>Total de filas analizadas: {importResult.totalRows || 0}</li>
+                    <li>Total de filas insertadas correctamente: {importResult.processed?.length || 0}</li>
+                    <li>Total de filas con errores: {importResult.errors?.length || 0}</li>
+                    <li>
+                      Total de filas duplicadas: {importResult.duplicated?.length || 0}
+                      {importResult.duplicated?.length ? " (ya existentes en la base de datos)" : ""}
+                    </li>
                   </ul>
-                )}
+                </div>
               </div>
             </div>
-          </div>
+            <div className="bg-red-50 p-4 rounded-md border border-red-200 mb-6">
+              <div className="flex">
+                <div className="flex-shrink-0">
+                  <svg
+                    className="h-5 w-5 text-red-400"
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                </div>
+
+                <div className="ml-3">
+                  <p className="text-sm font-medium text-red-800">Se han encontrado errores durante la importación.</p>
+                  {importResult.errors && (
+                    <ul className="mt-2 text-sm text-red-700 list-disc pl-5 max-h-40 overflow-y-auto">
+                      {importResult.errors.slice(0, 5).map((error, index) => {
+                        // Obtener el valor que causó el error
+                        const errorRow = previewData?.[error.row - 2];
+                        const errorValue = errorRow ? errorRow[error.field] : "No disponible";
+                        const valueType = typeof errorValue;
+
+                        return (
+                          <li key={index} className="mb-1">
+                            <span className="font-semibold">Fila {error.row}:</span> Campo {error.field} -{" "}
+                            {error.message}
+                            <br />
+                            <span className="text-gray-600">
+                              Valor actual: {String(errorValue)} (tipo: {valueType})
+                            </span>
+                          </li>
+                        );
+                      })}
+                      {importResult.errors.length > 5 && <li>...y {importResult.errors.length - 5} errores más</li>}
+                    </ul>
+                  )}
+                </div>
+              </div>
+            </div>
+          </>
         )}
 
         {importResult.failed && importResult.failed.length > 0 && (

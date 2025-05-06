@@ -16,6 +16,7 @@ DROP TABLE IF EXISTS "public"."Holidays";
 DROP TABLE IF EXISTS "public"."HealthInstitution";
 DROP TABLE IF EXISTS "public"."CurrencyType";
 DROP TABLE IF EXISTS "public"."AFPInstitution";
+DROP TABLE IF EXISTS "public"."CurrencyHistory";
 
 -- Create tables
 CREATE TABLE "public"."AFPInstitution" (
@@ -226,6 +227,15 @@ CREATE TABLE "public"."Project" (
     "status" VARCHAR(50),
     "created_at" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE "public"."CurrencyHistory" (
+    "id" SERIAL PRIMARY KEY,
+    "date" DATE UNIQUE NOT NULL,
+    "usd" NUMERIC NOT NULL,
+    "uf" NUMERIC NOT NULL,
+    "created_at" TIMESTAMP DEFAULT NOW(),
+    "updated_at" TIMESTAMP DEFAULT NOW()
 );
 
 -- Insert data from backup files

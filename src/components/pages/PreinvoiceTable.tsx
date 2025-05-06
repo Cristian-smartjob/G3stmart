@@ -93,7 +93,7 @@ export default function PreinvoiceTable() {
 
         <MainTable
           title="Prefacturas"
-          count={preInvoices.length}
+          count={filteredPreInvoices.length}
           page={currentPage}
           header={header}
           showCheckbox={false}
@@ -103,6 +103,7 @@ export default function PreinvoiceTable() {
               selected={selected}
               onSelect={(value) => {
                 setSelected(value);
+                setCurrentPage(1);
               }}
               labels={tabs}
             />
@@ -114,7 +115,8 @@ export default function PreinvoiceTable() {
             setCurrentPage(page);
           }}
           onNext={() => {
-            const page = Math.min(Math.ceil(filteredPreInvoices.length / 10), currentPage + 1);
+            const maxPage = Math.max(1, Math.ceil(filteredPreInvoices.length / 10));
+            const page = Math.min(maxPage, currentPage + 1);
             setCurrentPage(page);
           }}
           onPrev={() => {
@@ -124,7 +126,7 @@ export default function PreinvoiceTable() {
         >
           <>
             <TableSkeleton isLoading={isLoading && filteredPreInvoices.length <= 0} size={6} />
-            {filteredPreInvoices.map((item) => (
+            {filteredPreInvoices.slice((currentPage - 1) * 10, currentPage * 10).map((item) => (
               <PreInvoiceItemRow key={item.id} item={item} />
             ))}
           </>

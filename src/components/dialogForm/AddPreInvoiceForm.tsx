@@ -6,7 +6,6 @@ import { Formik, FieldProps } from "formik";
 import { months } from "@/utils/constants";
 import { PreinvoiceForm } from "@/interface/form";
 import * as Yup from "yup";
-import ErrorAlert from "../core/ErrorAlert";
 import { useRouter } from "next/navigation";
 import { Field } from "formik";
 
@@ -19,6 +18,9 @@ interface Client {
 interface Contact {
   id: number;
   name: string;
+  lastName?: string;
+  client_id?: number | null;
+  clientId?: number | null;
 }
 
 interface Option {
@@ -33,9 +35,18 @@ interface AutocompleteFieldProps extends FieldProps {
   onChange: (option: Option | undefined) => void;
   value?: Option;
   className: string;
+  disabled?: boolean;
 }
 
-const AutocompleteField = ({ field, options, placeholder, onChange, value, className }: AutocompleteFieldProps) => {
+const AutocompleteField = ({
+  field,
+  options,
+  placeholder,
+  onChange,
+  value,
+  className,
+  disabled,
+}: AutocompleteFieldProps) => {
   return (
     <select
       {...field}
@@ -47,6 +58,7 @@ const AutocompleteField = ({ field, options, placeholder, onChange, value, class
           onChange(selectedOption);
         }
       }}
+      disabled={disabled}
     >
       <option value="">{placeholder}</option>
       {options.map((option) => (
@@ -274,10 +286,18 @@ export default function AddPreInvoiceForm({ onSave }: Props) {
                     <Field
                       name="contact_id"
                       component={AutocompleteField}
-                      options={contacts.map((contact) => ({
-                        value: contact.id,
-                        label: contact.name,
-                      }))}
+                      options={
+                        // Filtrar contactos por el cliente seleccionado
+                        contacts
+                          .filter((contact) => {
+                            const cId = contact.client_id ?? contact.clientId;
+                            return values.client_id ? cId === values.client_id : false;
+                          })
+                          .map((contact) => ({
+                            value: contact.id,
+                            label: `${contact.name} ${contact.lastName ?? ""}`.trim(),
+                          }))
+                      }
                       placeholder="Seleccione un contacto"
                       onChange={(option?: Option) => {
                         setFieldValue("contact_id", option?.value);
@@ -287,12 +307,15 @@ export default function AddPreInvoiceForm({ onSave }: Props) {
                           .filter((contact) => contact.id === values.contact_id)
                           .map((contact) => ({
                             value: contact.id,
-                            label: contact.name,
+                            label: `${contact.name} ${contact.lastName ?? ""}`.trim(),
                           }))[0]
                       }
                       className={`block w-full border ${
-                        touched.contact_id && errors.contact_id ? "border-red-500" : "border-gray-300"
-                      } rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm`}
+                        touched.contact_id && errors.contact_id ? "border-gray-300" : "border-gray-300"
+                      } rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm ${
+                        !values.client_id ? "bg-gray-100 text-gray-400 cursor-not-allowed" : ""
+                      }`}
+                      disabled={!values.client_id}
                     />
                     {touched.contact_id && errors.contact_id && (
                       <p className="mt-2 text-sm text-red-600">{errors.contact_id}</p>
@@ -340,11 +363,7 @@ export default function AddPreInvoiceForm({ onSave }: Props) {
                   </div>
                 </section>
 
-                {Object.values(errors).length > 0 ? (
-                  <div className="mt-4">
-                    <ErrorAlert message={Object.values(errors).join(", ")} />
-                  </div>
-                ) : null}
+                {Object.values(errors).length > 0 ? <div className="mt-4"></div> : null}
 
                 {formError && <div className="mt-4">{renderError(formError)}</div>}
 

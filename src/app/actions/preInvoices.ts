@@ -191,6 +191,7 @@ export async function createPreInvoice(data: PreinvoiceForm): Promise<PreInvoice
         id: true,
         fee: true,
         billableDay: true,
+        netSalary: true,
       },
     });
 
@@ -241,8 +242,8 @@ export async function createPreInvoice(data: PreinvoiceForm): Promise<PreInvoice
 
     // Calcular el valor total de la prefactura
     const totalValue = allPeople.reduce((sum, person) => {
-      const fee = typeof person.fee === "number" ? person.fee : Number(person.fee);
-      return sum + (fee || 0);
+      const netSalary = typeof person.netSalary === "number" ? person.netSalary : Number(person.netSalary);
+      return sum + (netSalary || 0);
     }, 0);
 
     // Ahora intentamos crear la prefactura y sus detalles usando la transacción
@@ -280,7 +281,7 @@ export async function createPreInvoice(data: PreinvoiceForm): Promise<PreInvoice
             status: "ASSIGN", // Estado inicial (antes era "PENDING")
             personId: person.id,
             preInvoiceId: createdPreInvoice.id,
-            value: Number(person.fee) || 0,
+            value: person.netSalary !== undefined && person.netSalary !== null ? Number(person.netSalary) : 0,
             billableDays: person.billableDay || 0,
             leaveDays: 0,
             totalConsumeDays: person.billableDay || 0,

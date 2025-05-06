@@ -295,15 +295,17 @@ export async function POST(request: NextRequest) {
 
     // Si hay errores, devolver la lista de errores (solo en import real)
     if (validationErrors.length > 0) {
-      return NextResponse.json(
-        {
-          success: false,
-          errors: validationErrors,
-          preview: data.slice(0, 10),
-          totalRows: data.length,
-        },
-        { status: 400 }
-      );
+      // Procesar las filas válidas aunque existan errores
+      const results = await processRows(validRows);
+      return NextResponse.json({
+        success: false,
+        errors: validationErrors,
+        processed: results.processed,
+        failed: results.failed,
+        duplicated: results.duplicated,
+        preview: data.slice(0, 10),
+        totalRows: data.length,
+      });
     }
 
     // Procesar las filas válidas (solo si no es preview)
@@ -324,6 +326,20 @@ export async function POST(request: NextRequest) {
 }
 
 async function processRows(rows: Record<string, unknown>[]) {
+  // Limpiar espacios en los strings de cada fila
+  const cleanedRows = rows.map((row) => {
+    const cleanedRow: Record<string, unknown> = {};
+    for (const key in row) {
+      const value = row[key];
+      if (typeof value === "string") {
+        cleanedRow[key] = value.trim();
+      } else {
+        cleanedRow[key] = value;
+      }
+    }
+    return cleanedRow;
+  });
+
   const processed: number[] = [];
   const failed: { row: number; error: string }[] = [];
   const duplicated: { row: number; dni: string }[] = [];
@@ -336,14 +352,14 @@ async function processRows(rows: Record<string, unknown>[]) {
     return String(value);
   };
 
-  console.log(`🔄 Iniciando procesamiento de ${rows.length} filas...`);
+  console.log(`🔄 Iniciando procesamiento de ${cleanedRows.length} filas...`);
 
   // Primero verificamos todos los DNIs para detectar duplicados en la base de datos
   const dniToCheck = new Map<number, string>(); // Mapa de rowIndex -> dni
 
-  for (let i = 0; i < rows.length; i++) {
+  for (let i = 0; i < cleanedRows.length; i++) {
     const rowIndex = i + 2; // Excel comienza en 1 y la primera fila es cabecera
-    const row = rows[i];
+    const row = cleanedRows[i];
     const dni = row["dni"] as string;
 
     if (dni && dni.trim() !== "") {
@@ -441,8 +457,8 @@ async function processRows(rows: Record<string, unknown>[]) {
   }
 
   // Ahora procesamos cada fila
-  for (let i = 0; i < rows.length; i++) {
-    const row = rows[i];
+  for (let i = 0; i < cleanedRows.length; i++) {
+    const row = cleanedRows[i];
     const rowIndex = i + 2; // Excel comienza en 1 y la primera fila es cabecera
 
     // Para la primera fila, mostrar todas las claves disponibles
@@ -967,7 +983,7 @@ async function processRows(rows: Record<string, unknown>[]) {
     - Filas procesadas: ${processed.length}
     - Filas duplicadas: ${duplicated.length}
     - Filas con errores: ${failed.length}
-    - Total filas analizadas: ${rows.length}
+    - Total filas analizadas: ${cleanedRows.length}
   `);
 
   return { processed, failed, duplicated };
