@@ -20,6 +20,8 @@ docker compose --env-file .env -p g3stmart up -d
 cd ../..
 npm install
 npx prisma generate
+npx tsc prisma/seed.ts --outDir dist
+node dist/seed.js
 
 # 5. Run dev server
 npm run dev 

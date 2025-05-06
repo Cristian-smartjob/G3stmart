@@ -290,3 +290,12 @@ model Project {
 
   @@map("Project")
 }
+
+model CurrencyHistory {
+  id         Int      @id @default(autoincrement())
+  date       DateTime @unique
+  usd        Float
+  uf         Float
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+}

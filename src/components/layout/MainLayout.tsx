@@ -1,39 +1,37 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
+import { useState } from "react";
 import {
   Bars3Icon,
   UsersIcon,
   DocumentCurrencyDollarIcon,
   CircleStackIcon,
-  UserCircleIcon
-} from '@heroicons/react/24/outline'
-import MobileSidebar from './MobileSidebar'
-import Sidebar from './Sidebar'
+  UserCircleIcon,
+} from "@heroicons/react/24/outline";
+import MobileSidebar from "./MobileSidebar";
+import Sidebar from "./Sidebar";
 
 const navigation = [
-
-  { name: 'Personas', href: '/people', icon: UsersIcon, current: true },
-  { name: 'Contactos', href: '/contacts', icon: UsersIcon, current: false },
-  { name: 'Datos', href: '/data', icon: CircleStackIcon, current: false },
-  { name: 'Prefacturas', href: '/preinvoice', icon: DocumentCurrencyDollarIcon, current: false },
+  { name: "Personas", href: "/people", icon: UsersIcon, current: true },
+  { name: "Contactos", href: "/contacts", icon: UsersIcon, current: false },
+  { name: "Datos", href: "/data", icon: CircleStackIcon, current: false },
+  { name: "Prefacturas", href: "/preinvoice", icon: DocumentCurrencyDollarIcon, current: false },
   //{ name: 'Notas de crédito', href: '/credit_notes', icon: DocumentCurrencyDollarIcon, current: false },
   //{ name: 'Proyectos', href: '/projects', icon: FolderOpenIcon, current: false },
-  { name: 'Clientes', href: '/clients', icon: UserCircleIcon, current: false },
-]
+  { name: "Clientes", href: "/clients", icon: UserCircleIcon, current: false },
+];
 
 interface Props {
-    children: React.ReactNode;
-    currentMenu?: string;
+  children: React.ReactNode;
+  currentMenu?: string;
 }
 
 export default function MainLayout({ children, currentMenu }: Props) {
-  const [sidebarOpen, setSidebarOpen] = useState(false)
-
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  console.log(sidebarOpen);
   return (
     <>
       <div>
-        
         <MobileSidebar navigation={navigation} />
         <Sidebar navigation={navigation} currentMenu={currentMenu} />
 
@@ -53,9 +51,9 @@ export default function MainLayout({ children, currentMenu }: Props) {
           </a>
         </div>
         <main className="lg:pl-72">
-          <div className="">{children}</div>
+          <div className="flex flex-col gap-4">{children}</div>
         </main>
       </div>
     </>
-  )
+  );
 }
