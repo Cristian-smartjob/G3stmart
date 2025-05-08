@@ -17,7 +17,7 @@ cd ..\..
 call npm install
 call npx prisma generate
 call npx tsc prisma/seed.ts --outDir dist
-call node dist/seed.js
+@REM call node dist/seed.js
 
 REM 5. Run dev server
 call npm run dev 

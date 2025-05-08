@@ -46,7 +46,6 @@ export default function PaletteContacts({ open, setOpen }: Props) {
           return person.name.toLowerCase().includes(query.toLowerCase())
         })
 
-console.log('filteredPeople', filteredPeople)
 
   return (
     <Dialog

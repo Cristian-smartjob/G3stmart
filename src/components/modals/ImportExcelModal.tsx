@@ -196,23 +196,29 @@ const ImportExcelModal = ({ isOpen, onClose }: ImportExcelModalProps) => {
           </table>
         </div>
 
-        <div className="mt-6 flex justify-end space-x-3">
-          <button
-            type="button"
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
-            onClick={handleReset}
-            disabled={isLoading}
-          >
-            Cancelar
-          </button>
-          <button
-            type="button"
-            className={`px-4 py-2 text-sm font-medium text-white rounded-md ${"bg-blue-600 hover:bg-blue-700"}`}
-            onClick={handleConfirmImport}
-            disabled={isLoading}
-          >
-            {isLoading ? "Importando..." : "Confirmar importación"}
-          </button>
+        <div className="mt-6 flex flex-col items-end space-y-4">
+          {isLoading && (
+            <div className="flex flex-col items-center w-full">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+              <p className="text-sm text-gray-600 mt-2">Por favor espere, importando datos...</p>
+            </div>
+          )}
+          <div className="flex justify-end space-x-3">
+            <button
+              onClick={handleReset}
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+              disabled={isLoading}
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={handleConfirmImport}
+              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={isLoading}
+            >
+              Confirmar Importación
+            </button>
+          </div>
         </div>
       </div>
     );

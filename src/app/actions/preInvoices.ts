@@ -167,7 +167,6 @@ export async function fetchPreInvoices(): Promise<PreInvoice[]> {
 
 export async function createPreInvoice(data: PreinvoiceForm): Promise<PreInvoice> {
   try {
-    console.log("Datos recibidos en createPreInvoice:", data);
     // Validar que tenemos los datos mínimos necesarios
     if (!data || !data.client_id || !data.month || !data.year) {
       console.error("Datos incompletos para crear prefactura:", data);
@@ -180,7 +179,6 @@ export async function createPreInvoice(data: PreinvoiceForm): Promise<PreInvoice
     const month = Number(data.month);
     const year = Number(data.year);
 
-    console.log("Datos procesados:", { clientId, contactId, month, year });
 
     // Obtener todos los smarters/people para agregarlos como detalles
     const allPeople = await prisma.people.findMany({
@@ -190,8 +188,17 @@ export async function createPreInvoice(data: PreinvoiceForm): Promise<PreInvoice
       select: {
         id: true,
         fee: true,
+        serviceFee: true,
+      },
+    });
+
+    // Obtener el cliente para obtener los días facturables
+    const client = await prisma.client.findUnique({
+      where: {
+        id: clientId,
+      },
+      select: {
         billableDay: true,
-        netSalary: true,
       },
     });
 
@@ -203,6 +210,14 @@ export async function createPreInvoice(data: PreinvoiceForm): Promise<PreInvoice
       );
     }
 
+    // Validar que el cliente tenga días facturables definidos
+    if (!client || !client.billableDay) {
+      console.error("El cliente no tiene días facturables definidos");
+      throw new Error(
+        "No se puede crear la prefactura. El cliente seleccionado no tiene días facturables definidos. Por favor, primero configura los días facturables del cliente."
+      );
+    }
+
     // Intentar reparar la secuencia antes de crear la nueva prefactura
     try {
       // Obtener el valor máximo actual de ID
@@ -211,12 +226,10 @@ export async function createPreInvoice(data: PreinvoiceForm): Promise<PreInvoice
       });
 
       const maxId = lastPreInvoice ? lastPreInvoice.id : 0;
-      console.log("ID máximo actual:", maxId);
 
       // Reparar la secuencia usando SQL nativo
       // Esta consulta reestablece la secuencia al valor máximo actual + 1
       await prisma.$executeRaw`SELECT setval('"PreInvoice_id_seq"', ${maxId}, true)`;
-      console.log("Secuencia reparada exitosamente");
     } catch (seqError) {
       console.error("Error al intentar reparar la secuencia:", seqError);
       // Continuamos de todos modos, ya que puede que no sea un problema de secuencia
@@ -234,16 +247,15 @@ export async function createPreInvoice(data: PreinvoiceForm): Promise<PreInvoice
 
       // Reparar la secuencia usando SQL nativo
       await prisma.$executeRaw`SELECT setval('"PreInvoiceDetail_id_seq"', ${maxDetailId}, true)`;
-      console.log("Secuencia de PreInvoiceDetail reparada exitosamente");
     } catch (seqError) {
       console.error("Error al intentar reparar la secuencia de PreInvoiceDetail:", seqError);
       // Continuamos de todos modos
     }
 
     // Calcular el valor total de la prefactura
-    const totalValue = allPeople.reduce((sum, person) => {
-      const netSalary = typeof person.netSalary === "number" ? person.netSalary : Number(person.netSalary);
-      return sum + (netSalary || 0);
+    const totalValue = allPeople.reduce((acc, person) => {
+      const value = person.serviceFee !== undefined && person.serviceFee !== null ? Number(person.serviceFee) : 0;
+      return acc + value;
     }, 0);
 
     // Ahora intentamos crear la prefactura y sus detalles usando la transacción
@@ -272,7 +284,6 @@ export async function createPreInvoice(data: PreinvoiceForm): Promise<PreInvoice
         },
       });
 
-      console.log("PreInvoice creada con éxito:", createdPreInvoice);
 
       // Crear detalles para cada smarter/people
       for (const person of allPeople) {
@@ -281,15 +292,14 @@ export async function createPreInvoice(data: PreinvoiceForm): Promise<PreInvoice
             status: "ASSIGN", // Estado inicial (antes era "PENDING")
             personId: person.id,
             preInvoiceId: createdPreInvoice.id,
-            value: person.netSalary !== undefined && person.netSalary !== null ? Number(person.netSalary) : 0,
-            billableDays: person.billableDay || 0,
+            value: person.serviceFee !== undefined && person.serviceFee !== null ? Number(person.serviceFee) : 0,
+            billableDays: client.billableDay || 0,
             leaveDays: 0,
-            totalConsumeDays: person.billableDay || 0,
+            totalConsumeDays: client.billableDay || 0,
           },
         });
       }
 
-      console.log(`Se agregaron ${allPeople.length} smarters como detalles a la prefactura ${createdPreInvoice.id}`);
 
       return createdPreInvoice;
     });
@@ -323,7 +333,6 @@ export async function createPreInvoice(data: PreinvoiceForm): Promise<PreInvoice
 
 export async function updatePreInvoice(id: number, data: PreInvoiceUpdate): Promise<PreInvoice> {
   try {
-    console.log("updatePreInvoice: Iniciando actualización para ID:", id, "con datos:", data);
 
     // Adaptamos los datos al formato esperado por Prisma
     const updateData: Prisma.PreInvoiceUpdateInput = {};
@@ -335,7 +344,6 @@ export async function updatePreInvoice(id: number, data: PreInvoiceUpdate): Prom
 
     // Aplicar directamente el cambio de estado si está presente
     if (data.status) {
-      console.log("updatePreInvoice: Actualizando estado a:", data.status);
       updateData.status = data.status;
 
       // Si el estado cambia a COMPLETED o facturada, registramos quién lo completó y cuándo
@@ -344,12 +352,6 @@ export async function updatePreInvoice(id: number, data: PreInvoiceUpdate): Prom
         updateData.completedBy = data.completedBy || "sistema";
         // Si no se proporciona completedAt, usamos la fecha y hora actual
         updateData.completedAt = data.completedAt || new Date();
-        console.log(
-          "updatePreInvoice: Registrando completación por:",
-          updateData.completedBy,
-          "en:",
-          updateData.completedAt
-        );
       }
     }
 
@@ -364,10 +366,8 @@ export async function updatePreInvoice(id: number, data: PreInvoiceUpdate): Prom
     if (data.completedBy) updateData.completedBy = data.completedBy;
     if (data.completedAt) updateData.completedAt = data.completedAt;
 
-    console.log("updatePreInvoice: Datos a actualizar:", updateData);
 
     await preInvoiceRepository.update(id, updateData);
-    console.log("updatePreInvoice: Actualización exitosa en la base de datos");
 
     const preInvoiceWithRelations = await preInvoiceRepository.findById(id);
     revalidatePath("/");
@@ -377,7 +377,6 @@ export async function updatePreInvoice(id: number, data: PreInvoiceUpdate): Prom
       throw new Error("No se pudo actualizar la prefactura");
     }
 
-    console.log("updatePreInvoice: Prefactura recuperada:", preInvoiceWithRelations);
     return await mapToDomainModel(preInvoiceWithRelations);
   } catch (error) {
     console.error("Error updating preInvoice:", error);
@@ -387,7 +386,6 @@ export async function updatePreInvoice(id: number, data: PreInvoiceUpdate): Prom
 
 export async function recalculatePreInvoice(id: number): Promise<PreInvoice> {
   try {
-    console.log("Recalculando prefactura con ID:", id);
 
     // Obtener todos los detalles de la prefactura
     const details = await prisma.preInvoiceDetail.findMany({
