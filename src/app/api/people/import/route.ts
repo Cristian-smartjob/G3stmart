@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import * as ExcelJS from "exceljs";
 import { PrismaClient } from "@prisma/client";
+import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { z } from "zod";
 import type { Cell } from "exceljs";
 
@@ -204,6 +205,121 @@ function obtenerTextoCelda(celda: Cell): string {
   return "";
 }
 
+// Mapeo de sinónimos
+const currencyMap: Record<string, string> = {
+  "USD": "USD",
+  "CLP": "CLP",
+  "UF": "UF"
+};
+
+// Mapeo de sinónimos para AFPs
+const afpMap: Record<string, string> = {
+  "UNO": "Uno",
+  "Uno": "Uno",
+  "HABITAT": "Habitat",
+  "HÁBITAT": "Habitat",
+  "Habitat": "Habitat",
+  "PLAN VITAL": "Plan Vital",
+  "Plan Vital": "Plan Vital",
+  "Plan vital": "Plan Vital",
+  "PlanVital": "Plan Vital",
+  "PLANVITAL": "Plan Vital",
+  "PLAN-VITAL": "Plan Vital",
+  "Plan-Vital": "Plan Vital",
+  "PLANVITAL AFP": "Plan Vital",
+  "PLAN VITAL AFP": "Plan Vital",
+  "CAPITAL": "Capital",
+  "CAPITAL AFP": "Capital",
+  "MODELO": "Modelo",
+  "MODELO AFP": "Modelo",
+  "PROVIDA": "Provida",
+  "PROVIDA AFP": "Provida",
+  "CUPRUM": "Cuprum",
+  "CUPRUM AFP": "Cuprum"
+};
+
+// Mapeo de sinónimos para Seniorities
+const seniorityMap: Record<string, string> = {
+  "SEMI-SENIOR": "Semi-Senior",
+  "SEMI SENIOR": "Semi-Senior",
+  "SEMISENIOR": "Semi-Senior",
+  "Semi Senior": "Semi-Senior",
+  "SemiSenior": "Semi-Senior",
+  "SEMI": "Semi-Senior",
+  "Semi": "Semi-Senior",
+  "JUNIOR": "Junior",
+  "Junior": "Junior",
+  "SENIOR": "Senior",
+  "Senior": "Senior",
+  "LEAD": "Lead",
+  "Lead": "Lead",
+  "PRINCIPAL": "Principal",
+  "Principal": "Principal",
+  "ARCHITECT": "Architect",
+  "Architect": "Architect"
+};
+
+// Función para normalizar texto (quitar tildes, espacios extra, etc)
+function normalizeText(text: string): string {
+  if (!text) return "";
+  
+  return text
+    .normalize("NFD") // Descompone los caracteres acentuados
+    .replace(/[\u0300-\u036f]/g, "") // Elimina los diacríticos
+    .trim() // Elimina espacios al inicio y final
+    .replace(/\s+/g, " ") // Reemplaza múltiples espacios por uno solo
+    .replace(/[^a-zA-Z0-9\s-]/g, ""); // Elimina caracteres especiales excepto guiones
+}
+
+// Función para buscar el valor normalizado en un mapeo
+function getNormalizedValue(value: string, map: Record<string, string>): string {
+  if (!value) return "";
+  
+  const normalized = normalizeText(value);
+  const upperNormalized = normalized.toUpperCase();
+  
+  // Buscar en el mapeo
+  for (const [key, mappedValue] of Object.entries(map)) {
+    if (normalizeText(key).toUpperCase() === upperNormalized) {
+      return mappedValue;
+    }
+  }
+  
+  // Si no se encuentra en el mapeo, devolver el valor normalizado
+  return normalized;
+}
+
+
+// Para Seniority
+async function createOrFindSeniority(name: string) {
+  let retries = 0;
+  let record = null;
+  while (retries < 3) {
+    try {
+      record = await prisma.seniority.create({ data: { name } });
+      return record;
+    } catch {
+      record = await prisma.seniority.findFirst({
+        where: { name: { equals: name, mode: "insensitive" } }
+      });
+      if (record) return record;
+      await new Promise(res => setTimeout(res, 100 * (retries + 1)));
+      retries++;
+    }
+  }
+  throw new Error(`No se pudo crear ni encontrar la seniority: ${name}`);
+}
+
+// Para AFP
+async function createOrFindAfp(name: string) {
+  const record = await prisma.aFPInstitution.findFirst({
+    where: { name: { equals: name, mode: "insensitive" } }
+  });
+  if (record) return record;
+  // Si no existe, crear
+  return await prisma.aFPInstitution.create({ data: { name } });
+}
+
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
@@ -344,15 +460,8 @@ async function processRows(rows: Record<string, unknown>[]) {
   const failed: { row: number; error: string }[] = [];
   const duplicated: { row: number; dni: string }[] = [];
 
-  // Función auxiliar para hacer debug de valores
-  const debugValue = (value: unknown): string => {
-    if (value === null) return "null";
-    if (value === undefined) return "undefined";
-    if (typeof value === "string") return `"${value}"`;
-    return String(value);
-  };
+  
 
-  console.log(`🔄 Iniciando procesamiento de ${cleanedRows.length} filas...`);
 
   // Primero verificamos todos los DNIs para detectar duplicados en la base de datos
   const dniToCheck = new Map<number, string>(); // Mapa de rowIndex -> dni
@@ -367,31 +476,22 @@ async function processRows(rows: Record<string, unknown>[]) {
     }
   }
 
-  console.log(`📋 Verificando ${dniToCheck.size} DNIs para detectar duplicados...`);
 
   // Verificar todos los DNIs en una sola consulta
   if (dniToCheck.size > 0) {
     const dnisToVerify = Array.from(dniToCheck.values());
 
-    console.log(`🔎 DNIs a verificar: ${JSON.stringify(dnisToVerify)}`);
 
     try {
       // Verificar conexión a la base de datos
       try {
         await prisma.$queryRaw`SELECT 1`;
-        console.log("✅ Conexión a la base de datos verificada");
       } catch (connectError) {
         console.error("❌ Error de conexión a la base de datos:", connectError);
         throw new Error("No se pudo conectar a la base de datos");
       }
 
-      // Verificar si la tabla 'People' existe y tiene registros
-      try {
-        const peopleCount = await prisma.people.count();
-        console.log(`📊 La tabla People contiene ${peopleCount} registros en total`);
-      } catch (countError) {
-        console.error("❌ Error al contar registros en la tabla People:", countError);
-      }
+    
 
       // Verificar DNIs duplicados
       const existingPeople = await prisma.people.findMany({
@@ -414,24 +514,14 @@ async function processRows(rows: Record<string, unknown>[]) {
         (person) => person && person.dni && dnisToVerify.includes(person.dni)
       );
 
-      console.log(`🔍 Encontrados ${validExistingPeople.length} DNIs duplicados en la base de datos.`);
 
-      if (validExistingPeople.length > 0) {
-        console.log(
-          `📝 Detalles de DNIs encontrados en la base de datos: ${JSON.stringify(
-            validExistingPeople.map((p) => p.dni)
-          )}`
-        );
-      } else {
-        console.log(`✅ No se encontraron DNIs duplicados en la base de datos. Todos los registros son nuevos.`);
-      }
+    
 
       // Crear un mapa de DNIs existentes para búsqueda rápida
       const existingDNIs = new Map();
       validExistingPeople.forEach((person) => {
         if (person.dni) {
           existingDNIs.set(person.dni, person);
-          console.log(`📌 DNI "${person.dni}" ya existe en la base de datos con ID ${person.id}`);
         }
       });
 
@@ -461,10 +551,7 @@ async function processRows(rows: Record<string, unknown>[]) {
     const row = cleanedRows[i];
     const rowIndex = i + 2; // Excel comienza en 1 y la primera fila es cabecera
 
-    // Para la primera fila, mostrar todas las claves disponibles
-    if (i === 0) {
-      console.log("Nombres de columnas disponibles:", Object.keys(row));
-    }
+  
 
     // Verificar si la fila está completamente vacía
     const isEmpty = Object.values(row).every(
@@ -473,16 +560,14 @@ async function processRows(rows: Record<string, unknown>[]) {
     );
 
     if (isEmpty) {
-      console.log(`⏩ Omitiendo fila ${rowIndex} por estar vacía`);
       continue; // Saltar al siguiente ciclo
     }
 
     // Verificar si el DNI ya fue marcado como duplicado
-    const dni = row["dni"] as string;
+    // const dni = row["dni"] as string;
     const isDuplicate = duplicated.some((item) => item.row === rowIndex);
 
     if (isDuplicate) {
-      console.log(`➡️ Omitiendo procesamiento de fila ${rowIndex} por DNI "${dni}" duplicado.`);
       continue; // Saltar al siguiente registro
     }
 
@@ -550,7 +635,6 @@ async function processRows(rows: Record<string, unknown>[]) {
                   name: row["job_title"] as string,
                 },
               });
-              console.log(`✅ Cargo creado exitosamente: ${row["job_title"]} (ID: ${jobTitle.id})`);
             } catch (createError) {
               console.error(`❌ Error al crear cargo "${row["job_title"]}":`, createError);
 
@@ -563,17 +647,12 @@ async function processRows(rows: Record<string, unknown>[]) {
                 },
               });
 
-              if (jobTitle) {
-                console.log(`🔍 Cargo encontrado después del error: ${row["job_title"]} (ID: ${jobTitle.id})`);
-              } else {
-                console.error(`❌❌ No se pudo crear ni encontrar el cargo: ${row["job_title"]}`);
-              }
+             
             }
           }
 
           if (jobTitle) {
             jobTitleId = jobTitle.id;
-            console.log(`✓ Asignando jobTitleId: ${jobTitleId} para ${row["job_title"]}`);
           }
         } catch (error) {
           console.error(`⚠️ Error al procesar cargo "${row["job_title"]}":`, error);
@@ -583,34 +662,15 @@ async function processRows(rows: Record<string, unknown>[]) {
       // Buscar o crear seniority
       let seniorityId = null;
       if (row["seniority"]) {
-        let seniority = await prisma.seniority.findFirst({
-          where: {
-            name: row["seniority"] as string,
-          },
-        });
-
-        if (!seniority) {
-          try {
-            seniority = await prisma.seniority.create({
-              data: {
-                name: row["seniority"] as string,
-              },
-            });
-          } catch {
-            // Si falla la creación, intentar buscar de nuevo
-            seniority = await prisma.seniority.findFirst({
-              where: {
-                name: row["seniority"] as string,
-              },
-            });
-
-            if (!seniority) {
-              throw new Error(`No se pudo crear o encontrar la seniority: ${row["seniority"]}`);
-            }
-          }
+        const normalizedSeniorityName = getNormalizedValue(row["seniority"] as string, seniorityMap);
+        
+        try {
+          const seniority = await createOrFindSeniority(normalizedSeniorityName);
+          seniorityId = seniority.id;
+        } catch (error) {
+          console.error(`❌ Error al procesar Seniority "${row["seniority"]}":`, error);
+          throw new Error(`No se pudo crear o encontrar la seniority: ${normalizedSeniorityName}`);
         }
-
-        seniorityId = seniority.id;
       }
 
       // Buscar o crear stack técnico
@@ -644,7 +704,6 @@ async function processRows(rows: Record<string, unknown>[]) {
                   name: row["tech_stack"] as string,
                 },
               });
-              console.log(`✅ Stack técnico creado exitosamente: ${row["tech_stack"]} (ID: ${techStack.id})`);
             } catch (createError) {
               console.error(`❌ Error al crear stack técnico "${row["tech_stack"]}":`, createError);
 
@@ -657,19 +716,12 @@ async function processRows(rows: Record<string, unknown>[]) {
                 },
               });
 
-              if (techStack) {
-                console.log(
-                  `🔍 Stack técnico encontrado después del error: ${row["tech_stack"]} (ID: ${techStack.id})`
-                );
-              } else {
-                console.error(`❌❌ No se pudo crear ni encontrar el stack técnico: ${row["tech_stack"]}`);
-              }
+             
             }
           }
 
           if (techStack) {
             technicalStacksId = techStack.id;
-            console.log(`✓ Asignando technicalStacksId: ${technicalStacksId} para ${row["tech_stack"]}`);
           }
         } catch (error) {
           console.error(`⚠️ Error al procesar stack técnico "${row["tech_stack"]}":`, error);
@@ -679,34 +731,17 @@ async function processRows(rows: Record<string, unknown>[]) {
       // Buscar o crear institución AFP
       let afpInstitutionId = null;
       if (row["afp"]) {
-        let afp = await prisma.aFPInstitution.findFirst({
-          where: {
-            name: row["afp"] as string,
-          },
-        });
-
-        if (!afp) {
-          try {
-            afp = await prisma.aFPInstitution.create({
-              data: {
-                name: row["afp"] as string,
-              },
-            });
-          } catch {
-            // Si falla la creación, intentar buscar de nuevo
-            afp = await prisma.aFPInstitution.findFirst({
-              where: {
-                name: row["afp"] as string,
-              },
-            });
-
-            if (!afp) {
-              throw new Error(`No se pudo crear o encontrar la AFP: ${row["afp"]}`);
-            }
-          }
+        const normalizedAfpName = getNormalizedValue(row["afp"] as string, afpMap);
+        
+        try {
+          // const afpsExistentes = await prisma.aFPInstitution.findMany({ select: { name: true } });
+          // console.log("AFP existentes en la base de datos:", afpsExistentes.map(a => a.name));
+          const afp = await createOrFindAfp(normalizedAfpName);
+          afpInstitutionId = afp.id;
+        } catch (error) {
+          console.error(`❌ Error al procesar AFP "${row["afp"]}":`, error);
+          throw new Error(`No se pudo crear o encontrar la AFP: ${normalizedAfpName}`);
         }
-
-        afpInstitutionId = afp.id;
       }
 
       // Buscar o crear institución de salud
@@ -730,7 +765,6 @@ async function processRows(rows: Record<string, unknown>[]) {
                 name: row["health"] as string,
               },
             });
-            console.log(`Institución de salud creada: ${row["health"]}`);
           }
 
           healthInstitutionId = health.id;
@@ -741,65 +775,104 @@ async function processRows(rows: Record<string, unknown>[]) {
       }
 
       // Buscar o crear tipo de moneda para sueldo
+      const rawCurrency = (row["salary_currency"] as string).trim();
+      const currencyName = currencyMap[rawCurrency.toUpperCase()] || rawCurrency;
+
       let salaryCurrencyTypeId = null;
-      if (row["salary_currency"]) {
-        let currency = await prisma.currencyType.findFirst({
-          where: {
-            name: row["salary_currency"] as string,
+      let currency = await prisma.currencyType.findFirst({
+        where: {
+          name: {
+            equals: currencyName,
+            mode: "insensitive",
           },
-        });
+        },
+      });
 
-        if (!currency) {
-          try {
-            currency = await prisma.currencyType.create({
-              data: {
-                name: row["salary_currency"] as string,
-                symbol: (row["salary_currency"] as string).substring(0, 3),
+      if (!currency) {
+        try {
+          await prisma.currencyType.create({
+            data: {
+              name: currencyName,
+              symbol: currencyName.substring(0, 3),
+            },
+          });
+          // Buscar de nuevo tras crear
+          currency = await prisma.currencyType.findFirst({
+            where: {
+              name: {
+                equals: currencyName,
+                mode: "insensitive",
               },
-            });
-          } catch {
-            // Si falla la creación, intentar buscar de nuevo
-            currency = await prisma.currencyType.findFirst({
-              where: {
-                name: row["salary_currency"] as string,
+            },
+          });
+          if (currency) {
+          } else {
+            throw new Error(`No se pudo crear ni encontrar la moneda: ${currencyName}`);
+          }
+        } catch {
+          // Buscar de nuevo por si fue un error de duplicado
+          currency = await prisma.currencyType.findFirst({
+            where: {
+              name: {
+                equals: currencyName,
+                mode: "insensitive",
               },
-            });
-
-            if (!currency) {
-              throw new Error(`No se pudo crear o encontrar la moneda: ${row["salary_currency"]}`);
-            }
+            },
+          });
+          if (currency) {
+          } else {
+            throw new Error(`No se pudo crear o encontrar la moneda: ${currencyName}`);
           }
         }
-
-        salaryCurrencyTypeId = currency.id;
       }
+
+      salaryCurrencyTypeId = currency.id;
 
       // Buscar o crear tipo de moneda para tarifa
       let feeCurrencyTypeId = null;
       if (row["fee_currency"]) {
         let currency = await prisma.currencyType.findFirst({
           where: {
-            name: row["fee_currency"] as string,
+            name: {
+              equals: (row["fee_currency"] as string).trim(),
+              mode: "insensitive",
+            },
           },
         });
 
         if (!currency) {
           try {
-            currency = await prisma.currencyType.create({
+            await prisma.currencyType.create({
               data: {
-                name: row["fee_currency"] as string,
+                name: (row["fee_currency"] as string).trim(),
                 symbol: (row["fee_currency"] as string).substring(0, 3),
               },
             });
-          } catch {
-            // Si falla la creación, intentar buscar de nuevo
+            // Buscar de nuevo tras crear
             currency = await prisma.currencyType.findFirst({
               where: {
-                name: row["fee_currency"] as string,
+                name: {
+                  equals: (row["fee_currency"] as string).trim(),
+                  mode: "insensitive",
+                },
               },
             });
-
-            if (!currency) {
+            if (currency) {
+            } else {
+              throw new Error(`No se pudo crear ni encontrar la moneda: ${row["fee_currency"]}`);
+            }
+          } catch {
+            // Buscar de nuevo por si fue un error de duplicado
+            currency = await prisma.currencyType.findFirst({
+              where: {
+                name: {
+                  equals: (row["fee_currency"] as string).trim(),
+                  mode: "insensitive",
+                },
+              },
+            });
+            if (currency) {
+            } else {
               throw new Error(`No se pudo crear o encontrar la moneda: ${row["fee_currency"]}`);
             }
           }
@@ -813,27 +886,46 @@ async function processRows(rows: Record<string, unknown>[]) {
       if (row["laptop_currency"]) {
         let currency = await prisma.currencyType.findFirst({
           where: {
-            name: row["laptop_currency"] as string,
+            name: {
+              equals: (row["laptop_currency"] as string).trim(),
+              mode: "insensitive",
+            },
           },
         });
 
         if (!currency) {
           try {
-            currency = await prisma.currencyType.create({
+            await prisma.currencyType.create({
               data: {
-                name: row["laptop_currency"] as string,
+                name: (row["laptop_currency"] as string).trim(),
                 symbol: (row["laptop_currency"] as string).substring(0, 3),
               },
             });
-          } catch {
-            // Si falla la creación, intentar buscar de nuevo
+            // Buscar de nuevo tras crear
             currency = await prisma.currencyType.findFirst({
               where: {
-                name: row["laptop_currency"] as string,
+                name: {
+                  equals: (row["laptop_currency"] as string).trim(),
+                  mode: "insensitive",
+                },
               },
             });
-
-            if (!currency) {
+            if (currency) {
+            } else {
+              throw new Error(`No se pudo crear ni encontrar la moneda: ${row["laptop_currency"]}`);
+            }
+          } catch {
+            // Buscar de nuevo por si fue un error de duplicado
+            currency = await prisma.currencyType.findFirst({
+              where: {
+                name: {
+                  equals: (row["laptop_currency"] as string).trim(),
+                  mode: "insensitive",
+                },
+              },
+            });
+            if (currency) {
+            } else {
               throw new Error(`No se pudo crear o encontrar la moneda: ${row["laptop_currency"]}`);
             }
           }
@@ -872,11 +964,7 @@ async function processRows(rows: Record<string, unknown>[]) {
       const deliveryManagerValue = row["delivery_manager"] || row["delivery_manager "];
 
       // Registrar los valores para diagnóstico
-      console.log(`Columnas disponibles para esta fila: ${Object.keys(row).join(", ")}`);
-      console.log(`Intentando acceder a: "search_manager" y "delivery_manager"`);
-      console.log(
-        `Valores encontrados: searchManager="${searchManagerValue}", deliveryManager="${deliveryManagerValue}"`
-      );
+      
 
       // Crear registro de persona
       try {
@@ -940,6 +1028,10 @@ async function processRows(rows: Record<string, unknown>[]) {
           comment: row["comment"] !== null && row["comment"] !== undefined ? String(row["comment"]) : null,
         };
 
+        if ('id' in personData) {
+          delete personData.id;
+        }
+
         // Verificar si ya existe una persona con el mismo DNI
         if (personData.dni) {
           const existingPerson = await prisma.people.findFirst({
@@ -949,25 +1041,43 @@ async function processRows(rows: Record<string, unknown>[]) {
           });
 
           if (existingPerson) {
-            console.log(`⚠️ Persona con DNI ${personData.dni} ya existe en la base de datos`);
             duplicated.push({ row: rowIndex, dni: personData.dni });
             continue;
           }
         }
 
+        if ('id' in row) {
+          delete row.id;
+        }
+
+
         await prisma.people.create({
           data: personData,
         });
 
-        console.log(
-          `✅ Persona creada exitosamente en fila ${rowIndex}: ${name} ${lastName} (DNI: ${debugValue(dni)})`
-        );
         processed.push(rowIndex); // Añadir a procesados
       } catch (createError) {
+        let userMessage = "Error desconocido al crear persona";
+        if (
+          createError instanceof PrismaClientKnownRequestError &&
+          createError.code === "P2002"
+        ) {
+          const meta = createError.meta;
+          if (meta && Array.isArray(meta.target) && meta.target.includes("id")) {
+            userMessage = "Ya existe una persona con ese ID interno. Por favor, no incluya el campo 'id' en el Excel o asegúrese de que no esté duplicado.";
+          } else if (meta && Array.isArray(meta.target) && meta.target.includes("dni")) {
+            userMessage = "Ya existe una persona con ese RUT/DNI en la base de datos.";
+          } else {
+            userMessage = "Ya existe un registro con un valor duplicado en un campo único.";
+          }
+        } else if (createError instanceof Error) {
+          userMessage = createError.message;
+        }
+        // Log completo para depuración
         console.error(`❌ Error al crear persona en fila ${rowIndex}:`, createError);
         failed.push({
           row: rowIndex,
-          error: createError instanceof Error ? createError.message : "Error al crear persona",
+          error: userMessage,
         });
       }
     } catch (error: unknown) {
@@ -979,12 +1089,6 @@ async function processRows(rows: Record<string, unknown>[]) {
     }
   }
 
-  console.log(`📊 Resumen final de importación:
-    - Filas procesadas: ${processed.length}
-    - Filas duplicadas: ${duplicated.length}
-    - Filas con errores: ${failed.length}
-    - Total filas analizadas: ${cleanedRows.length}
-  `);
 
   return { processed, failed, duplicated };
 }

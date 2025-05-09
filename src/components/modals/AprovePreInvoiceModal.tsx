@@ -21,7 +21,6 @@ export default function AprovePreInvoiceModal({ isOpen, setIsOpen, preinvoiceId}
     if (isLoading) return;
     
     setIsLoading(true);
-    console.log('Iniciando aprobación de prefactura ID:', preinvoiceId);
     
     try {
       // 1. Actualizar en Redux
@@ -29,7 +28,6 @@ export default function AprovePreInvoiceModal({ isOpen, setIsOpen, preinvoiceId}
         id: preinvoiceId,
         status: "APPROVED"
       }));
-      console.log('Estado actualizado en Redux');
       
       // 2. Actualizar en el servidor usando server action
       try {
