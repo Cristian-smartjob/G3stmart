@@ -12,12 +12,20 @@ REM 3. Start database
 cd database\docker
 docker compose --env-file .env -p g3stmart up -d
 
-REM 4. Install deps & generate Prisma client
+REM 4. Wait for database to be ready
+echo Esperando a que la base de datos esté lista...
+timeout /t 5
+
+REM 5. Execute initial database setup
+echo Ejecutando script de inicialización de la base de datos...
+docker exec -i g3smart-postgres psql -U admin -d g3stmart < init-db\01_setup_database.sql
+
+REM 6. Install deps & generate Prisma client
 cd ..\..
 call npm install
 call npx prisma generate
 call npx tsc prisma/seed.ts --outDir dist
 @REM call node dist/seed.js
 
-REM 5. Run dev server
+REM 7. Run dev server
 call npm run dev 

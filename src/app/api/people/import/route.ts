@@ -136,34 +136,50 @@ type ValidationError = {
 
 // Función para validar y convertir fechas
 function parseDate(dateString: string | null | undefined): Date | null {
-  if (!dateString) return null;
-
-  // Intentar varios formatos comunes de fecha
-  const date = new Date(dateString);
-
-  // Verificar si la fecha es válida
-  if (isNaN(date.getTime())) {
-    // Intentar formatear manualmente DD/MM/YYYY o DD-MM-YYYY
-    if (dateString.includes("/") || dateString.includes("-")) {
-      const separator = dateString.includes("/") ? "/" : "-";
-      const parts = dateString.split(separator);
-
-      if (parts.length === 3) {
-        // Asumir formato DD/MM/YYYY
-        const day = parseInt(parts[0]);
-        const month = parseInt(parts[1]) - 1; // Los meses en JS van de 0-11
-        const year = parseInt(parts[2]);
-
-        const newDate = new Date(year, month, day);
-        if (!isNaN(newDate.getTime())) {
-          return newDate;
-        }
-      }
-    }
+  console.log(`🔄 Intentando parsear fecha:`, dateString);
+  if (!dateString) {
+    console.log(`  ❌ Fecha vacía o nula`);
     return null;
   }
 
-  return date;
+  // Limpiar la cadena de fecha
+  const cleanDate = dateString.trim();
+  console.log(`  📝 Fecha limpia:`, cleanDate);
+
+  // Si es un número (fecha de Excel), convertirlo
+  if (!isNaN(Number(cleanDate))) {
+    console.log(`  📊 Detectada fecha numérica de Excel:`, cleanDate);
+    const excelDate = new Date((Number(cleanDate) - 25569) * 86400 * 1000);
+    if (!isNaN(excelDate.getTime())) {
+      console.log(`  ✅ Fecha Excel convertida:`, excelDate);
+      return excelDate;
+    }
+  }
+
+  // Intentar parsear formato DD/MM/YYYY
+  const ddmmyyyyRegex = /^(\d{1,2})[/|-](\d{1,2})[/|-](\d{4})$/;
+  const ddmmyyyyMatch = cleanDate.match(ddmmyyyyRegex);
+  if (ddmmyyyyMatch) {
+    console.log(`  📅 Detectado formato DD/MM/YYYY`);
+    const day = parseInt(ddmmyyyyMatch[1]);
+    const month = parseInt(ddmmyyyyMatch[2]) - 1;
+    const year = parseInt(ddmmyyyyMatch[3]);
+    const date = new Date(year, month, day);
+    if (!isNaN(date.getTime())) {
+      console.log(`  ✅ Fecha parseada correctamente:`, date);
+      return date;
+    }
+  }
+
+  // Intentar con el constructor de Date como último recurso
+  const date = new Date(cleanDate);
+  if (!isNaN(date.getTime())) {
+    console.log(`  ✅ Fecha parseada con constructor Date:`, date);
+    return date;
+  }
+
+  console.log(`  ❌ No se pudo parsear la fecha`);
+  return null;
 }
 
 // Función para extraer texto seguro de una celda de ExcelJS
@@ -207,62 +223,62 @@ function obtenerTextoCelda(celda: Cell): string {
 
 // Mapeo de sinónimos
 const currencyMap: Record<string, string> = {
-  "USD": "USD",
-  "CLP": "CLP",
-  "UF": "UF"
+  USD: "USD",
+  CLP: "CLP",
+  UF: "UF",
 };
 
 // Mapeo de sinónimos para AFPs
 const afpMap: Record<string, string> = {
-  "UNO": "Uno",
-  "Uno": "Uno",
-  "HABITAT": "Habitat",
-  "HÁBITAT": "Habitat",
-  "Habitat": "Habitat",
+  UNO: "Uno",
+  Uno: "Uno",
+  HABITAT: "Habitat",
+  HÁBITAT: "Habitat",
+  Habitat: "Habitat",
   "PLAN VITAL": "Plan Vital",
   "Plan Vital": "Plan Vital",
   "Plan vital": "Plan Vital",
-  "PlanVital": "Plan Vital",
-  "PLANVITAL": "Plan Vital",
+  PlanVital: "Plan Vital",
+  PLANVITAL: "Plan Vital",
   "PLAN-VITAL": "Plan Vital",
   "Plan-Vital": "Plan Vital",
   "PLANVITAL AFP": "Plan Vital",
   "PLAN VITAL AFP": "Plan Vital",
-  "CAPITAL": "Capital",
+  CAPITAL: "Capital",
   "CAPITAL AFP": "Capital",
-  "MODELO": "Modelo",
+  MODELO: "Modelo",
   "MODELO AFP": "Modelo",
-  "PROVIDA": "Provida",
+  PROVIDA: "Provida",
   "PROVIDA AFP": "Provida",
-  "CUPRUM": "Cuprum",
-  "CUPRUM AFP": "Cuprum"
+  CUPRUM: "Cuprum",
+  "CUPRUM AFP": "Cuprum",
 };
 
 // Mapeo de sinónimos para Seniorities
 const seniorityMap: Record<string, string> = {
   "SEMI-SENIOR": "Semi-Senior",
   "SEMI SENIOR": "Semi-Senior",
-  "SEMISENIOR": "Semi-Senior",
+  SEMISENIOR: "Semi-Senior",
   "Semi Senior": "Semi-Senior",
-  "SemiSenior": "Semi-Senior",
-  "SEMI": "Semi-Senior",
-  "Semi": "Semi-Senior",
-  "JUNIOR": "Junior",
-  "Junior": "Junior",
-  "SENIOR": "Senior",
-  "Senior": "Senior",
-  "LEAD": "Lead",
-  "Lead": "Lead",
-  "PRINCIPAL": "Principal",
-  "Principal": "Principal",
-  "ARCHITECT": "Architect",
-  "Architect": "Architect"
+  SemiSenior: "Semi-Senior",
+  SEMI: "Semi-Senior",
+  Semi: "Semi-Senior",
+  JUNIOR: "Junior",
+  Junior: "Junior",
+  SENIOR: "Senior",
+  Senior: "Senior",
+  LEAD: "Lead",
+  Lead: "Lead",
+  PRINCIPAL: "Principal",
+  Principal: "Principal",
+  ARCHITECT: "Architect",
+  Architect: "Architect",
 };
 
 // Función para normalizar texto (quitar tildes, espacios extra, etc)
 function normalizeText(text: string): string {
   if (!text) return "";
-  
+
   return text
     .normalize("NFD") // Descompone los caracteres acentuados
     .replace(/[\u0300-\u036f]/g, "") // Elimina los diacríticos
@@ -274,21 +290,20 @@ function normalizeText(text: string): string {
 // Función para buscar el valor normalizado en un mapeo
 function getNormalizedValue(value: string, map: Record<string, string>): string {
   if (!value) return "";
-  
+
   const normalized = normalizeText(value);
   const upperNormalized = normalized.toUpperCase();
-  
+
   // Buscar en el mapeo
   for (const [key, mappedValue] of Object.entries(map)) {
     if (normalizeText(key).toUpperCase() === upperNormalized) {
       return mappedValue;
     }
   }
-  
+
   // Si no se encuentra en el mapeo, devolver el valor normalizado
   return normalized;
 }
-
 
 // Para Seniority
 async function createOrFindSeniority(name: string) {
@@ -300,10 +315,10 @@ async function createOrFindSeniority(name: string) {
       return record;
     } catch {
       record = await prisma.seniority.findFirst({
-        where: { name: { equals: name, mode: "insensitive" } }
+        where: { name: { equals: name, mode: "insensitive" } },
       });
       if (record) return record;
-      await new Promise(res => setTimeout(res, 100 * (retries + 1)));
+      await new Promise((res) => setTimeout(res, 100 * (retries + 1)));
       retries++;
     }
   }
@@ -313,7 +328,7 @@ async function createOrFindSeniority(name: string) {
 // Para AFP
 async function createOrFindAfp(name: string) {
   const record = await prisma.aFPInstitution.findFirst({
-    where: { name: { equals: name, mode: "insensitive" } }
+    where: { name: { equals: name, mode: "insensitive" } },
   });
   if (record) return record;
   // Si no existe, crear
@@ -352,27 +367,51 @@ export async function POST(request: NextRequest) {
         const headerCell = worksheet.getRow(1).getCell(colNumber);
         let header = obtenerTextoCelda(headerCell);
         if (typeof header !== "string" || !header) header = "";
-        let value: unknown = obtenerTextoCelda(cell);
+
+        // Obtener el valor y el tipo de la celda
+        let value: unknown = cell.value;
+        const cellType = cell.type;
+        const cellFormat = cell.numFmt;
+
+        // Log para fechas
+        if (["start_date", "end_date", "client_end_date", "birth_date"].includes(header)) {
+          console.log(`📅 Fila ${rowNumber}, Columna ${header}:`);
+          console.log(`  - Valor original:`, value);
+          console.log(`  - Tipo de celda:`, cellType);
+          console.log(`  - Formato de celda:`, cellFormat);
+        }
+
+        // Si es una fecha de Excel
+        if (cellType === 5 || (typeof value === "object" && value instanceof Date)) {
+          value = value;
+        } else {
+          value = obtenerTextoCelda(cell);
+        }
+
         if (value === null || value === undefined) value = "";
         if (typeof value !== "string") {
           if (typeof value === "number" || typeof value === "boolean") {
             value = value.toString();
+          } else if (value instanceof Date) {
+            // Formatear fecha como DD/MM/YYYY
+            value = `${value.getDate().toString().padStart(2, "0")}/${(value.getMonth() + 1)
+              .toString()
+              .padStart(2, "0")}/${value.getFullYear()}`;
           } else {
             value = "";
           }
         }
+
         rowData[header] = value;
       });
-      // LOG extra para rastrear emails
-      if (
-        rowData["email"] !== undefined ||
-        rowData["corporate_email"] !== undefined ||
-        rowData["leader_email"] !== undefined
-      ) {
-        console.log(
-          `Fila Excel ${rowNumber}: email='${rowData["email"]}', corporate_email='${rowData["corporate_email"]}', leader_email='${rowData["leader_email"]}'`
-        );
-      }
+
+      // Log para ver los valores finales de las fechas
+      console.log(`🔍 Valores finales para fila ${rowNumber}:`);
+      console.log(`  - start_date:`, rowData["start_date"]);
+      console.log(`  - end_date:`, rowData["end_date"]);
+      console.log(`  - client_end_date:`, rowData["client_end_date"]);
+      console.log(`  - birth_date:`, rowData["birth_date"]);
+
       data.push(rowData);
     });
 
@@ -460,9 +499,6 @@ async function processRows(rows: Record<string, unknown>[]) {
   const failed: { row: number; error: string }[] = [];
   const duplicated: { row: number; dni: string }[] = [];
 
-  
-
-
   // Primero verificamos todos los DNIs para detectar duplicados en la base de datos
   const dniToCheck = new Map<number, string>(); // Mapa de rowIndex -> dni
 
@@ -476,11 +512,9 @@ async function processRows(rows: Record<string, unknown>[]) {
     }
   }
 
-
   // Verificar todos los DNIs en una sola consulta
   if (dniToCheck.size > 0) {
     const dnisToVerify = Array.from(dniToCheck.values());
-
 
     try {
       // Verificar conexión a la base de datos
@@ -490,8 +524,6 @@ async function processRows(rows: Record<string, unknown>[]) {
         console.error("❌ Error de conexión a la base de datos:", connectError);
         throw new Error("No se pudo conectar a la base de datos");
       }
-
-    
 
       // Verificar DNIs duplicados
       const existingPeople = await prisma.people.findMany({
@@ -513,9 +545,6 @@ async function processRows(rows: Record<string, unknown>[]) {
       const validExistingPeople = existingPeople.filter(
         (person) => person && person.dni && dnisToVerify.includes(person.dni)
       );
-
-
-    
 
       // Crear un mapa de DNIs existentes para búsqueda rápida
       const existingDNIs = new Map();
@@ -550,8 +579,6 @@ async function processRows(rows: Record<string, unknown>[]) {
   for (let i = 0; i < cleanedRows.length; i++) {
     const row = cleanedRows[i];
     const rowIndex = i + 2; // Excel comienza en 1 y la primera fila es cabecera
-
-  
 
     // Verificar si la fila está completamente vacía
     const isEmpty = Object.values(row).every(
@@ -646,8 +673,6 @@ async function processRows(rows: Record<string, unknown>[]) {
                   name: row["job_title"] as string,
                 },
               });
-
-             
             }
           }
 
@@ -663,7 +688,7 @@ async function processRows(rows: Record<string, unknown>[]) {
       let seniorityId = null;
       if (row["seniority"]) {
         const normalizedSeniorityName = getNormalizedValue(row["seniority"] as string, seniorityMap);
-        
+
         try {
           const seniority = await createOrFindSeniority(normalizedSeniorityName);
           seniorityId = seniority.id;
@@ -715,8 +740,6 @@ async function processRows(rows: Record<string, unknown>[]) {
                   name: row["tech_stack"] as string,
                 },
               });
-
-             
             }
           }
 
@@ -732,7 +755,7 @@ async function processRows(rows: Record<string, unknown>[]) {
       let afpInstitutionId = null;
       if (row["afp"]) {
         const normalizedAfpName = getNormalizedValue(row["afp"] as string, afpMap);
-        
+
         try {
           // const afpsExistentes = await prisma.aFPInstitution.findMany({ select: { name: true } });
           // console.log("AFP existentes en la base de datos:", afpsExistentes.map(a => a.name));
@@ -964,7 +987,6 @@ async function processRows(rows: Record<string, unknown>[]) {
       const deliveryManagerValue = row["delivery_manager"] || row["delivery_manager "];
 
       // Registrar los valores para diagnóstico
-      
 
       // Crear registro de persona
       try {
@@ -1028,7 +1050,7 @@ async function processRows(rows: Record<string, unknown>[]) {
           comment: row["comment"] !== null && row["comment"] !== undefined ? String(row["comment"]) : null,
         };
 
-        if ('id' in personData) {
+        if ("id" in personData) {
           delete personData.id;
         }
 
@@ -1046,10 +1068,9 @@ async function processRows(rows: Record<string, unknown>[]) {
           }
         }
 
-        if ('id' in row) {
+        if ("id" in row) {
           delete row.id;
         }
-
 
         await prisma.people.create({
           data: personData,
@@ -1058,13 +1079,11 @@ async function processRows(rows: Record<string, unknown>[]) {
         processed.push(rowIndex); // Añadir a procesados
       } catch (createError) {
         let userMessage = "Error desconocido al crear persona";
-        if (
-          createError instanceof PrismaClientKnownRequestError &&
-          createError.code === "P2002"
-        ) {
+        if (createError instanceof PrismaClientKnownRequestError && createError.code === "P2002") {
           const meta = createError.meta;
           if (meta && Array.isArray(meta.target) && meta.target.includes("id")) {
-            userMessage = "Ya existe una persona con ese ID interno. Por favor, no incluya el campo 'id' en el Excel o asegúrese de que no esté duplicado.";
+            userMessage =
+              "Ya existe una persona con ese ID interno. Por favor, no incluya el campo 'id' en el Excel o asegúrese de que no esté duplicado.";
           } else if (meta && Array.isArray(meta.target) && meta.target.includes("dni")) {
             userMessage = "Ya existe una persona con ese RUT/DNI en la base de datos.";
           } else {
@@ -1088,7 +1107,6 @@ async function processRows(rows: Record<string, unknown>[]) {
       });
     }
   }
-
 
   return { processed, failed, duplicated };
 }

@@ -39,14 +39,16 @@ export default function PreInvoiceItemRow({ item, selectedTabId = 1 }: Props) {
           "-"
         )}
       </td>
-      <td className="px-4 py-3">{Number(numValue) < 10000 
+      <td className="px-4 py-3">
+        {Number(numValue) < 10000
           ? `${Number(numValue).toFixed(2)} UF`
-          : formatCurrency(Number(numValue), "es-ES", "CLP")}</td>
+          : formatCurrency(Number(numValue), "es-ES", "CLP")}
+      </td>
 
       <td className="px-4 py-3">
         {" "}
         <Link
-          href={`/preInvocedetail/${item.id}?returnTabId=${selectedTabId}`}
+          href={`/preInvocedetail/${item.id}?returnTabId=${selectedTabId}&detailTabId=1`}
           className="rounded-full bg-indigo-600 px-2.5 py-1 text-xs font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
         >
           Ver detalle

@@ -44,7 +44,12 @@ export default function PreinvoceDetail() {
   const [isRecalculating, setIsRecalculating] = useState(false);
   const [isLoadingClient, setIsLoadingClient] = useState(false);
   const searchParams = useSearchParams();
-  const returnTabId = searchParams.get('returnTabId') || '1';
+  const returnTabId = searchParams.get("returnTabId") || "1";
+  const detailTabId = searchParams.get("detailTabId") || "1";
+
+  // Convertir detailTabId a número para usarlo como selección inicial de tab
+  const initialTabSelection = parseInt(detailTabId, 10) || 1;
+  const [selected, setSelected] = useState(initialTabSelection);
 
   const preInvoices = useSelector<RootState, PreInvoice[]>((state) => state.preInvoices.list);
   const isLoadingAssignOrUnassign = useSelector<RootState, boolean>(
@@ -79,7 +84,6 @@ export default function PreinvoceDetail() {
     return acc + (value * totalConsumeDays) / billableDays;
   }, 0);
 
-  const [selected, setSelected] = useState(1);
   const [showModal, setShowModal] = useState(false);
   const [showModalDownload, setShowModalDownload] = useState(false);
   const [showModalUnassign, setShowModalUnassign] = useState(false);
@@ -93,7 +97,7 @@ export default function PreinvoceDetail() {
     dispatch(fetchSuccessfull([]));
   }, [dispatch]);
 
-  // Cargar los detalles de prefactura cuando cambie el ID
+  // Cargar los detalles de prefactura cuando cambie el ID o la tab seleccionada
   useEffect(() => {
     // Intentar convertir el ID a número de manera segura
     let numericId: number;
@@ -110,13 +114,15 @@ export default function PreinvoceDetail() {
     }
 
     if (!isNaN(numericId) && numericId > 0) {
+      // Limpiar los detalles antes de cargar nuevos para evitar problemas de estado
+      dispatch(fetchSuccessfull([]));
+      // Luego cargar los nuevos detalles
       dispatch(fetchPreInvoiceDetails());
-      // Aquí podríamos cargar datos específicos para este ID, pero eso debería
-      // manejarse dentro de la acción o mediante efectos secundarios
+      console.log(`Cargando detalles para ID: ${numericId}, Tab: ${selected}`);
     } else {
       console.error("ID inválido para detalles de prefactura:", id);
     }
-  }, [id, dispatch]);
+  }, [id, dispatch]); // Quitar selected de las dependencias para evitar bucles infinitos
 
   // Cargar la prefactura directamente usando server actions
   useEffect(() => {
@@ -127,7 +133,7 @@ export default function PreinvoceDetail() {
 
         if (foundPreInvoice) {
           setCurrentPreInvoice(foundPreInvoice);
-        } 
+        }
       } catch (error) {
         console.error("Error al cargar la prefactura:", error);
       }
@@ -223,7 +229,6 @@ export default function PreinvoceDetail() {
         isOpen={showModalDownload}
         onAssign={async () => {
           if (id !== undefined) {
-
             try {
               // Usar la API REST
               const apiResponse = await fetch(`/api/preinvoices/${id}/status`, {
@@ -511,10 +516,7 @@ export default function PreinvoceDetail() {
                     <span className="mx-1 text-gray-500">•</span>
                     <span className="text-gray-600">
                       {activePreInvoice.ufDateUsed &&
-                        formatearFechaUFCorrecta(
-                          activePreInvoice.ufDateUsed, 
-                          Number(activePreInvoice.ufValueUsed)
-                        )}
+                        formatearFechaUFCorrecta(activePreInvoice.ufDateUsed, Number(activePreInvoice.ufValueUsed))}
                     </span>
                   </div>
                 </div>

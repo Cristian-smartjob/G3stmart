@@ -12,17 +12,32 @@ function* fetchPreinvoices(action: {
   payload: number;
 }): FetchSagaGenerator<PreInvoiceDetailWithRelations[]> {
   try {
-    // Asegurarnos de que tenemos un ID válido
-    const id =
-      typeof action.payload === "number"
-        ? action.payload
-        : action.type === ReducerPreInvoicesDetail.assignSuccessfull.type
-        ? action.payload
-        : 0;
+    // Obtener parámetros de la URL para el tabId
+    const urlParams = new URLSearchParams(window.location.search);
+    const tabId = urlParams.get("returnTabId") || "1";
 
-    if (!id) {
+    // Asegurarnos de que tenemos un ID válido
+    let id: number;
+
+    if (action.type === ReducerPreInvoicesDetail.fetch.type) {
+      // Si es una acción de fetch, intentamos obtener el ID de la URL
+      const pathParts = window.location.pathname.split("/");
+      id = Number(pathParts[pathParts.length - 1]);
+    } else if (action.type === ReducerPreInvoicesDetail.assignSuccessfull.type) {
+      // Si es una acción de asignación exitosa, usamos el ID del payload
+      id = Number(action.payload);
+    } else {
+      // En cualquier otro caso, intentamos usar el payload directamente
+      id = Number(action.payload);
+    }
+
+    if (!id || isNaN(id)) {
+      console.error("ID inválido para detalles de prefactura:", id);
+      yield put(ReducerPreInvoicesDetail.fetchError());
       return;
     }
+
+    console.log(`Fetching preinvoice details for ID: ${id}, Tab: ${tabId}`);
 
     const response = yield call(() =>
       fetch(`/api/preinvoices/details/${id}`, {
@@ -30,17 +45,28 @@ function* fetchPreinvoices(action: {
         headers: {
           "Content-Type": "application/json",
         },
+        // Añadir cache: 'no-store' para evitar problemas de caché
+        cache: "no-store",
       })
     );
 
-    const result = yield call(() => (response as Response).json());
-
     if (!(response as Response).ok) {
-      throw new Error((result as ApiResponse<unknown>).message || "Error fetching pre-invoice details");
+      const errorData = yield call(() => (response as Response).json());
+      console.error("Error response:", errorData);
+      throw new Error((errorData as ApiResponse<unknown>).message || "Error fetching pre-invoice details");
     }
 
-    yield put(ReducerPreInvoicesDetail.fetchSuccessfull((result as ApiResponse<PreInvoiceDetailWithRelations[]>).data));
-  } catch {
+    const rawResult = yield call(() => (response as Response).json());
+    const result = rawResult as ApiResponse<PreInvoiceDetailWithRelations[]>;
+
+    if (!result || !Array.isArray(result.data)) {
+      console.error("Invalid response format:", result);
+      throw new Error("Invalid response format");
+    }
+
+    yield put(ReducerPreInvoicesDetail.fetchSuccessfull(result.data));
+  } catch (error) {
+    console.error("Error in fetchPreinvoices saga:", error);
     yield put(ReducerPreInvoicesDetail.fetchError());
   }
 }
