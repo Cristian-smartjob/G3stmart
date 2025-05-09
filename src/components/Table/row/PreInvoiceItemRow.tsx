@@ -7,9 +7,11 @@ import Badge from "@/components/core/Badge";
 
 interface Props {
   item: PreInvoice;
+  selectedTabId?: number;
 }
 
-export default function PreInvoiceItemRow({ item }: Props) {
+export default function PreInvoiceItemRow({ item, selectedTabId = 1 }: Props) {
+  const numValue = typeof item.value === "string" ? parseFloat(item.value) : item.value || 0;
   return (
     <tr
       className="border-b dark:border-gray-700 hover:bg-gray-200 dark:hover:bg-gray-700 cursor-pointer transition"
@@ -37,12 +39,14 @@ export default function PreInvoiceItemRow({ item }: Props) {
           "-"
         )}
       </td>
-      <td className="px-4 py-3">{item.value ? formatCurrency(Number(item.value)) : "-"}</td>
+      <td className="px-4 py-3">{Number(numValue) < 10000 
+          ? `${Number(numValue).toFixed(2)} UF`
+          : formatCurrency(Number(numValue), "es-ES", "CLP")}</td>
 
       <td className="px-4 py-3">
         {" "}
         <Link
-          href={`/preInvocedetail/${item.id}`}
+          href={`/preInvocedetail/${item.id}?returnTabId=${selectedTabId}`}
           className="rounded-full bg-indigo-600 px-2.5 py-1 text-xs font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
         >
           Ver detalle

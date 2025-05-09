@@ -6,6 +6,7 @@ import { Dialog, DialogBackdrop, DialogPanel, DialogTitle } from '@headlessui/re
 import { CheckIcon } from '@heroicons/react/24/outline'
 import { useState } from 'react';
 import { updatePreInvoice } from '@/app/actions/preInvoices';
+import { useSearchParams } from 'next/navigation';
 
 interface Props {
     isOpen:boolean;
@@ -16,30 +17,31 @@ interface Props {
 export default function AprovePreInvoiceModal({ isOpen, setIsOpen, preinvoiceId}: Props) {
   const [isLoading, setIsLoading] = useState(false);
   const dispatch = useAppDispatch();
-  
+  const searchParams = useSearchParams();
+  const returnTabId = searchParams.get('returnTabId') || '1';
+
   const handlerUpdate = async () => {
     if (isLoading) return;
-    
+
     setIsLoading(true);
-    
+
     try {
       // 1. Actualizar en Redux
       dispatch(update({
         id: preinvoiceId,
         status: "APPROVED"
       }));
-      
       // 2. Actualizar en el servidor usando server action
       try {
         const result = await updatePreInvoice(preinvoiceId, { 
-          id: preinvoiceId, 
-          status: "APPROVED" 
+          id: preinvoiceId,
+          status: "APPROVED"
         });
         console.log('Prefactura aprobada en servidor:', result);
       } catch (error) {
         console.error('Error al actualizar en el servidor:', error);
       }
-      
+
       // 3. Actualizar usando API REST
       try {
         const apiResponse = await fetch(`/api/preinvoices/${preinvoiceId}/status`, {
@@ -49,23 +51,23 @@ export default function AprovePreInvoiceModal({ isOpen, setIsOpen, preinvoiceId}
           },
           body: JSON.stringify({ status: 'APPROVED' }),
         });
-        
+
         const apiResult = await apiResponse.json();
         console.log('Respuesta de la API:', apiResult);
       } catch (error) {
         console.error('Error al llamar a la API:', error);
       }
-      
-      // Redirigir a la lista de prefacturas después de completar todo
+
+      // Redirigir a la lista de prefacturas después de completar todo, preservando la pestaña activa
       setTimeout(() => {
-        window.location.href = '/preinvoice';
+        window.location.href = `/preinvoice?tabId=${returnTabId}`;
       }, 500);
     } catch (error) {
       console.error('Error general en la aprobación:', error);
       setIsLoading(false);
     }
   }
-   
+
   return (
     <Dialog open={isOpen} onClose={setIsOpen} className="relative z-50">
       <DialogBackdrop
@@ -88,7 +90,7 @@ export default function AprovePreInvoiceModal({ isOpen, setIsOpen, preinvoiceId}
                   Aprobar prefactura 
                 </DialogTitle>
                 <div className="mt-2">
-                  
+
                 </div>
               </div>
             </div>

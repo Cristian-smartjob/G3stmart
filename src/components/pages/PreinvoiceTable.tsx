@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { fetchPreInvoices } from "@/app/actions/preInvoices";
 import type { PreInvoice } from "../../interface/common";
+import { useSearchParams } from "next/navigation";
 
 import AddPreInvoiceForm from "../dialogForm/AddPreInvoiceForm";
 import Search from "../Table/Search/SearchBar";
@@ -24,12 +25,38 @@ const tabs: Selector[] = [
 ];
 
 export default function PreinvoiceTable() {
+  const searchParams = useSearchParams();
   const [currentPage, setCurrentPage] = useState(1);
   const [showDialog, setShowDialog] = useState(false);
   const [selected, setSelected] = useState(1);
   const [preInvoices, setPreInvoices] = useState<PreInvoice[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isFormSubmitting, setIsFormSubmitting] = useState(false);
+
+  // Inicializar la pestaña seleccionada según parámetros de URL o localStorage
+  useEffect(() => {
+    const tabIdFromURL = searchParams.get('tabId');
+    if (tabIdFromURL) {
+      const parsedTabId = parseInt(tabIdFromURL);
+      // Verificar que el tabId sea válido
+      if (!isNaN(parsedTabId) && tabs.some(tab => tab.id === parsedTabId)) {
+        setSelected(parsedTabId);
+      }
+    } else {
+      const savedTabId = localStorage.getItem('preinvoiceSelectedTab');
+      if (savedTabId) {
+        const parsedSavedTabId = parseInt(savedTabId);
+        if (!isNaN(parsedSavedTabId) && tabs.some(tab => tab.id === parsedSavedTabId)) {
+          setSelected(parsedSavedTabId);
+        }
+      }
+    }
+  }, [searchParams]);
+
+  // Guardar la pestaña seleccionada en localStorage cuando cambie
+  useEffect(() => {
+    localStorage.setItem('preinvoiceSelectedTab', selected.toString());
+  }, [selected]);
 
   const selectedTab = tabs.find((item) => item.id === selected);
 
@@ -127,7 +154,11 @@ export default function PreinvoiceTable() {
           <>
             <TableSkeleton isLoading={isLoading && filteredPreInvoices.length <= 0} size={6} />
             {filteredPreInvoices.slice((currentPage - 1) * 10, currentPage * 10).map((item) => (
-              <PreInvoiceItemRow key={item.id} item={item} />
+              <PreInvoiceItemRow 
+                key={item.id} 
+                item={item}
+                selectedTabId={selected}
+              />
             ))}
           </>
         </MainTable>

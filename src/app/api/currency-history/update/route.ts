@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/infrastructure/database/connection/prisma";
 import axios from "axios";
+import { fechaToISOString } from "@/utils/date";
 
 function toCLDateString(date: Date): string {
-  // Retorna dd-mm-yyyy
-  const d = date.getDate().toString().padStart(2, "0");
-  const m = (date.getMonth() + 1).toString().padStart(2, "0");
-  const y = date.getFullYear();
+  // Retorna dd-mm-yyyy usando UTC para evitar problemas de zona horaria
+  const d = date.getUTCDate().toString().padStart(2, "0");
+  const m = (date.getUTCMonth() + 1).toString().padStart(2, "0");
+  const y = date.getUTCFullYear();
   return `${d}-${m}-${y}`;
 }
 
@@ -36,8 +37,16 @@ export async function POST() {
     const last = await prisma.currencyHistory.findFirst({
       orderBy: { date: "desc" },
     });
-    const today = new Date();
-    const todayStr = today.toISOString().substring(0, 10);
+    
+    // Crear fecha en UTC para evitar problemas de zona horaria
+    const today = new Date(Date.UTC(
+      new Date().getUTCFullYear(),
+      new Date().getUTCMonth(),
+      new Date().getUTCDate(),
+      12, 0, 0
+    ));
+    
+    // Formatear fecha para consulta en formato chileno
     const todayCL = toCLDateString(today);
 
     if (!last) {
@@ -47,7 +56,7 @@ export async function POST() {
       if (uf !== null && usd !== null) {
         await prisma.currencyHistory.create({
           data: {
-            date: new Date(todayStr),
+            date: today, // Usar fecha UTC
             uf,
             usd,
           },
@@ -62,23 +71,35 @@ export async function POST() {
     }
 
     // Si hay datos, insertar los días faltantes
-    const lastDate = new Date(last.date);
-    lastDate.setDate(lastDate.getDate() + 1); // Día siguiente al último
-    const missingDates: { iso: string; cl: string }[] = [];
+    // Crear una copia de la fecha en UTC
+    const lastDate = new Date(Date.UTC(
+      last.date.getUTCFullYear(),
+      last.date.getUTCMonth(),
+      last.date.getUTCDate() + 1, // Día siguiente al último
+      12, 0, 0
+    ));
+    
+    const missingDates: { iso: string; cl: string; fecha: Date }[] = [];
     const d = new Date(lastDate);
     while (d <= today) {
-      missingDates.push({ iso: d.toISOString().substring(0, 10), cl: toCLDateString(d) });
-      d.setDate(d.getDate() + 1);
+      missingDates.push({
+        iso: fechaToISOString(d),
+        cl: toCLDateString(d),
+        fecha: new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), 12, 0, 0))
+      });
+      // Incrementar en UTC para evitar problemas con cambios de horario
+      d.setUTCDate(d.getUTCDate() + 1);
     }
+    
     let inserted = 0;
-    for (const { iso, cl } of missingDates) {
+    for (const { iso, cl, fecha } of missingDates) {
       const uf = await fetchDayValue("uf", cl);
       const usd = await fetchDayValue("dolar", cl);
       if (uf !== null && usd !== null) {
         await prisma.currencyHistory.upsert({
-          where: { date: new Date(iso) },
+          where: { date: fecha }, // Usar la fecha UTC
           update: { uf, usd },
-          create: { date: new Date(iso), uf, usd },
+          create: { date: fecha, uf, usd }, // Usar la fecha UTC
         });
         inserted++;
         console.log(`[DB] Insertado ${iso}: UF=${uf}, USD=${usd}`);

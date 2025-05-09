@@ -7,6 +7,7 @@ import clsx from 'clsx'
 import { useAppDispatch } from '@/lib/hook'
 import { update } from '@/lib/features/preinvoices'
 import { updatePreInvoice } from '@/app/actions/preInvoices'
+import { useSearchParams } from 'next/navigation'
 
 interface Props {
     isOpen:boolean;
@@ -18,6 +19,8 @@ export default function RejectPreinvoiceModal({ isOpen, preinvoiceId, setIsOpen}
   const [note, setNote] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const dispatch = useAppDispatch()
+  const searchParams = useSearchParams();
+  const returnTabId = searchParams.get('returnTabId') || '1';
 
   const handlerUpdate = async () => {
     if (isLoading || note === "") return;
@@ -65,9 +68,9 @@ export default function RejectPreinvoiceModal({ isOpen, preinvoiceId, setIsOpen}
         console.error('Error al llamar a la API:', error);
       }
       
-      // Redirigir a la lista de prefacturas después de completar todo
+      // Redirigir a la lista de prefacturas después de completar todo, preservando la pestaña activa
       setTimeout(() => {
-        window.location.href = '/preinvoice';
+        window.location.href = `/preinvoice?tabId=${returnTabId}`;
       }, 500);
     } catch (error) {
       console.error('Error general en el rechazo:', error);
