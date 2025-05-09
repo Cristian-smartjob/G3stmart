@@ -17,6 +17,7 @@ import ImportExcelModal from "../modals/ImportExcelModal";
 import MainTable from "../Table/MainTable";
 import TableSkeleton from "../core/TableSkeleton";
 import { PeopleWithAllRelations } from "@/types/people";
+import { ScrollSection, ScrollToLink } from "../ui/ScrollToSection";
 
 const header = [
   "Empresa",
@@ -96,6 +97,15 @@ export default function PeopleTable() {
 
   return (
     <div className="overflow-x-auto">
+      <div className="mb-4 flex justify-center space-x-4 py-2 bg-white z-50 relative transform-gpu">
+        <ScrollToLink to="search-section" className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-md">
+          Búsqueda
+        </ScrollToLink>
+        <ScrollToLink to="table-section" className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-md">
+          Tabla
+        </ScrollToLink>
+      </div>
+
       <GenericModal isOpen={showDialog} onClose={handlerClose}>
         <AddPeopleForm />
       </GenericModal>
@@ -108,102 +118,114 @@ export default function PeopleTable() {
 
       <AssignProjectModal isOpen={isOpen} setIsOpen={setIsOpen} smarter={selectedSmarter} />
 
-      <div className="bg-white dark:bg-gray-800 relative shadow-md sm:rounded-lg overflow-hidden">
-        <div className="flex flex-col md:flex-row items-center justify-between space-y-3 md:space-y-0 md:space-x-4 p-4">
-          <div className="w-full md:w-1/2">
-            <form className="flex items-center">
-              <label htmlFor="simple-search" className="sr-only">
-                Buscar
-              </label>
-              <div className="relative w-full">
-                <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                  <svg
-                    aria-hidden="true"
-                    className="w-5 h-5 text-gray-500 dark:text-gray-400"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
+      <ScrollSection id="search-section" className="mb-8">
+        <div className="bg-white dark:bg-gray-800 relative shadow-md sm:rounded-lg overflow-hidden">
+          <div className="flex flex-col md:flex-row items-center justify-between space-y-3 md:space-y-0 md:space-x-4 p-4">
+            <div className="w-full md:w-1/2">
+              <form className="flex items-center">
+                <label htmlFor="simple-search" className="sr-only">
+                  Buscar
+                </label>
+                <div className="relative w-full">
+                  <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                    <svg
+                      aria-hidden="true"
+                      className="w-5 h-5 text-gray-500 dark:text-gray-400"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                  </div>
+                  <input
+                    type="text"
+                    id="simple-search"
+                    className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full pl-10 p-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
+                    placeholder="Buscar"
+                    onChange={(event) => {
+                      setQuery(event.target.value);
+                    }}
+                  />
                 </div>
-                <input
-                  type="text"
-                  id="simple-search"
-                  className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full pl-10 p-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                  placeholder="Buscar"
-                  onChange={(event) => {
-                    setQuery(event.target.value);
-                  }}
-                />
+                <button
+                  id="actionsDropdownButton"
+                  onClick={handleClickFilter}
+                  data-dropdown-toggle="actionsDropdown"
+                  className="w-full ml-4 md:w-auto flex items-center justify-center py-2 px-4 text-sm font-medium text-gray-900 focus:outline-none bg-white rounded-lg border border-gray-200 hover:bg-gray-100 hover:text-primary-700 focus:z-10 focus:ring-4 focus:ring-gray-200 dark:focus:ring-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700"
+                  type="button"
+                >
+                  <FunnelIcon className="h-4 w-4" />
+                </button>
+              </form>
+            </div>
+            <div className="w-full md:w-auto flex flex-col md:flex-row space-y-2 md:space-y-0 items-stretch md:items-center justify-end md:space-x-3 flex-shrink-0">
+              <div className="flex items-center space-x-3 w-full md:w-auto">
+                <button
+                  id="importExcelButton"
+                  onClick={handleClickImport}
+                  className="w-full md:w-auto flex items-center justify-center py-2 px-4 text-sm font-medium text-gray-900 focus:outline-none bg-white rounded-lg border border-gray-200 hover:bg-gray-100 hover:text-primary-700 focus:z-10 focus:ring-4 focus:ring-gray-200 dark:focus:ring-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700"
+                  type="button"
+                >
+                  <ArrowUpTrayIcon className="h-4 w-4" /> <span className="ml-2">Cargar Excel de Smarters</span>
+                </button>
+                <button
+                  id="actionsDropdownButton"
+                  onClick={handleClick}
+                  data-dropdown-toggle="actionsDropdown"
+                  className="w-full md:w-auto flex items-center justify-center py-2 px-4 text-sm font-medium text-gray-900 focus:outline-none bg-white rounded-lg border border-gray-200 hover:bg-gray-100 hover:text-primary-700 focus:z-10 focus:ring-4 focus:ring-gray-200 dark:focus:ring-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700"
+                  type="button"
+                >
+                  <PlusIcon className="h-4 w-4" /> <span className="ml-2">Agregar Smarter</span>
+                </button>
               </div>
-              <button
-                id="actionsDropdownButton"
-                onClick={handleClickFilter}
-                data-dropdown-toggle="actionsDropdown"
-                className="w-full ml-4 md:w-auto flex items-center justify-center py-2 px-4 text-sm font-medium text-gray-900 focus:outline-none bg-white rounded-lg border border-gray-200 hover:bg-gray-100 hover:text-primary-700 focus:z-10 focus:ring-4 focus:ring-gray-200 dark:focus:ring-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700"
-                type="button"
-              >
-                <FunnelIcon className="h-4 w-4" />
-              </button>
-            </form>
-          </div>
-          <div className="w-full md:w-auto flex flex-col md:flex-row space-y-2 md:space-y-0 items-stretch md:items-center justify-end md:space-x-3 flex-shrink-0">
-            <div className="flex items-center space-x-3 w-full md:w-auto">
-              <button
-                id="importExcelButton"
-                onClick={handleClickImport}
-                className="w-full md:w-auto flex items-center justify-center py-2 px-4 text-sm font-medium text-gray-900 focus:outline-none bg-white rounded-lg border border-gray-200 hover:bg-gray-100 hover:text-primary-700 focus:z-10 focus:ring-4 focus:ring-gray-200 dark:focus:ring-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700"
-                type="button"
-              >
-                <ArrowUpTrayIcon className="h-4 w-4" /> <span className="ml-2">Cargar Excel de Smarters</span>
-              </button>
-              <button
-                id="actionsDropdownButton"
-                onClick={handleClick}
-                data-dropdown-toggle="actionsDropdown"
-                className="w-full md:w-auto flex items-center justify-center py-2 px-4 text-sm font-medium text-gray-900 focus:outline-none bg-white rounded-lg border border-gray-200 hover:bg-gray-100 hover:text-primary-700 focus:z-10 focus:ring-4 focus:ring-gray-200 dark:focus:ring-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700"
-                type="button"
-              >
-                <PlusIcon className="h-4 w-4" /> <span className="ml-2">Agregar Smarter</span>
-              </button>
             </div>
           </div>
+          <div className="overflow-x-auto"></div>
         </div>
-        <div className="overflow-x-auto"></div>
+      </ScrollSection>
+
+      <ScrollSection id="table-section">
+        <MainTable
+          title="Smarters"
+          count={filteredUsers.length}
+          page={currentPage}
+          header={header}
+          showCheckbox={false}
+          onChangeSelectAll={() => {}}
+          onSelectPage={(page) => {
+            setCurrentPage(page);
+          }}
+          onNext={() => {
+            const page = Math.min(Math.ceil(filteredUsers.length / 10), currentPage + 1);
+            setCurrentPage(page);
+          }}
+          onPrev={() => {
+            const page = Math.max(1, currentPage - 1);
+            setCurrentPage(page);
+          }}
+        >
+          <>
+            <TableSkeleton isLoading={isLoading && filteredUsers.length <= 0} size={7} />
+
+            {filteredUsers.slice(Math.max(0, currentPage - 1) * 10, currentPage * 10).map((item) => (
+              <PeopleItemRow key={item.id} item={item} onActionPress={handleActionPress} />
+            ))}
+          </>
+        </MainTable>
+      </ScrollSection>
+
+      <div className="fixed bottom-5 right-5">
+        <ScrollToLink to="search-section" className="rounded-full bg-indigo-600 p-3 text-white shadow-lg hover:bg-indigo-700">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
+          </svg>
+        </ScrollToLink>
       </div>
-
-      <MainTable
-        title="Smarters"
-        count={filteredUsers.length}
-        page={currentPage}
-        header={header}
-        showCheckbox={false}
-        onChangeSelectAll={() => {}}
-        onSelectPage={(page) => {
-          setCurrentPage(page);
-        }}
-        onNext={() => {
-          const page = Math.min(Math.ceil(filteredUsers.length / 10), currentPage + 1);
-          setCurrentPage(page);
-        }}
-        onPrev={() => {
-          const page = Math.max(1, currentPage - 1);
-          setCurrentPage(page);
-        }}
-      >
-        <>
-          <TableSkeleton isLoading={isLoading && filteredUsers.length <= 0} size={7} />
-
-          {filteredUsers.slice(Math.max(0, currentPage - 1) * 10, currentPage * 10).map((item) => (
-            <PeopleItemRow key={item.id} item={item} onActionPress={handleActionPress} />
-          ))}
-        </>
-      </MainTable>
     </div>
   );
 }

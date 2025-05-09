@@ -127,6 +127,7 @@ interface Props {
   bottomContent?: React.ReactNode;
   showCheckbox?: boolean;
   isPreInvoiceBlocked?: boolean;
+  ufValue?: number | null;
 }
 
 export default function PreInvoiceDetailTable({
@@ -135,6 +136,7 @@ export default function PreInvoiceDetailTable({
   bottomContent,
   showCheckbox,
   isPreInvoiceBlocked = false,
+  ufValue,
 }: Props) {
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -247,6 +249,7 @@ export default function PreInvoiceDetailTable({
                   item={item}
                   onClick={() => {}}
                   isPreInvoiceBlocked={isPreInvoiceBlocked}
+                  ufValue={ufValue}
                 />
               ))
           )}

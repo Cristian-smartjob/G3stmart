@@ -1,6 +1,6 @@
 "use client";
 
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useAppDispatch } from "@/lib/hook";
 import { unAssign, fetch as fetchPreInvoiceDetails, fetchSuccessfull } from "@/lib/features/preinvoicesdetail";
@@ -29,6 +29,8 @@ import CompleteBillButton from "../buttons/CompleteBillButton";
 import Link from "next/link";
 import { fetchPreInvoices as fetchPreInvoicesAction } from "@/app/actions/preInvoices";
 import { updatePreInvoice, recalculatePreInvoice } from "@/app/actions/preInvoices";
+import { getClientById } from "@/app/actions/clients";
+import { formatearFechaUFCorrecta } from "@/utils/date";
 
 const tabs: Selector[] = [
   { id: 1, label: "Todas" },
@@ -40,6 +42,9 @@ export default function PreinvoceDetail() {
   const { id } = useParams();
   const dispatch = useAppDispatch();
   const [isRecalculating, setIsRecalculating] = useState(false);
+  const [isLoadingClient, setIsLoadingClient] = useState(false);
+  const searchParams = useSearchParams();
+  const returnTabId = searchParams.get('returnTabId') || '1';
 
   const preInvoices = useSelector<RootState, PreInvoice[]>((state) => state.preInvoices.list);
   const isLoadingAssignOrUnassign = useSelector<RootState, boolean>(
@@ -69,6 +74,8 @@ export default function PreinvoceDetail() {
       typeof item.totalConsumeDays === "number" ? item.totalConsumeDays : Number(item.totalConsumeDays.toString());
     const billableDays =
       typeof item.billableDays === "number" ? item.billableDays : Number(item.billableDays.toString());
+    // Si hay al menos un ítem con un valor pequeño (UF), asumir que todos deberían sumarse como UF
+    // Esto mantiene consistencia con lo que se muestra en la UI
     return acc + (value * totalConsumeDays) / billableDays;
   }, 0);
 
@@ -103,7 +110,9 @@ export default function PreinvoceDetail() {
     }
 
     if (!isNaN(numericId) && numericId > 0) {
-      dispatch(fetchPreInvoiceDetails(numericId));
+      dispatch(fetchPreInvoiceDetails());
+      // Aquí podríamos cargar datos específicos para este ID, pero eso debería
+      // manejarse dentro de la acción o mediante efectos secundarios
     } else {
       console.error("ID inválido para detalles de prefactura:", id);
     }
@@ -118,9 +127,7 @@ export default function PreinvoceDetail() {
 
         if (foundPreInvoice) {
           setCurrentPreInvoice(foundPreInvoice);
-        } else {
-          console.log("No se encontró la prefactura con ID:", id);
-        }
+        } 
       } catch (error) {
         console.error("Error al cargar la prefactura:", error);
       }
@@ -132,6 +139,13 @@ export default function PreinvoceDetail() {
   // Usar currentPreInvoice en lugar de preInvoice del store cuando renderizamos
   const activePreInvoice = currentPreInvoice || preInvoice;
 
+  // Efecto para depuración
+  useEffect(() => {
+    if (activePreInvoice?.client) {
+      // console.log("Cliente en UI:", activePreInvoice.client);
+    }
+  }, [activePreInvoice?.client]);
+
   const handleRecalculate = async () => {
     if (!id) return;
 
@@ -139,7 +153,7 @@ export default function PreinvoceDetail() {
     try {
       await recalculatePreInvoice(Number(id));
       // Recargar los detalles después de recalcular
-      dispatch(fetchPreInvoiceDetails(Number(id)));
+      dispatch(fetchPreInvoiceDetails());
       // Recargar la prefactura
       const allPreInvoices = await fetchPreInvoicesAction();
       const foundPreInvoice = allPreInvoices.find((item) => item.id === Number(id));
@@ -150,6 +164,32 @@ export default function PreinvoceDetail() {
       console.error("Error al recalcular:", error);
     } finally {
       setIsRecalculating(false);
+    }
+  };
+
+  const loadClientInfo = async () => {
+    if (!activePreInvoice?.clientId) return;
+
+    setIsLoadingClient(true);
+    try {
+      const clientInfo = await getClientById(activePreInvoice.clientId);
+      if (clientInfo) {
+        // Actualizar el activePreInvoice con la información del cliente
+        setCurrentPreInvoice((prev) => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            client: {
+              ...prev.client,
+              ...clientInfo,
+            },
+          };
+        });
+      }
+    } catch (error) {
+      console.error("Error al cargar información del cliente:", error);
+    } finally {
+      setIsLoadingClient(false);
     }
   };
 
@@ -183,10 +223,9 @@ export default function PreinvoceDetail() {
         isOpen={showModalDownload}
         onAssign={async () => {
           if (id !== undefined) {
-            console.log("Intentando actualizar el estado a DOWNLOADED para id:", id);
 
             try {
-              // 1. Usar la API REST
+              // Usar la API REST
               const apiResponse = await fetch(`/api/preinvoices/${id}/status`, {
                 method: "PUT",
                 headers: {
@@ -196,7 +235,6 @@ export default function PreinvoceDetail() {
               });
 
               const apiResult = await apiResponse.json();
-              console.log("Respuesta de la API:", apiResult);
 
               if (apiResponse.ok) {
                 // 2. Actualizar el estado local en Redux
@@ -209,11 +247,10 @@ export default function PreinvoceDetail() {
 
                 // 3. También actualizar usando server action
                 try {
-                  const serverActionResult = await updatePreInvoice(Number(id), {
+                  await updatePreInvoice(Number(id), {
                     id: Number(id),
                     status: "DOWNLOADED",
                   });
-                  console.log("Resultado de server action:", serverActionResult);
                 } catch (serverError) {
                   console.error("Error en server action:", serverError);
                 }
@@ -221,11 +258,10 @@ export default function PreinvoceDetail() {
                 // 4. Recargar la prefactura para asegurar que los cambios se reflejen
                 const refreshedInvoices = await fetchPreInvoicesAction();
                 const updated = refreshedInvoices.find((inv) => inv.id === Number(id));
-                console.log("Estado actualizado de la prefactura:", updated?.status);
                 setCurrentPreInvoice(updated || null);
 
                 // 5. Redirigir a /preinvoice
-                window.location.href = "/preinvoice";
+                window.location.href = `/preinvoice?tabId=${returnTabId}`;
                 return;
               } else {
                 console.error("Error en la respuesta de la API:", apiResult);
@@ -247,7 +283,7 @@ export default function PreinvoceDetail() {
           <header className="pb-4 pt-6 sm:pb-6">
             <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-6 px-4 sm:flex-nowrap sm:px-6 lg:px-8">
               <Link
-                href="/preinvoice"
+                href={`/preinvoice?tabId=${returnTabId}`}
                 className="inline-flex items-center justify-center rounded-md bg-blue-700 p-2 text-white shadow-sm hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
               >
                 <ArrowLeftIcon className="h-5 w-5" aria-hidden="true" />
@@ -357,7 +393,18 @@ export default function PreinvoceDetail() {
 
           <div className="border-b border-b-gray-900/10 lg:border-t lg:border-t-gray-900/5">
             <dl className="mx-auto grid max-w-7xl grid-cols-1 sm:grid-cols-3 lg:grid-cols-4 lg:px-2 xl:px-0">
-              <PreInvoceStat name="Total a facturar" value={`${formatCurrency(total)}`} statIdx={0} />
+              <PreInvoceStat
+                name="Total a facturar"
+                value={
+                  details.some((item) => {
+                    const value = typeof item.value === "number" ? item.value : Number(item.value.toString());
+                    return value < 1000;
+                  })
+                    ? `${total.toFixed(2)} UF`
+                    : formatCurrency(total)
+                }
+                statIdx={0}
+              />
               <PreInvoceStat
                 name="Número factura"
                 value={!activePreInvoice?.invoiceNumber ? "" : `${activePreInvoice?.invoiceNumber}`}
@@ -385,6 +432,96 @@ export default function PreinvoceDetail() {
             </dl>
           </div>
 
+          {/* Información de UF utilizada */}
+          {activePreInvoice?.ufValueUsed && activePreInvoice?.ufDateUsed && (
+            <div className="mx-auto max-w-7xl px-4 py-2 sm:px-6 lg:px-2 xl:px-0">
+              <div className="flex items-center justify-end space-x-4">
+                <div className="flex items-center space-x-2">
+                  <span className="text-xs text-gray-500">Día de facturación:</span>
+                  <div className="inline-flex items-center rounded-md bg-gray-50 px-3 py-1 text-xs font-medium text-gray-700 ring-1 ring-inset ring-gray-700/10 shadow-sm">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                      className="mr-1.5 h-3.5 w-3.5"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M5.75 2a.75.75 0 0 1 .75.75V4h7V2.75a.75.75 0 0 1 1.5 0V4h.25A2.75 2.75 0 0 1 18 6.75v8.5A2.75 2.75 0 0 1 15.25 18H4.75A2.75 2.75 0 0 1 2 15.25v-8.5A2.75 2.75 0 0 1 4.75 4H5V2.75A.75.75 0 0 1 5.75 2Zm-1 5.5c-.69 0-1.25.56-1.25 1.25v6.5c0 .69.56 1.25 1.25 1.25h10.5c.69 0 1.25-.56 1.25-1.25v-6.5c0-.69-.56-1.25-1.25-1.25H4.75Z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                    <span className="font-semibold">
+                      {activePreInvoice?.client?.billableDay ? (
+                        Number(activePreInvoice.client.billableDay)
+                      ) : (
+                        <button
+                          onClick={loadClientInfo}
+                          className="text-blue-500 hover:text-blue-700 hover:underline flex items-center"
+                          title="Cargar información del cliente"
+                          disabled={isLoadingClient}
+                        >
+                          {isLoadingClient ? (
+                            <>
+                              <svg className="animate-spin h-3 w-3 mr-1" viewBox="0 0 24 24">
+                                <circle
+                                  className="opacity-25"
+                                  cx="12"
+                                  cy="12"
+                                  r="10"
+                                  stroke="currentColor"
+                                  strokeWidth="4"
+                                  fill="none"
+                                />
+                                <path
+                                  className="opacity-75"
+                                  fill="currentColor"
+                                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                />
+                              </svg>
+                              Cargando...
+                            </>
+                          ) : (
+                            "Cargar día"
+                          )}
+                        </button>
+                      )}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  <span className="text-xs text-gray-500">Valor UF utilizado:</span>
+                  <div className="inline-flex items-center rounded-md bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10 shadow-sm">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                      className="mr-1.5 h-3.5 w-3.5"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16ZM8.732 6.232a2.5 2.5 0 0 1 3.536 0 .75.75 0 1 0 1.06-1.06A4 4 0 0 0 6.5 8v.165c0 .364.034.728.1 1.085h-.35a.75.75 0 0 0 0 1.5h.737a5.25 5.25 0 0 1-.367 3.072l-.055.123a.75.75 0 0 0 .848 1.037l1.272-.283a3.493 3.493 0 0 1 1.604.021 4.992 4.992 0 0 0 2.422 0l.97-.242a.75.75 0 0 0-.363-1.456l-.971.243a3.491 3.491 0 0 1-1.694 0 4.992 4.992 0 0 0-2.258-.038c.085-.314.154-.636.206-.963h2.74a.75.75 0 0 0 0-1.5h-2.845a4.835 4.835 0 0 1-.1-2.25A2.5 2.5 0 0 1 8.732 6.232Z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                    <span className="font-semibold">
+                      ${Number(activePreInvoice.ufValueUsed).toLocaleString("es-CL")}
+                    </span>
+                    <span className="mx-1 text-gray-500">•</span>
+                    <span className="text-gray-600">
+                      {activePreInvoice.ufDateUsed &&
+                        formatearFechaUFCorrecta(
+                          activePreInvoice.ufDateUsed, 
+                          Number(activePreInvoice.ufValueUsed)
+                        )}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           <div
             aria-hidden="true"
             className="absolute left-0 top-full -z-10 mt-96 origin-top-left translate-y-40 -rotate-90 transform-gpu opacity-20 blur-3xl sm:left-1/2 sm:-ml-96 sm:-mt-10 sm:translate-y-0 sm:rotate-0 sm:transform-gpu sm:opacity-50"
@@ -404,6 +541,7 @@ export default function PreinvoceDetail() {
             typeFilter={selected}
             showCheckbox={selected !== 1}
             isPreInvoiceBlocked={activePreInvoice?.status !== "PENDING"}
+            ufValue={activePreInvoice?.ufValueUsed ? Number(activePreInvoice.ufValueUsed) : null}
             bottomContent={
               <TabSelector
                 selected={selected}

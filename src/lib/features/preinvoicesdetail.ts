@@ -12,6 +12,7 @@ interface PreInvoiceDetailState {
   progressAssignOrUnassign: number;
   totalAssignOrUnassign: number;
   allSelectedStatus: CheckboxStatus;
+  lastProcessedId: number | null;
 }
 
 const initialState: PreInvoiceDetailState = {
@@ -21,6 +22,7 @@ const initialState: PreInvoiceDetailState = {
   totalAssignOrUnassign: 1,
   list: [],
   allSelectedStatus: CheckboxStatus.Off,
+  lastProcessedId: null,
 };
 
 const preInvoicesDetailSlices = createSlice({
@@ -41,11 +43,10 @@ const preInvoicesDetailSlices = createSlice({
       state.progressAssignOrUnassign = state.progressAssignOrUnassign + 1;
     },
     assignSuccessfull(state, action: PayloadAction<number>) {
-      console.log(action);
       state.isLoadingAssignOrUnassign = false;
+      state.lastProcessedId = action.payload;
     },
-    fetch(state, action: PayloadAction<number>) {
-      console.log(action);
+    fetch(state) {
       state.isLoading = true;
     },
     fetchSuccessfull(state, action: PayloadAction<PreInvoiceDetail[]>) {

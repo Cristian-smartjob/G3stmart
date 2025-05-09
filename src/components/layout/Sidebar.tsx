@@ -2,6 +2,7 @@
 
 import { SidebarItem } from "@/interface/ui";
 import Link from "next/link";
+import Image from "next/image";
 import { UserCircleIcon } from "@heroicons/react/24/outline";
 import CurrencyCard from "../core/CurrencyCard";
 
@@ -19,7 +20,15 @@ export default function Sidebar({ navigation, currentMenu }: Props) {
     <div className="hidden lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:w-72 lg:flex-col">
       <div className="flex grow flex-col gap-y-5 overflow-y-auto border-r border-gray-200 bg-white px-6">
         <div className="flex h-16 shrink-0 items-center">
-          <img alt="Smartjob" src="http://localhost:3000/logo.png" className="h-8 w-auto" />
+          <Image 
+            alt="Smartjob" 
+            src="/logo.png" 
+            width={160} 
+            height={160} 
+            className="h-8 w-auto" 
+            priority 
+            quality={100}
+          />
         </div>
         <nav className="flex flex-1 flex-col">
           <ul role="list" className="flex flex-1 flex-col gap-y-7">

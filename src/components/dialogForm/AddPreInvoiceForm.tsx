@@ -1,6 +1,6 @@
 "use client";
 // Eliminamos los imports no utilizados
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { createPreInvoice } from "@/app/actions/preInvoices";
 import { Formik, FieldProps } from "formik";
 import { months } from "@/utils/constants";
@@ -110,6 +110,9 @@ export default function AddPreInvoiceForm({ onSave }: Props) {
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [formError, setFormError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isDuplicateError, setIsDuplicateError] = useState(false);
+  const [countdown, setCountdown] = useState(5);
+  const countdownTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Cargar clientes y contactos desde el servidor
   useEffect(() => {
@@ -155,18 +158,62 @@ export default function AddPreInvoiceForm({ onSave }: Props) {
       if (onSave) onSave();
       router.push("/preinvoice");
     } catch (error: unknown) {
-      console.error("Error creating preInvoice:", error);
-
       let errorMessage: string;
 
       if (error instanceof Error) {
-        console.log("Error message:", error.message);
         errorMessage = error.message;
+
+        // Verificar si es un error de duplicado
+        if (errorMessage.includes("Ya existe una prefactura para este cliente en el período seleccionado")) {
+          setIsDuplicateError(true);
+          setCountdown(5);
+
+          // Iniciar la cuenta regresiva
+          if (countdownTimerRef.current) {
+            clearInterval(countdownTimerRef.current);
+          }
+
+          countdownTimerRef.current = setInterval(() => {
+            setCountdown((prev) => {
+              if (prev <= 1) {
+                if (countdownTimerRef.current) {
+                  clearInterval(countdownTimerRef.current);
+                  countdownTimerRef.current = null;
+                }
+                onSave(); // Cerrar el modal cuando el contador llegue a 0
+                return 0;
+              }
+              return prev - 1;
+            });
+          }, 1000);
+        }
       } else if (typeof error === "object" && error !== null && "message" in error) {
-        console.log("Error object message:", (error as { message: string }).message);
         errorMessage = (error as { message: string }).message;
+
+        // También verificamos aquí para objetos error con propiedad message
+        if (errorMessage.includes("Ya existe una prefactura para este cliente en el período seleccionado")) {
+          setIsDuplicateError(true);
+          setCountdown(5);
+
+          if (countdownTimerRef.current) {
+            clearInterval(countdownTimerRef.current);
+          }
+
+          countdownTimerRef.current = setInterval(() => {
+            setCountdown((prev) => {
+              if (prev <= 1) {
+                if (countdownTimerRef.current) {
+                  clearInterval(countdownTimerRef.current);
+                  countdownTimerRef.current = null;
+                }
+                onSave();
+                return 0;
+              }
+              return prev - 1;
+            });
+          }, 1000);
+        }
       } else {
-        console.log("Unknown error type:", error);
         errorMessage = "No se pudo crear la prefactura. Por favor, intenta nuevamente más tarde.";
       }
 
@@ -176,7 +223,100 @@ export default function AddPreInvoiceForm({ onSave }: Props) {
     }
   };
 
+  // Limpiar el temporizador al desmontar el componente
+  useEffect(() => {
+    return () => {
+      if (countdownTimerRef.current) {
+        clearInterval(countdownTimerRef.current);
+      }
+    };
+  }, []);
+
   const renderError = (error: string) => {
+    if (isDuplicateError) {
+      // Calcular el porcentaje de progreso para el círculo
+      const progressPercentage = (countdown / 5) * 100;
+      const circumference = 2 * Math.PI * 18; // 2πr donde r es el radio (18)
+      const strokeDashoffset = circumference - (progressPercentage / 100) * circumference;
+
+      return (
+        <div className="rounded-md bg-red-50 p-4 shadow-md border border-red-200 animate-bounce-once">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <svg
+                className="h-8 w-8 text-red-500 animate-pulse"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M12 8V12M12 16H12.01M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </div>
+            <div className="ml-3 flex-1">
+              <h3 className="text-lg font-medium text-red-800">¡Prefactura duplicada!</h3>
+              <div className="mt-2 text-sm text-red-700">
+                <p className="mb-3 font-medium">{error}</p>
+                <div className="bg-red-100 rounded-lg p-3 mt-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center">
+                      {/* Círculo de progreso animado */}
+                      <div className="relative inline-flex mr-3">
+                        <svg className="w-10 h-10" viewBox="0 0 40 40">
+                          {/* Círculo base */}
+                          <circle
+                            className="text-red-200"
+                            strokeWidth="3"
+                            stroke="currentColor"
+                            fill="transparent"
+                            r="18"
+                            cx="20"
+                            cy="20"
+                          />
+                          {/* Círculo de progreso */}
+                          <circle
+                            className="text-red-600 transition-all duration-300 ease-in-out"
+                            strokeWidth="3"
+                            strokeDasharray={circumference}
+                            strokeDashoffset={strokeDashoffset}
+                            strokeLinecap="round"
+                            stroke="currentColor"
+                            fill="transparent"
+                            r="18"
+                            cx="20"
+                            cy="20"
+                            transform="rotate(-90 20 20)"
+                          />
+                          {/* Texto del contador */}
+                          <text
+                            x="50%"
+                            y="50%"
+                            dy=".3em"
+                            textAnchor="middle"
+                            className="text-red-600 font-medium text-xl"
+                          >
+                            {countdown}
+                          </text>
+                        </svg>
+                      </div>
+                      <span className="text-red-600 font-medium">
+                        Este modal se cerrará automáticamente en {countdown} {countdown === 1 ? 'segundo' : 'segundos'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     if (error.includes("no tiene smarters asociados")) {
       return (
         <div className="rounded-md bg-red-50 p-4">

@@ -13,12 +13,8 @@ export async function PUT(request: Request, context: { params: Promise<Params> }
     const params = await context.params;
     const numericId = Number(params.id);
 
-    console.log(`API: Actualizando el estado de la prefactura ID ${numericId}`);
-
     const requestData = await request.json();
     const { status, rejectNote, ocNumber, hesNumber, invoiceNumber, ocAmount, completedBy } = requestData;
-
-    console.log(`API: Datos recibidos:`, requestData);
 
     if (!status) {
       return NextResponse.json({ message: "Se requiere el parámetro status" }, { status: 400 });
@@ -40,12 +36,7 @@ export async function PUT(request: Request, context: { params: Promise<Params> }
       // Por ahora usamos un valor estático para demostración
       updateData.completedBy = completedBy || "Usuario actual"; // Idealmente proviene de la sesión
       updateData.completedAt = new Date();
-      console.log(
-        `API: Marcando prefactura como completada por ${updateData.completedBy} en ${updateData.completedAt}`
-      );
     }
-
-    console.log(`API: Datos para actualizar:`, updateData);
 
     const updatedPreInvoice = await prisma.preInvoice.update({
       where: { id: numericId },
@@ -60,11 +51,8 @@ export async function PUT(request: Request, context: { params: Promise<Params> }
       ocAmount: updatedPreInvoice.ocAmount ? Number(updatedPreInvoice.ocAmount) : null,
     };
 
-    console.log(`API: Prefactura actualizada correctamente:`, serializedPreInvoice);
-
     return NextResponse.json({ data: serializedPreInvoice }, { status: 200 });
-  } catch (error) {
-    console.error(`Error actualizando el estado de la prefactura:`, error);
+  } catch {
     return NextResponse.json({ message: "Error al actualizar el estado de la prefactura" }, { status: 500 });
   }
 }

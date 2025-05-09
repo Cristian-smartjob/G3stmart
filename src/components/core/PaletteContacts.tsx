@@ -12,6 +12,7 @@ import {
 import { ChevronRightIcon, MagnifyingGlassIcon } from '@heroicons/react/20/solid'
 import { UsersIcon } from '@heroicons/react/24/outline'
 import { useState } from 'react'
+import Image from 'next/image'
 
 const people = [
   {
@@ -108,7 +109,7 @@ export default function PaletteContacts({ open, setOpen }: Props) {
                             value={person}
                             className="group flex cursor-default select-none items-center rounded-md p-2 data-[focus]:bg-gray-100 data-[focus]:text-gray-900 data-[focus]:outline-none"
                           >
-                            <img src={person.imageUrl} alt="" className="size-6 flex-none rounded-full" />
+                            <Image src={person.imageUrl} alt="" width={24} height={24} className="size-6 flex-none rounded-full" />
                             <span className="ml-3 flex-auto truncate">{person.name}</span>
                             <ChevronRightIcon
                               className="ml-3 hidden size-5 flex-none text-gray-400 group-data-[focus]:block"

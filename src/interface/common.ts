@@ -51,6 +51,8 @@ export interface PreInvoice {
   edpNumber?: string | null;
   completedBy?: string | null;
   completedAt?: Date | null;
+  ufValueUsed?: number | Decimal | null;
+  ufDateUsed?: Date | null;
   createdAt?: Date | null;
   updatedAt?: Date | null;
 }

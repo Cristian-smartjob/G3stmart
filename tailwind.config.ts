@@ -17,6 +17,15 @@ export default {
         primary: "#F99B06",
         secondary: "#29D9C2"
       },
+      keyframes: {
+        'bounce-once': {
+          '0%, 100%': { transform: 'translateY(0)' },
+          '50%': { transform: 'translateY(-10px)' }
+        }
+      },
+      animation: {
+        'bounce-once': 'bounce-once 1s ease-in-out 3'
+      }
     },
   },
   plugins: [

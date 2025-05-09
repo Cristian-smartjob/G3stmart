@@ -47,6 +47,7 @@ interface Props {
   onClick: (item: PreInvoiceDetail) => void;
   onChangeCheckBox: (item: PreInvoiceDetail, value: CheckboxStatus) => void;
   isPreInvoiceBlocked?: boolean;
+  ufValue?: number | null;
 }
 
 export default function PreInvoiceDetailRow({
@@ -55,6 +56,7 @@ export default function PreInvoiceDetailRow({
   showCheckbox,
   onChangeCheckBox,
   isPreInvoiceBlocked = false,
+  ufValue,
 }: Props) {
   const handlerClick = () => {
     onClick(item);
@@ -128,45 +130,76 @@ export default function PreInvoiceDetailRow({
         {personName} <br /> {personLastName}
       </th>
 
+      {/* Cargo */}
       <td className="px-4 py-3" onClick={handlerClick}>
         {jobTitleName}
       </td>
 
-      {/*
-        <td className="px-4 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white" onClick={handlerClick}>
-        {item.person?.dni || item.People?.dni || ""}  
-        </td>
-        
-        <td className="px-4 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white" onClick={handlerClick}>
-        {item.person?.country || item.People?.country || ""}  
-        </td>*/}
-
+      {/* Tarifa / mes - con tooltip que muestra el valor en CLP */}
       <td className="px-4 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white" onClick={handlerClick}>
-        {formatCurrency(numValue)}
+        {numValue < 10000 ? (
+          <div className="group relative flex items-center">
+            <span>{`${numValue.toFixed(2)} UF`}</span>
+            {ufValue && (
+              <div className="ml-1.5 cursor-help">
+                <div className="relative">
+                  <span className="text-xs text-blue-500 cursor-help">ⓘ</span>
+                  <div className="absolute left-0 bottom-full mb-2 hidden whitespace-nowrap rounded-md bg-gray-800 px-2 py-1 text-xs text-white shadow-sm group-hover:block z-10">
+                    = {formatCurrency(numValue * ufValue, "es-ES", "CLP")}
+                    <div className="absolute -bottom-1 left-1 h-2 w-2 rotate-45 bg-gray-800"></div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        ) : formatCurrency(numValue, "es-ES", "CLP")}
       </td>
 
+      {/* Día / mes facturable */}
       <td className="px-4 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white" onClick={handlerClick}>
         {numBillableDays}
       </td>
 
+      {/* Días de ausencia */}
       <td className="px-4 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white" onClick={handlerClick}>
         {numLeaveDays}
       </td>
 
+      {/* Total día mes consumidos */}
       <td className="px-4 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white" onClick={handlerClick}>
         {numTotalConsumeDays}
       </td>
 
+      {/* HH mes consumidos */}
       <td className="px-4 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white" onClick={handlerClick}>
         {numTotalConsumeDays * 8}
       </td>
 
+      {/* Total por cobrar (UF) - con tooltip que muestra el valor de UF */}
       <td className="px-4 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white" onClick={handlerClick}>
-        {formatCurrency((numValue * numTotalConsumeDays) / numBillableDays)}
+        {numValue < 10000 ? (
+          <div className="group relative flex items-center">
+            <span>{`${((numValue * numTotalConsumeDays) / numBillableDays).toFixed(2)} UF`}</span>
+            {ufValue && (
+              <div className="ml-1.5 cursor-help">
+                <div className="relative">
+                  <span className="text-xs text-blue-500 cursor-help">ⓘ</span>
+                  <div className="absolute left-0 bottom-full mb-2 hidden whitespace-nowrap rounded-md bg-gray-800 px-2 py-1 text-xs text-white shadow-sm group-hover:block z-10">
+                    1 UF = {formatCurrency(ufValue, "es-ES", "CLP")}
+                    <div className="absolute -bottom-1 left-1 h-2 w-2 rotate-45 bg-gray-800"></div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        ) : formatCurrency(numValue, "es-ES", "CLP")}
       </td>
 
+      {/* Total por cobrar (CLP) */}
       <td className="px-4 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white" onClick={handlerClick}>
-        {formatCurrency((numValue * numTotalConsumeDays) / numBillableDays)}
+        {numValue < 10000 
+          ? formatCurrency(((numValue * numTotalConsumeDays) / numBillableDays) * (ufValue || 39127.41), "es-ES", "CLP")
+          : formatCurrency((numValue * numTotalConsumeDays) / numBillableDays, "es-ES", "CLP")}
       </td>
     </tr>
   );
