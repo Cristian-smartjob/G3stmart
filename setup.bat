@@ -24,7 +24,7 @@ REM 6. Install deps & generate Prisma client
 cd ..\..
 call npm install
 call npx prisma generate
-call npx tsc prisma/seed.ts --outDir dist
+@REM call npx tsc prisma/seed.ts --outDir dist
 @REM call node dist/seed.js
 
 REM 7. Run dev server
