@@ -197,66 +197,46 @@ async function getAppropriateUFValue(
     });
 
     if (!latestUF) {
+      // Mantenemos este log por ser informativo de un valor por defecto
       console.log(`⚠️ No se encontraron valores de UF en la base de datos, usando valor por defecto`);
       return { uf: 39127.41, date: today };
     }
 
     // Si estamos en el mes actual o futuro, usar UF actual
     if (year > currentYear || (year === currentYear && month >= currentMonth)) {
-      console.log(`📆 Usando UF actual para fecha futura o actual: ${latestUF.date.toISOString().split("T")[0]}`);
       return {
         uf: Number(latestUF.uf),
-        date: latestUF.date, // Devolver la fecha real del valor UF
+        date: latestUF.date,
       };
     }
 
     // Para un mes pasado, buscar la UF del día de facturación de ese mes
     // Si no hay día de facturación especificado, usar el último día del mes
     const billableDay = clientBillableDay || 25; // Valor predeterminado si no está definido
-    console.log(`📅 Día de facturación del cliente: ${billableDay}`);
 
     // Calcular último día del mes
     const daysInMonth = new Date(year, month, 0).getDate();
-    console.log(`ℹ️ El mes ${month}/${year} tiene ${daysInMonth} días`);
 
     // Si el día de facturación es mayor que los días del mes, usar el último día
     const adjustedBillableDay = billableDay > daysInMonth ? daysInMonth : billableDay;
-    if (adjustedBillableDay !== billableDay) {
-      console.log(`⚠️ Día de facturación ajustado a último día del mes: ${adjustedBillableDay}`);
-    }
 
     // Generar la fecha basada en el día de facturación EXACTO
     // Usar UTC para evitar problemas con zonas horarias
     const targetDate = new Date(Date.UTC(year, month - 1, adjustedBillableDay, 12, 0, 0));
-    console.log(`🎯 Fecha objetivo exacta para facturación: ${targetDate.toISOString().split("T")[0]}`);
 
     // IMPORTANTE: Para días de facturación, NO queremos ajustar la fecha si cae en día hábil
     // Solo ajustamos si cae en fin de semana
     const dayOfWeek = targetDate.getDay();
     let needsAdjustment = false;
 
-    if (dayOfWeek === 0) {
-      // Domingo
-      console.log(
-        `⚠️ La fecha (${targetDate.toISOString().split("T")[0]}) cae en domingo. Buscando UF del viernes anterior.`
-      );
+    if (dayOfWeek === 0 || dayOfWeek === 6) {
+      // Domingo (0) o Sábado (6)
       needsAdjustment = true;
-    } else if (dayOfWeek === 6) {
-      // Sábado
-      console.log(
-        `⚠️ La fecha (${targetDate.toISOString().split("T")[0]}) cae en sábado. Buscando UF del viernes anterior.`
-      );
-      needsAdjustment = true;
-    } else {
-      console.log(
-        `✅ La fecha (${targetDate.toISOString().split("T")[0]}) cae en día hábil (${dayOfWeek}), no requiere ajuste`
-      );
     }
 
     // PRIMERO: Intentar buscar con SQL directo para eliminar problemas con los tipos de fecha
     try {
       const isoDate = fechaToISOString(targetDate);
-      console.log(`🔎 SQL: Buscando UF para ${isoDate}`);
 
       // Nueva lógica mejorada: buscar el valor exacto o el valor anterior más cercano
       // en un solo query (hasta 5 días antes)
@@ -269,10 +249,6 @@ async function getAppropriateUFValue(
 
       if (result && Array.isArray(result) && result.length > 0) {
         const resultDate = new Date(result[0].date);
-        const daysDifference = Math.floor((targetDate.getTime() - resultDate.getTime()) / (1000 * 60 * 60 * 24));
-
-        console.log(`✅ SQL: Encontrada UF para fecha cercana: ${fechaToISOString(resultDate)}`);
-        console.log(`   Diferencia con fecha deseada: ${daysDifference} días`);
 
         // Devolver el valor y la fecha real del registro encontrado
         return {
@@ -280,8 +256,6 @@ async function getAppropriateUFValue(
           date: resultDate, // Usar la fecha real del valor UF encontrado
         };
       }
-
-      console.log(`❌ SQL: No se encontró UF cercana para ${isoDate}`);
 
       // SEGUNDO: Si no encuentra con SQL directo y es fin de semana, buscar día hábil anterior
       if (needsAdjustment) {
@@ -295,7 +269,6 @@ async function getAppropriateUFValue(
         }
 
         const fridayIsoDate = fechaToISOString(fridayDate);
-        console.log(`🔍 Buscando UF en día hábil anterior: ${fridayIsoDate}`);
 
         // Buscar con SQL directo para el día hábil anterior o el más cercano
         const fridayResult = await prisma.$queryRaw`
@@ -306,7 +279,6 @@ async function getAppropriateUFValue(
         `;
 
         if (fridayResult && Array.isArray(fridayResult) && fridayResult.length > 0) {
-          console.log(`✅ Encontrada UF para día hábil cercano:`, fridayResult[0].uf);
           // Devolver la fecha real del registro encontrado
           const fridayResultDate = new Date(fridayResult[0].date);
           return {
@@ -317,7 +289,6 @@ async function getAppropriateUFValue(
       }
 
       // TERCERO: Buscar el valor anterior más cercano como último recurso
-      console.log(`🔍 Buscando valor de UF anterior más cercano`);
       const historicalUF = await prisma.currencyHistory.findFirst({
         where: {
           date: {
@@ -329,12 +300,6 @@ async function getAppropriateUFValue(
       });
 
       if (historicalUF) {
-        console.log(
-          `⚠️ Usando UF de fecha anterior (${historicalUF.date.toISOString().split("T")[0]}): ${Number(
-            historicalUF.uf
-          )}`
-        );
-
         // Devolver la fecha real del registro encontrado
         return {
           uf: Number(historicalUF.uf),
@@ -343,7 +308,6 @@ async function getAppropriateUFValue(
       }
 
       // Si no se encuentra ningún valor, devolver el más reciente
-      console.log(`⚠️ No se encontró valor histórico, usando el más reciente`);
       return {
         uf: Number(latestUF.uf),
         date: latestUF.date, // Usar la fecha real del valor UF más reciente
@@ -354,8 +318,6 @@ async function getAppropriateUFValue(
 
       // Crear fechas de inicio y fin del día en UTC para evitar problemas de zona horaria
       const { inicio: startOfDay, fin: endOfDay } = crearRangoFechaUTC(targetDate);
-
-      console.log(`🔍 Buscando con query builder: ${startOfDay.toISOString()} hasta ${endOfDay.toISOString()}`);
 
       const exactUF = await prisma.currencyHistory.findFirst({
         where: {
@@ -369,7 +331,6 @@ async function getAppropriateUFValue(
       });
 
       if (exactUF) {
-        console.log(`✅ UF exacta encontrada para día de facturación ${adjustedBillableDay}: ${Number(exactUF.uf)}`);
         return {
           uf: Number(exactUF.uf),
           date: exactUF.date, // Usar la fecha real del valor UF encontrado
@@ -729,7 +690,6 @@ export async function recalculatePreInvoice(id: number): Promise<PreInvoice> {
     console.log(
       `Recalculando prefactura ${id}, cliente: ${preInvoice.client.name}, mes/año: ${preInvoice.month}/${preInvoice.year}`
     );
-    console.log(`Día de facturación del cliente: ${preInvoice.client.billableDay}`);
 
     // Obtener todos los detalles de la prefactura
     const details = await prisma.preInvoiceDetail.findMany({
@@ -760,8 +720,6 @@ export async function recalculatePreInvoice(id: number): Promise<PreInvoice> {
       preInvoice.year,
       preInvoice.client.billableDay ? Number(preInvoice.client.billableDay) : null
     );
-
-    console.log(`Valor UF seleccionado: ${ufToCLPRate} para fecha: ${ufDateUsed.toISOString().split("T")[0]}`);
 
     // Calcular el nuevo valor total
     let totalValue = 0;

@@ -2,6 +2,32 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Solución para problemas de auto-scroll con elementos sticky/fixed */
+body * {
+  scroll-behavior: smooth !important;
+}
+
+/* Evitar problemas con elementos sticky/fixed */
+[style*="position: fixed"],
+[style*="position:fixed"],
+[style*="position: sticky"],
+[style*="position:sticky"] {
+  transform: translateZ(0);
+  will-change: transform;
+  isolation: isolate;
+}
+
+/* Sobreescribir comportamiento de headlessui */
+.fixed {
+  transform: translateZ(0);
+  will-change: transform;
+  backface-visibility: hidden;
+}
+
+/* Corregir superposición z-index */
+.z-40, .z-50 {
+  isolation: isolate;
+}
 
 body {
   color: var(--foreground);

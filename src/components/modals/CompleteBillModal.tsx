@@ -22,11 +22,8 @@ export default function CompleteBillModal({ isOpen, setIsOpen, preinvoiceId }: P
   const firstRender = useRef(true);
   const fetchedData = useRef(false);
 
-  console.log("CompleteBillModal renderizado con preinvoiceId:", preinvoiceId, "isOpen:", isOpen);
-
   // Obtener la preinvoice actual desde el store Redux
   const preInvoices = useSelector<RootState, PreInvoice[]>((state) => {
-    console.log("Estado actual de preInvoices:", state.preInvoices);
     return state.preInvoices.list;
   });
 
@@ -37,10 +34,6 @@ export default function CompleteBillModal({ isOpen, setIsOpen, preinvoiceId }: P
 
   // Usamos la prefactura de cualquiera de las dos fuentes
   const invoiceData = directPreInvoice || currentPreInvoice;
-
-  console.log("PreInvoice encontrada:", currentPreInvoice);
-  console.log("DirectPreInvoice:", directPreInvoice);
-  console.log("InvoiceData final:", invoiceData);
 
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -55,31 +48,9 @@ export default function CompleteBillModal({ isOpen, setIsOpen, preinvoiceId }: P
   // Estado para mensajes de error de validación
   const [validationError, setValidationError] = useState<string | null>(null);
 
-  // Cargar los detalles de la prefactura
-  // const preInvoiceDetails = useSelector<RootState, PreInvoiceDetail[]>((state) => {
-  //   return state.preInvoicesDetail.list.filter(
-  //     (detail) => detail.status === "ASSIGN" && detail.preInvoiceId === preinvoiceId
-  //   );
-  // });
-
   // Agregar variables para el cálculo del margen y validación
   const [maxAllowedAmount, setMaxAllowedAmount] = useState<number | null>(null);
-  // const [totalToInvoice, setTotalToInvoice] = useState<number>(0);
   const [isMarginValid, setIsMarginValid] = useState(true);
-
-  // Calcular el total real a facturar basado en los detalles
-  // const calculateTotalAmount = useCallback(() => {
-  //   if (!preInvoiceDetails.length) return 0;
-
-  //   return preInvoiceDetails.reduce((acc, item) => {
-  //     const value = typeof item.value === "number" ? item.value : Number(item.value.toString());
-  //     const totalConsumeDays =
-  //       typeof item.totalConsumeDays === "number" ? item.totalConsumeDays : Number(item.totalConsumeDays.toString());
-  //     const billableDays =
-  //       typeof item.billableDays === "number" ? item.billableDays : Number(item.billableDays.toString());
-  //     return acc + (value * totalConsumeDays) / billableDays;
-  //   }, 0);
-  // }, [preInvoiceDetails]);
 
   // Verificar si el monto excede el margen permitido
   const validateMargin = useCallback(() => {
@@ -106,7 +77,6 @@ export default function CompleteBillModal({ isOpen, setIsOpen, preinvoiceId }: P
     const baseValue = Number(invoiceData.value);
     const marginPercent = Number(invoiceData.client.marginPercentage || 0);
     const ocAmountValue = formData.ocAmount !== "" ? Number(formData.ocAmount) : null; // null si está vacío
-    console.log("ocAmountValue:", ocAmountValue);
 
     // Calcular el margen absoluto y los límites
     const marginAmount = baseValue * (marginPercent / 100);
@@ -148,44 +118,38 @@ export default function CompleteBillModal({ isOpen, setIsOpen, preinvoiceId }: P
   }, [
     invoiceData,
     formData.ocAmount,
-    isMarginValid, // Dependencia clave para evitar bucles
-    validationError, // Dependencia clave para evitar bucles
+    isMarginValid,
+    validationError,
   ]);
 
   // Cargar los datos directamente de la API cuando se abre el modal
   useEffect(() => {
     const loadPreInvoiceData = async () => {
       if (isOpen && preinvoiceId && !fetchedData.current) {
-        console.log("Cargando datos de prefactura directamente desde API para ID:", preinvoiceId);
         try {
           // Intenta cargar desde la API
           const response = await fetch(`/api/preinvoices/${preinvoiceId}`);
           if (response.ok) {
             const data = await response.json();
-            console.log("Datos obtenidos de API:", data);
             if (data && data.data) {
               setDirectPreInvoice(data.data);
               fetchedData.current = true;
             }
           } else {
-            console.error("Error al obtener prefactura desde API:", response.statusText);
-
             // Intenta cargar datos usando la acción del servidor como respaldo
             try {
-              console.log("Intentando obtener datos mediante server action...");
               const allPreInvoices = await fetchPreInvoices();
               const foundInvoice = allPreInvoices.find((inv) => inv.id === preinvoiceId);
               if (foundInvoice) {
-                console.log("Prefactura encontrada mediante server action:", foundInvoice);
                 setDirectPreInvoice(foundInvoice);
                 fetchedData.current = true;
               }
-            } catch (serverActionError) {
-              console.error("Error al obtener prefactura mediante server action:", serverActionError);
+            } catch {
+              // Error al obtener datos mediante server action
             }
           }
-        } catch (error) {
-          console.error("Error al cargar prefactura:", error);
+        } catch {
+          // Error al cargar prefactura
         }
       }
     };
@@ -196,9 +160,6 @@ export default function CompleteBillModal({ isOpen, setIsOpen, preinvoiceId }: P
   // Actualizar formData cuando se abre el modal o cambia la preinvoice seleccionada
   useEffect(() => {
     if (isOpen) {
-      console.log("Modal abierto, datos actuales del formulario:", formData);
-      console.log("InvoiceData disponible:", invoiceData);
-
       if (invoiceData) {
         // Usar el campo value de la prefactura para el monto OC
         const ocAmountValue = invoiceData.value
@@ -214,17 +175,14 @@ export default function CompleteBillModal({ isOpen, setIsOpen, preinvoiceId }: P
           ocAmount: ocAmountValue, // Usar value como valor inicial
         };
 
-        console.log("Actualizando formulario con:", newFormData);
         setFormData(newFormData);
       }
     }
   }, [isOpen, invoiceData]);
 
-  // Log cuando cambia formData
+  // Eliminar efecto que muestra logs
   useEffect(() => {
     if (!firstRender.current) {
-      console.log("formData actualizado:", formData);
-    } else {
       firstRender.current = false;
     }
   }, [formData]);
@@ -249,22 +207,9 @@ export default function CompleteBillModal({ isOpen, setIsOpen, preinvoiceId }: P
   // Por ahora usamos un valor estático para simular el usuario actual
   const currentUser = "Miguel Carrizo";
 
-  // Modificar la función handleInputChange para validar el formulario
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    console.log(`Cambiando campo ${name} a ${value}`);
-
-    const newFormData = {
-      ...formData,
-      [name]: value,
-    };
-
-    setFormData(newFormData);
-
-    // Validar que el número de factura tenga al menos 8 caracteres
-    const isValidNumberBill = newFormData.numberBill.length >= 8;
-    // No llamamos a validateMargin() aquí para evitar actualizaciones en cascada
-    setIsFormValid(isValidNumberBill && isMarginValid);
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handlerUpdate = async () => {
@@ -340,8 +285,6 @@ export default function CompleteBillModal({ isOpen, setIsOpen, preinvoiceId }: P
             : Number(invoiceData.client.marginPercentage)
         }%`
       : "No definido";
-
-  console.log("Valores a mostrar en inputs:", displayValues);
 
   return (
     <Dialog open={isOpen} onClose={setIsOpen} className="relative z-50">

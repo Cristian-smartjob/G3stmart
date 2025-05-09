@@ -20,7 +20,6 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     const { table, columns, conditions, includeAllJoins } = body;
-    console.log("API Select Request:", { table, columns, conditions, includeAllJoins });
 
     if (!table) {
       return NextResponse.json({ error: "Table is required" }, { status: 400 });

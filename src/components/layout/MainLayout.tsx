@@ -10,6 +10,8 @@ import {
 } from "@heroicons/react/24/outline";
 import MobileSidebar from "./MobileSidebar";
 import Sidebar from "./Sidebar";
+import Image from "next/image";
+import ScrollHelper from "../utils/ScrollHelper";
 
 const navigation = [
   { name: "Personas", href: "/people", icon: UsersIcon, current: true },
@@ -28,11 +30,15 @@ interface Props {
 
 export default function MainLayout({ children, currentMenu }: Props) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  console.log(sidebarOpen);
+  
   return (
-    <>
+    <ScrollHelper>
       <div>
-        <MobileSidebar navigation={navigation} />
+        <MobileSidebar 
+          navigation={navigation} 
+          sidebarOpen={sidebarOpen} 
+          setSidebarOpen={setSidebarOpen} 
+        />
         <Sidebar navigation={navigation} currentMenu={currentMenu} />
 
         <div className="sticky top-0 z-40 flex items-center gap-x-6 bg-white px-4 py-4 shadow-sm sm:px-6 lg:hidden">
@@ -43,10 +49,12 @@ export default function MainLayout({ children, currentMenu }: Props) {
           <div className="flex-1 text-sm/6 font-semibold text-gray-900">Dashboard</div>
           <a href="#">
             <span className="sr-only">Tu perfil</span>
-            <img
-              alt=""
+            <Image
+              alt="Foto de perfil"
               src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
-              className="size-8 rounded-full bg-gray-50"
+              width={32}
+              height={32}
+              className="rounded-full bg-gray-50"
             />
           </a>
         </div>
@@ -54,6 +62,6 @@ export default function MainLayout({ children, currentMenu }: Props) {
           <div className="flex flex-col gap-4">{children}</div>
         </main>
       </div>
-    </>
+    </ScrollHelper>
   );
 }

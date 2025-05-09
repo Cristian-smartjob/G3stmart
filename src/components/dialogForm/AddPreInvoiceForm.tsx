@@ -158,17 +158,13 @@ export default function AddPreInvoiceForm({ onSave }: Props) {
       if (onSave) onSave();
       router.push("/preinvoice");
     } catch (error: unknown) {
-      console.error("Error creating preInvoice:", error);
-
       let errorMessage: string;
 
       if (error instanceof Error) {
-        console.log("Error message:", error.message);
         errorMessage = error.message;
 
         // Verificar si es un error de duplicado
         if (errorMessage.includes("Ya existe una prefactura para este cliente en el período seleccionado")) {
-          console.log("Error de duplicado detectado, activando timer...");
           setIsDuplicateError(true);
           setCountdown(5);
 
@@ -179,13 +175,11 @@ export default function AddPreInvoiceForm({ onSave }: Props) {
 
           countdownTimerRef.current = setInterval(() => {
             setCountdown((prev) => {
-              console.log("Contador:", prev);
               if (prev <= 1) {
                 if (countdownTimerRef.current) {
                   clearInterval(countdownTimerRef.current);
                   countdownTimerRef.current = null;
                 }
-                console.log("Contador llegó a 0, cerrando modal");
                 onSave(); // Cerrar el modal cuando el contador llegue a 0
                 return 0;
               }
@@ -194,12 +188,10 @@ export default function AddPreInvoiceForm({ onSave }: Props) {
           }, 1000);
         }
       } else if (typeof error === "object" && error !== null && "message" in error) {
-        console.log("Error object message:", (error as { message: string }).message);
         errorMessage = (error as { message: string }).message;
 
         // También verificamos aquí para objetos error con propiedad message
         if (errorMessage.includes("Ya existe una prefactura para este cliente en el período seleccionado")) {
-          console.log("Error de duplicado detectado (objeto), activando timer...");
           setIsDuplicateError(true);
           setCountdown(5);
 
@@ -209,13 +201,11 @@ export default function AddPreInvoiceForm({ onSave }: Props) {
 
           countdownTimerRef.current = setInterval(() => {
             setCountdown((prev) => {
-              console.log("Contador:", prev);
               if (prev <= 1) {
                 if (countdownTimerRef.current) {
                   clearInterval(countdownTimerRef.current);
                   countdownTimerRef.current = null;
                 }
-                console.log("Contador llegó a 0, cerrando modal");
                 onSave();
                 return 0;
               }
@@ -224,7 +214,6 @@ export default function AddPreInvoiceForm({ onSave }: Props) {
           }, 1000);
         }
       } else {
-        console.log("Unknown error type:", error);
         errorMessage = "No se pudo crear la prefactura. Por favor, intenta nuevamente más tarde.";
       }
 

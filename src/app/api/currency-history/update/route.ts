@@ -102,7 +102,6 @@ export async function POST() {
           create: { date: fecha, uf, usd }, // Usar la fecha UTC
         });
         inserted++;
-        console.log(`[DB] Insertado ${iso}: UF=${uf}, USD=${usd}`);
       } else {
         console.warn(`[DB] No se insertó ${iso} (${cl}): UF=${uf}, USD=${usd}`);
       }

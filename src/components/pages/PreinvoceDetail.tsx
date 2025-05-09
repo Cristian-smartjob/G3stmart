@@ -110,7 +110,9 @@ export default function PreinvoceDetail() {
     }
 
     if (!isNaN(numericId) && numericId > 0) {
-      dispatch(fetchPreInvoiceDetails(numericId));
+      dispatch(fetchPreInvoiceDetails());
+      // Aquí podríamos cargar datos específicos para este ID, pero eso debería
+      // manejarse dentro de la acción o mediante efectos secundarios
     } else {
       console.error("ID inválido para detalles de prefactura:", id);
     }
@@ -125,9 +127,7 @@ export default function PreinvoceDetail() {
 
         if (foundPreInvoice) {
           setCurrentPreInvoice(foundPreInvoice);
-        } else {
-          console.log("No se encontró la prefactura con ID:", id);
-        }
+        } 
       } catch (error) {
         console.error("Error al cargar la prefactura:", error);
       }
@@ -142,7 +142,7 @@ export default function PreinvoceDetail() {
   // Efecto para depuración
   useEffect(() => {
     if (activePreInvoice?.client) {
-      console.log("Cliente en UI:", activePreInvoice.client);
+      // console.log("Cliente en UI:", activePreInvoice.client);
     }
   }, [activePreInvoice?.client]);
 
@@ -153,7 +153,7 @@ export default function PreinvoceDetail() {
     try {
       await recalculatePreInvoice(Number(id));
       // Recargar los detalles después de recalcular
-      dispatch(fetchPreInvoiceDetails(Number(id)));
+      dispatch(fetchPreInvoiceDetails());
       // Recargar la prefactura
       const allPreInvoices = await fetchPreInvoicesAction();
       const foundPreInvoice = allPreInvoices.find((item) => item.id === Number(id));
@@ -223,7 +223,6 @@ export default function PreinvoceDetail() {
         isOpen={showModalDownload}
         onAssign={async () => {
           if (id !== undefined) {
-            console.log("Intentando actualizar el estado a DOWNLOADED para id:", id);
 
             try {
               // Usar la API REST
@@ -236,7 +235,6 @@ export default function PreinvoceDetail() {
               });
 
               const apiResult = await apiResponse.json();
-              console.log("Respuesta de la API:", apiResult);
 
               if (apiResponse.ok) {
                 // 2. Actualizar el estado local en Redux
@@ -249,11 +247,10 @@ export default function PreinvoceDetail() {
 
                 // 3. También actualizar usando server action
                 try {
-                  const serverActionResult = await updatePreInvoice(Number(id), {
+                  await updatePreInvoice(Number(id), {
                     id: Number(id),
                     status: "DOWNLOADED",
                   });
-                  console.log("Resultado de server action:", serverActionResult);
                 } catch (serverError) {
                   console.error("Error en server action:", serverError);
                 }
@@ -261,7 +258,6 @@ export default function PreinvoceDetail() {
                 // 4. Recargar la prefactura para asegurar que los cambios se reflejen
                 const refreshedInvoices = await fetchPreInvoicesAction();
                 const updated = refreshedInvoices.find((inv) => inv.id === Number(id));
-                console.log("Estado actualizado de la prefactura:", updated?.status);
                 setCurrentPreInvoice(updated || null);
 
                 // 5. Redirigir a /preinvoice

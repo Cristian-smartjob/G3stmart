@@ -1,11 +1,12 @@
 'use client'
 
-import { useState } from 'react'
 import { Dialog, DialogBackdrop, DialogPanel, TransitionChild } from '@headlessui/react'
 import {
   XMarkIcon,
 } from '@heroicons/react/24/outline'
 import { SidebarItem } from '@/interface/ui'
+import { Dispatch, SetStateAction } from 'react'
+import Image from "next/image"
 
 function classNames(...classes: (string | boolean | undefined)[]) {
   return classes.filter(Boolean).join(' ')
@@ -13,12 +14,12 @@ function classNames(...classes: (string | boolean | undefined)[]) {
 
 interface Props {
   navigation: SidebarItem[];
+  sidebarOpen: boolean;
+  setSidebarOpen: Dispatch<SetStateAction<boolean>>;
 }
 
 
-export default function MobileSidebar({ navigation }: Props) {
-  const [sidebarOpen, setSidebarOpen] = useState(false)
-
+export default function MobileSidebar({ navigation, sidebarOpen, setSidebarOpen }: Props) {
   return (
     <Dialog open={sidebarOpen} onClose={setSidebarOpen} className="relative z-50 lg:hidden">
           <DialogBackdrop
@@ -41,9 +42,11 @@ export default function MobileSidebar({ navigation }: Props) {
               </TransitionChild>
               <div className="flex grow flex-col gap-y-5 overflow-y-auto bg-white px-6 pb-2">
                 <div className="flex h-16 shrink-0 items-center">
-                  <img
+                  <Image
                     alt="SmartJob"
                     src="https://tailwindui.com/plus/img/logos/mark.svg?color=indigo&shade=600"
+                    width={32}
+                    height={32}
                     className="h-8 w-auto"
                   />
                 </div>
