@@ -97,15 +97,6 @@ export default function PeopleTable() {
 
   return (
     <div className="overflow-x-auto">
-      <div className="mb-4 flex justify-center space-x-4 py-2 bg-white z-50 relative transform-gpu">
-        <ScrollToLink to="search-section" className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-md">
-          Búsqueda
-        </ScrollToLink>
-        <ScrollToLink to="table-section" className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-md">
-          Tabla
-        </ScrollToLink>
-      </div>
-
       <GenericModal isOpen={showDialog} onClose={handlerClose}>
         <AddPeopleForm />
       </GenericModal>
@@ -220,8 +211,17 @@ export default function PeopleTable() {
       </ScrollSection>
 
       <div className="fixed bottom-5 right-5">
-        <ScrollToLink to="search-section" className="rounded-full bg-indigo-600 p-3 text-white shadow-lg hover:bg-indigo-700">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <ScrollToLink
+          to="search-section"
+          className="rounded-full bg-indigo-600 p-3 text-white shadow-lg hover:bg-indigo-700"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-6 w-6"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
           </svg>
         </ScrollToLink>

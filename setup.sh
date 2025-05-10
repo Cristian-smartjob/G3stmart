@@ -38,7 +38,7 @@ docker exec -i g3smart-postgres psql -U admin -d g3stmart < init-db/01_setup_dat
 cd ../..
 npm install
 npx prisma generate
-npx tsc prisma/seed.ts --outDir dist
+# npx tsc prisma/seed.ts --outDir dist
 # node dist/seed.js
 
 # 7. Run dev server

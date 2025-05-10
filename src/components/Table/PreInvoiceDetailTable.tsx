@@ -1,14 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { fetch } from "@/lib/features/users";
 import { useAppDispatch } from "@/lib/hook";
 import { useSelector } from "react-redux";
 import { RootState } from "@/lib/store";
 import PreInvoiceDetailRow from "./row/PreInvoceDetailRow";
-import GenericModal from "../modals/GenericModal";
-import LeaveDaysCalendar from "../core/LeaveDaysCalendar";
-import TabSelector, { Selector } from "../core/TabSelector";
 import MainTable from "./MainTable";
 import { CheckboxStatus } from "@/interface/ui";
 import { selectAll, selectItem, PreInvoiceDetail as ReduxPreInvoiceDetail } from "@/lib/features/preinvoicesdetail";
@@ -116,11 +112,6 @@ const header = [
   "Total por cobrar (CLP)",
 ];
 
-const tabs: Selector[] = [
-  { id: 1, label: "Datos" },
-  { id: 2, label: "Días fuera" },
-];
-
 interface Props {
   typeFilter: number;
   rightContent?: React.ReactNode;
@@ -147,6 +138,7 @@ export default function PreInvoiceDetailTable({
   // Convertir los detalles al tipo UI para usar en la tabla
   const uiDetailsRoot = detailsRoot.map(adaptToUIDetail);
 
+  // Filtrar los detalles según el tipo seleccionado
   const details = uiDetailsRoot.filter((item) => {
     if (typeFilter === 1) {
       return true;
@@ -157,18 +149,12 @@ export default function PreInvoiceDetailTable({
     }
   });
 
-  const [menu, setMenu] = useState(1);
-  const [isOpen, setIsOpen] = useState(false);
-
   const dispatch = useAppDispatch();
 
+  // Restablecer la página actual cuando cambia el filtro
   useEffect(() => {
-    dispatch(fetch());
-  }, [dispatch]);
-
-  // const handleActionPress = (item: PreInvoiceDetail) => {
-  //   setIsOpen(true)
-  // }
+    setCurrentPage(1);
+  }, [typeFilter]);
 
   const handlerChangeSelectAll = (value: CheckboxStatus) => {
     dispatch(selectAll(value));
@@ -186,26 +172,6 @@ export default function PreInvoiceDetailTable({
 
   return (
     <div className="overflow-x-auto">
-      <GenericModal
-        isOpen={isOpen}
-        onClose={() => {
-          setIsOpen(false);
-        }}
-      >
-        <div>
-          <TabSelector
-            labels={tabs}
-            selected={menu}
-            onSelect={(index: number) => {
-              setMenu(index);
-            }}
-          />
-          <div className="mt-6">
-            <LeaveDaysCalendar />
-          </div>
-        </div>
-      </GenericModal>
-
       <MainTable
         title="Detalle"
         count={details.length}
@@ -230,7 +196,7 @@ export default function PreInvoiceDetailTable({
         }}
       >
         <>
-          <TableSkeleton isLoading={isLoading && details.length <= 0} size={6} />
+          <TableSkeleton isLoading={isLoading} size={6} />
 
           {details.length === 0 && !isLoading ? (
             <tr>
@@ -239,6 +205,7 @@ export default function PreInvoiceDetailTable({
               </td>
             </tr>
           ) : (
+            !isLoading &&
             details
               .slice(Math.max(0, currentPage - 1) * 10, currentPage * 10)
               .map((item) => (
