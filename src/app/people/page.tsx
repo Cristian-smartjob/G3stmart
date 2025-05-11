@@ -1,14 +1,10 @@
-
-import PeopleTable from '@/components/pages/PeopleTable'
-import type { Metadata } from 'next'
+import PeopleTable from "@/components/pages/PeopleTable/index";
+import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: 'Personas',
-}
+  title: "Personas",
+};
 
 export default function People() {
-
-  return (
-    <PeopleTable />
-  )
+  return <PeopleTable />;
 }

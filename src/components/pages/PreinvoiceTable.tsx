@@ -35,18 +35,18 @@ export default function PreinvoiceTable() {
 
   // Inicializar la pestaña seleccionada según parámetros de URL o localStorage
   useEffect(() => {
-    const tabIdFromURL = searchParams.get('tabId');
+    const tabIdFromURL = searchParams.get("tabId");
     if (tabIdFromURL) {
       const parsedTabId = parseInt(tabIdFromURL);
       // Verificar que el tabId sea válido
-      if (!isNaN(parsedTabId) && tabs.some(tab => tab.id === parsedTabId)) {
+      if (!isNaN(parsedTabId) && tabs.some((tab) => tab.id === parsedTabId)) {
         setSelected(parsedTabId);
       }
     } else {
-      const savedTabId = localStorage.getItem('preinvoiceSelectedTab');
+      const savedTabId = localStorage.getItem("preinvoiceSelectedTab");
       if (savedTabId) {
         const parsedSavedTabId = parseInt(savedTabId);
-        if (!isNaN(parsedSavedTabId) && tabs.some(tab => tab.id === parsedSavedTabId)) {
+        if (!isNaN(parsedSavedTabId) && tabs.some((tab) => tab.id === parsedSavedTabId)) {
           setSelected(parsedSavedTabId);
         }
       }
@@ -55,7 +55,7 @@ export default function PreinvoiceTable() {
 
   // Guardar la pestaña seleccionada en localStorage cuando cambie
   useEffect(() => {
-    localStorage.setItem('preinvoiceSelectedTab', selected.toString());
+    localStorage.setItem("preinvoiceSelectedTab", selected.toString());
   }, [selected]);
 
   const selectedTab = tabs.find((item) => item.id === selected);
@@ -63,6 +63,22 @@ export default function PreinvoiceTable() {
   const filteredPreInvoices = preInvoices.filter((item) => {
     if (selected === 1) return true;
     return item.status === selectedTab?.value;
+  });
+
+  // Ordenar prefacturas de manera descendente por fecha (mes/año)
+  const sortedPreInvoices = [...filteredPreInvoices].sort((a, b) => {
+    // Valores por defecto para evitar undefined
+    const monthA = a.month || 1;
+    const yearA = a.year || 2000;
+    const monthB = b.month || 1;
+    const yearB = b.year || 2000;
+
+    // Crear fechas comparables a partir de mes y año
+    const dateA = new Date(yearA, monthA - 1); // El mes en JavaScript va de 0-11
+    const dateB = new Date(yearB, monthB - 1);
+
+    // Ordenar descendente (más reciente primero)
+    return dateB.getTime() - dateA.getTime();
   });
 
   // Carga inicial de datos
@@ -120,20 +136,25 @@ export default function PreinvoiceTable() {
 
         <MainTable
           title="Prefacturas"
-          count={filteredPreInvoices.length}
+          count={sortedPreInvoices.length}
           page={currentPage}
           header={header}
           showCheckbox={false}
           onClickEmpty={handlerNewItem}
           bottomContent={
-            <TabSelector
-              selected={selected}
-              onSelect={(value) => {
-                setSelected(value);
-                setCurrentPage(1);
-              }}
-              labels={tabs}
-            />
+            <>
+              <div className="pl-4 pb-2 text-xs text-gray-500 dark:text-gray-400">
+                Ordenado por fecha (más reciente primero)
+              </div>
+              <TabSelector
+                selected={selected}
+                onSelect={(value) => {
+                  setSelected(value);
+                  setCurrentPage(1);
+                }}
+                labels={tabs}
+              />
+            </>
           }
           emptyTitle="Agregar prefactura"
           isEmpty={!isLoading && filteredPreInvoices.length <= 0}
@@ -142,7 +163,7 @@ export default function PreinvoiceTable() {
             setCurrentPage(page);
           }}
           onNext={() => {
-            const maxPage = Math.max(1, Math.ceil(filteredPreInvoices.length / 10));
+            const maxPage = Math.max(1, Math.ceil(sortedPreInvoices.length / 10));
             const page = Math.min(maxPage, currentPage + 1);
             setCurrentPage(page);
           }}
@@ -153,12 +174,8 @@ export default function PreinvoiceTable() {
         >
           <>
             <TableSkeleton isLoading={isLoading && filteredPreInvoices.length <= 0} size={6} />
-            {filteredPreInvoices.slice((currentPage - 1) * 10, currentPage * 10).map((item) => (
-              <PreInvoiceItemRow 
-                key={item.id} 
-                item={item}
-                selectedTabId={selected}
-              />
+            {sortedPreInvoices.slice((currentPage - 1) * 10, currentPage * 10).map((item) => (
+              <PreInvoiceItemRow key={item.id} item={item} selectedTabId={selected} />
             ))}
           </>
         </MainTable>

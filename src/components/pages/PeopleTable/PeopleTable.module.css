@@ -1,0 +1,239 @@
+.container {
+  overflow-x: auto;
+}
+
+.searchSection {
+  margin-bottom: 2rem;
+}
+
+.card {
+  background-color: white;
+  position: relative;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+.dark .card {
+  background-color: #1f2937;
+}
+
+.cardHeader {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem;
+  gap: 0.75rem;
+}
+
+@media (min-width: 768px) {
+  .cardHeader {
+    flex-direction: row;
+    gap: 1rem;
+  }
+}
+
+.searchForm {
+  width: 100%;
+  display: flex;
+  align-items: stretch;
+  height: 38px;
+}
+
+@media (min-width: 768px) {
+  .searchForm {
+    width: 50%;
+  }
+}
+
+.searchContainer {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.searchIcon {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  display: flex;
+  align-items: center;
+  padding-left: 0.75rem;
+  pointer-events: none;
+}
+
+.searchInput {
+  background-color: #f9fafb;
+  border: 1px solid #d1d5db;
+  color: #111827;
+  font-size: 0.875rem;
+  border-radius: 0.5rem;
+  width: 100%;
+  padding: 0.5rem 0.5rem 0.5rem 2.5rem;
+  height: 100%;
+  min-height: 38px;
+}
+
+.searchInput:focus {
+  border-color: #6366f1;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.25);
+}
+
+.dark .searchInput {
+  background-color: #374151;
+  border-color: #4b5563;
+  color: white;
+}
+
+.dark .searchInput:focus {
+  border-color: #6366f1;
+}
+
+.filterButton {
+  width: 100%;
+  margin-left: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #111827;
+  background-color: white;
+  border-radius: 0.5rem;
+  border: 1px solid #e5e7eb;
+  height: 100%;
+  min-height: 38px;
+}
+
+.filterButton:hover {
+  background-color: #f9fafb;
+  color: #4f46e5;
+}
+
+.filterButton:focus {
+  outline: none;
+  z-index: 10;
+  box-shadow: 0 0 0 2px rgba(209, 213, 219, 0.5);
+}
+
+.dark .filterButton {
+  background-color: #1f2937;
+  color: #9ca3af;
+  border-color: #4b5563;
+}
+
+.dark .filterButton:hover {
+  background-color: #374151;
+  color: white;
+}
+
+@media (min-width: 768px) {
+  .filterButton {
+    width: auto;
+  }
+}
+
+.actionContainer {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+@media (min-width: 768px) {
+  .actionContainer {
+    width: auto;
+    flex-direction: row;
+    align-items: center;
+    gap: 0.75rem;
+  }
+}
+
+.buttonGroup {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+@media (min-width: 768px) {
+  .buttonGroup {
+    width: auto;
+  }
+}
+
+.actionButton {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #111827;
+  background-color: white;
+  border-radius: 0.5rem;
+  border: 1px solid #e5e7eb;
+}
+
+.actionButton:hover {
+  background-color: #f9fafb;
+  color: #4f46e5;
+}
+
+.actionButton:focus {
+  outline: none;
+  z-index: 10;
+  box-shadow: 0 0 0 2px rgba(209, 213, 219, 0.5);
+}
+
+.dark .actionButton {
+  background-color: #1f2937;
+  color: #9ca3af;
+  border-color: #4b5563;
+}
+
+.dark .actionButton:hover {
+  background-color: #374151;
+  color: white;
+}
+
+@media (min-width: 768px) {
+  .actionButton {
+    width: auto;
+  }
+}
+
+.buttonIcon {
+  height: 1rem;
+  width: 1rem;
+}
+
+.buttonText {
+  margin-left: 0.5rem;
+}
+
+.scrollToTop {
+  position: fixed;
+  bottom: 1.25rem;
+  right: 1.25rem;
+  border-radius: 9999px;
+  background-color: #4f46e5;
+  padding: 0.75rem;
+  color: white;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+.scrollToTop:hover {
+  background-color: #4338ca;
+}
+
+.scrollToTopIcon {
+  height: 1.5rem;
+  width: 1.5rem;
+}

@@ -1,30 +1,26 @@
-'use client'
+"use client";
 
-import { Dialog, DialogPanel, DialogTitle } from '@headlessui/react'
-import { XMarkIcon } from '@heroicons/react/24/outline'
+import { Dialog, DialogPanel, DialogTitle } from "@headlessui/react";
+import { XMarkIcon } from "@heroicons/react/24/outline";
 
 interface Props {
-    isShow: boolean;
-    title?: string;
-    onClose: () => void;
-    children: React.ReactNode;
+  isShow: boolean;
+  title?: string;
+  onClose: () => void;
+  children: React.ReactNode;
 }
 
 export default function GenericDialog({ isShow, onClose, children, title = "Filtrar personas" }: Props) {
-  
-
   return (
-    <Dialog open={isShow} onClose={onClose} className="relative z-10">
-      <div className="fixed inset-0" />
+    <Dialog open={isShow} onClose={onClose} className="relative z-50">
+      {/* Fondo oscuro semi-transparente */}
+      <div className="fixed inset-0 bg-black/30 backdrop-blur-sm" aria-hidden="true" />
 
       <div className="fixed inset-0 overflow-hidden">
         <div className="absolute inset-0 overflow-hidden">
           <div className="pointer-events-none fixed inset-y-0 right-0 flex max-w-full pl-10 sm:pl-16">
-            <DialogPanel
-              transition
-              className="pointer-events-auto w-screen max-w-2xl transform transition duration-500 ease-in-out data-[closed]:translate-x-full sm:duration-700"
-            >
-              <div className="flex h-full flex-col overflow-y-scroll bg-white py-6 shadow-xl">
+            <DialogPanel className="pointer-events-auto w-screen max-w-2xl transform transition duration-500 ease-in-out data-[closed]:translate-x-full sm:duration-700">
+              <div className="flex h-full flex-col overflow-y-scroll bg-white py-6 shadow-xl border-l border-gray-200">
                 <div className="px-4 sm:px-6">
                   <div className="flex items-start justify-between">
                     <DialogTitle className="text-base font-semibold text-gray-900">{title}</DialogTitle>
@@ -48,5 +44,5 @@ export default function GenericDialog({ isShow, onClose, children, title = "Filt
         </div>
       </div>
     </Dialog>
-  )
+  );
 }
