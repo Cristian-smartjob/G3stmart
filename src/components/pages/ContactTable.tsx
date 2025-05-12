@@ -6,7 +6,7 @@ import { useAppDispatch } from "@/lib/hook";
 import { useSelector } from "react-redux";
 import { Contact } from "@/lib/features/contacts";
 import { RootState } from "@/lib/store";
-import { PlusIcon } from "@heroicons/react/24/outline";
+import { PlusIcon, ArrowUpTrayIcon } from "@heroicons/react/24/outline";
 import GenericModal from "../modals/GenericModal";
 import ContactItemRow from "../Table/ContactItemRow";
 import { deleteItem } from "@/lib/features/contacts";
@@ -15,6 +15,7 @@ import AddContactForm from "../dialogForm/AddContactForm";
 import MainTable from "../Table/MainTable";
 import TableSkeleton from "../core/TableSkeleton";
 import DeleteModal from "../modals/DeleteModal";
+import ImportContactsModal from "../modals/ImportContactsModal";
 
 const header = ["Empresa", "Nombre apellido", "Telefono", "Correo", "Opciones"];
 
@@ -37,6 +38,7 @@ export default function ContactTable() {
 
   const [isOpenDelete, setIsOpenDelete] = useState(false);
   const [showDialog, setShowDialog] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
   const [isEditMode, setEditMode] = useState(false);
   const [selectContact, setSelectContact] = useState<Contact | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -58,6 +60,14 @@ export default function ContactTable() {
 
   const handlerClose = () => {
     setShowDialog(false);
+  };
+
+  const handleClickImport = () => {
+    setShowImportModal(true);
+  };
+
+  const handlerCloseImport = () => {
+    setShowImportModal(false);
   };
 
   const handlerPressItem = (option: string, contact: Contact) => {
@@ -107,6 +117,8 @@ export default function ContactTable() {
         element="contacto"
       />
 
+      <ImportContactsModal isOpen={showImportModal} onClose={handlerCloseImport} />
+
       <div className="bg-white dark:bg-gray-800 relative shadow-md sm:rounded-lg overflow-hidden">
         <div className="flex flex-col md:flex-row items-center justify-between space-y-3 md:space-y-0 md:space-x-4 p-4">
           <div className="w-full md:w-1/2">
@@ -145,6 +157,14 @@ export default function ContactTable() {
           <div className="w-full md:w-auto flex flex-col md:flex-row space-y-2 md:space-y-0 items-stretch md:items-center justify-end md:space-x-3 flex-shrink-0">
             <div className="flex items-center space-x-3 w-full md:w-auto">
               <button
+                id="importExcelButton"
+                onClick={handleClickImport}
+                className="w-full md:w-auto flex items-center justify-center py-2 px-4 text-sm font-medium text-gray-900 focus:outline-none bg-white rounded-lg border border-gray-200 hover:bg-gray-100 hover:text-primary-700 focus:z-10 focus:ring-4 focus:ring-gray-200 dark:focus:ring-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700"
+                type="button"
+              >
+                <ArrowUpTrayIcon className="h-4 w-4" /> <span className="ml-2">Cargar Excel de Contactos</span>
+              </button>
+              <button
                 id="actionsDropdownButton"
                 onClick={handleClick}
                 data-dropdown-toggle="actionsDropdown"
@@ -181,7 +201,7 @@ export default function ContactTable() {
         <>
           <TableSkeleton isLoading={isLoading && filteredUsers.length <= 0} size={5} />
 
-          {filteredUsers.map((item) => (
+          {filteredUsers.slice((currentPage - 1) * 10, currentPage * 10).map((item) => (
             <ContactItemRow key={item.id} item={item} onPressItem={handlerPressItem} />
           ))}
         </>

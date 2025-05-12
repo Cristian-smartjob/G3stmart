@@ -90,6 +90,7 @@ export class ContactRepository {
       email: result.email,
       phone: result.phone,
       clientId: result.clientId,
+      technicalStacksId: result.technicalStacksId,
       createdAt: result.createdAt,
       updatedAt: result.updatedAt,
     };

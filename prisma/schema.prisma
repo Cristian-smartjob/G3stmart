@@ -1,5 +1,6 @@
 generator client {
   provider = "prisma-client-js"
+  output   = "./generated/client"
 }
 
 datasource db {
@@ -54,16 +55,18 @@ model Client {
 }
 
 model Contact {
-  id          Int          @id @default(autoincrement())
-  name        String       @db.VarChar(255)
-  lastName    String?      @map("last_name") @db.VarChar(255)
-  email       String?      @db.VarChar(255)
-  phone       String?      @db.VarChar(50)
-  clientId    Int?         @map("client_id")
-  createdAt   DateTime?    @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt   DateTime?    @default(now()) @map("updated_at") @db.Timestamptz(6)
-  client      Client?      @relation(fields: [clientId], references: [id], onDelete: Cascade)
-  preInvoices PreInvoice[]
+  id                 Int               @id @default(autoincrement())
+  name               String            @db.VarChar(255)
+  lastName           String?           @map("last_name") @db.VarChar(255)
+  email              String?           @db.VarChar(255)
+  phone              String?           @db.VarChar(50)
+  clientId           Int?              @map("client_id")
+  technicalStacksId  Int?              @map("technical_stacks_id")
+  createdAt          DateTime?         @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime?         @default(now()) @map("updated_at") @db.Timestamptz(6)
+  client             Client?           @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  technicalStacks    TechnicalsStacks? @relation(fields: [technicalStacksId], references: [id])
+  preInvoices        PreInvoice[]
 
   @@map("Contact")
 }
@@ -135,6 +138,7 @@ model TechnicalsStacks {
   createdAt DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt DateTime? @default(now()) @map("updated_at") @db.Timestamptz(6)
   people    People[]
+  contacts  Contact[]
 
   @@map("TechnicalsStacks")
 }
