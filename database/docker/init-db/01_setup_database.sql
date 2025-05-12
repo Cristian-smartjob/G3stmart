@@ -47,6 +47,13 @@ CREATE TABLE "public"."Client" (
     "updated_at" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE "public"."TechnicalsStacks" (
+    "id" SERIAL PRIMARY KEY,
+    "name" VARCHAR(255) NOT NULL,
+    "created_at" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE TABLE "public"."Contact" (
     "id" SERIAL PRIMARY KEY,
     "name" VARCHAR(255) NOT NULL,
@@ -54,6 +61,7 @@ CREATE TABLE "public"."Contact" (
     "email" VARCHAR(255),
     "phone" VARCHAR(50),
     "client_id" INTEGER REFERENCES "public"."Client"("id") ON DELETE CASCADE ON UPDATE CASCADE,
+    "technical_stacks_id" INTEGER REFERENCES "public"."TechnicalsStacks"("id") ON DELETE SET NULL ON UPDATE CASCADE,
     "created_at" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
@@ -99,13 +107,6 @@ CREATE TABLE "public"."SkillLevel" (
     "id" SERIAL PRIMARY KEY,
     "name" VARCHAR(100) NOT NULL,
     "level" VARCHAR(2) NOT NULL,
-    "created_at" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE TABLE "public"."TechnicalsStacks" (
-    "id" SERIAL PRIMARY KEY,
-    "name" VARCHAR(255) NOT NULL,
     "created_at" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
@@ -419,35 +420,35 @@ INSERT INTO "public"."Holidays" ("id", "date", "name", "created_at", "updated_at
 ('15', '2025-12-25', 'Navidad', '2025-02-11 15:10:09.698662+00', '2025-02-11 15:10:09.698662'); 
 
 -- Contact data
-INSERT INTO "public"."Contact" ("id", "name", "last_name", "email", "phone", "client_id", "created_at", "updated_at") VALUES 
-('1', 'Juan', 'Pérez', 'juan.perez@bancodechile.cl', '+56912345678', '12', '2025-02-11 15:10:09.698662+00', '2025-02-11 15:10:09.698662'),
-('2', 'María', 'González', 'maria.gonzalez@bancoestado.cl', '+56987654321', '15', '2025-02-11 15:10:09.698662+00', '2025-02-11 15:10:09.698662'),
-('3', 'Pedro', 'Rodríguez', 'pedro.rodriguez@santander.cl', '+56923456789', '14', '2025-02-11 15:10:09.698662+00', '2025-02-11 15:10:09.698662'),
-('4', 'Ana', 'Martínez', 'ana.martinez@bci.cl', '+56934567890', '16', '2025-02-11 15:10:09.698662+00', '2025-02-11 15:10:09.698662'),
-('5', 'Carlos', 'López', 'carlos.lopez@security.cl', '+56945678901', '17', '2025-02-11 15:10:09.698662+00', '2025-02-11 15:10:09.698662'),
-('6', 'Laura', 'Sánchez', 'laura.sanchez@itau.cl', '+56956789012', '18', '2025-02-11 15:10:09.698662+00', '2025-02-11 15:10:09.698662'),
-('7', 'Roberto', 'García', 'roberto.garcia@scotiabank.cl', '+56967890123', '19', '2025-02-11 15:10:09.698662+00', '2025-02-11 15:10:09.698662'),
-('8', 'Sofía', 'Fernández', 'sofia.fernandez@falabella.cl', '+56978901234', '20', '2025-02-11 15:10:09.698662+00', '2025-02-11 15:10:09.698662'),
-('9', 'Diego', 'Torres', 'diego.torres@consorcio.cl', '+56989012345', '21', '2025-02-11 15:10:09.698662+00', '2025-02-11 15:10:09.698662'),
-('10', 'Valentina', 'Silva', 'valentina.silva@ripley.cl', '+56990123456', '22', '2025-02-11 15:10:09.698662+00', '2025-02-11 15:10:09.698662'),
-('11', 'Cosme', 'Fulanito', 'cosme@falabella.com', '+56930303030', '12', '2025-02-11 15:10:09.698662+00', '2025-02-11 15:10:09.698662'),
-('12', 'Andrés', 'Cortés', 'andres.cortes@cencosud.com', '+56911223344', '13', '2025-02-11 15:10:09.698662+00', '2025-02-11 15:10:09.698662'),
-('13', 'Patricia', 'Muñoz', 'patricia.munoz@sonda.com', '+56922334455', '14', '2025-02-11 15:10:09.698662+00', '2025-02-11 15:10:09.698662'),
-('14', 'Fernando', 'Rojas', 'fernando.rojas@bci.cl', '+56933445566', '15', '2025-02-11 15:10:09.698662+00', '2025-02-11 15:10:09.698662'),
-('15', 'Carolina', 'Vargas', 'carolina.vargas@fidseguros.cl', '+56944556677', '16', '2025-02-11 15:10:09.698662+00', '2025-02-11 15:10:09.698662'),
-('16', 'Ricardo', 'Mendoza', 'ricardo.mendoza@sodimac.com', '+56955667788', '17', '2025-02-11 15:10:09.698662+00', '2025-02-11 15:10:09.698662'),
-('17', 'Daniela', 'Pino', 'daniela.pino@logisticainternacional.cl', '+56966778899', '18', '2025-02-11 15:10:09.698662+00', '2025-02-11 15:10:09.698662'),
-('18', 'Javier', 'Silva', 'javier.silva@falabella.com', '+56977889900', '19', '2025-02-11 15:10:09.698662+00', '2025-02-11 15:10:09.698662'),
-('19', 'Camila', 'Torres', 'camila.torres@falabella.com', '+56988990011', '20', '2025-02-11 15:10:09.698662+00', '2025-02-11 15:10:09.698662'),
-('20', 'Felipe', 'Gómez', 'felipe.gomez@wom.cl', '+56999001122', '21', '2025-02-11 15:10:09.698662+00', '2025-02-11 15:10:09.698662'),
-('21', 'María José', 'Ríos', 'mariajose.rios@ikea.cl', '+56900112233', '22', '2025-02-11 15:10:09.698662+00', '2025-02-11 15:10:09.698662'),
-('22', 'Alejandro', 'Castro', 'alejandro.castro@smu.cl', '+56911223344', '23', '2025-02-11 15:10:09.698662+00', '2025-02-11 15:10:09.698662'),
-('23', 'Valeria', 'Herrera', 'valeria.herrera@falabella.com', '+56922334455', '24', '2025-02-11 15:10:09.698662+00', '2025-02-11 15:10:09.698662'),
-('24', 'Rodrigo', 'Navarro', 'rodrigo.navarro@bancointernacional.cl', '+56933445566', '25', '2025-02-11 15:10:09.698662+00', '2025-02-11 15:10:09.698662'),
-('25', 'Isabel', 'Mora', 'isabel.mora@itau.cl', '+56944556677', '26', '2025-02-11 15:10:09.698662+00', '2025-02-11 15:10:09.698662'),
-('26', 'Pablo', 'Fuentes', 'pablo.fuentes@ey.com', '+56955667788', '27', '2025-02-11 15:10:09.698662+00', '2025-02-11 15:10:09.698662'),
-('27', 'Natalia', 'Espinoza', 'natalia.espinoza@copec.cl', '+56966778899', '28', '2025-02-11 15:10:09.698662+00', '2025-02-11 15:10:09.698662'),
-('28', 'Gonzalo', 'Araya', 'gonzalo.araya@mallplaza.cl', '+56977889900', '29', '2025-02-11 15:10:09.698662+00', '2025-02-11 15:10:09.698662');
+INSERT INTO "public"."Contact" ("id", "name", "last_name", "email", "phone", "client_id", "technical_stacks_id", "created_at", "updated_at") VALUES 
+('1', 'Juan', 'Pérez', 'juan.perez@bancodechile.cl', '+56912345678', '12', 1, '2025-02-11 15:10:09.698662+00', '2025-02-11 15:10:09.698662'),
+('2', 'María', 'González', 'maria.gonzalez@bancoestado.cl', '+56987654321', '15', 2, '2025-02-11 15:10:09.698662+00', '2025-02-11 15:10:09.698662'),
+('3', 'Pedro', 'Rodríguez', 'pedro.rodriguez@santander.cl', '+56923456789', '14', 3, '2025-02-11 15:10:09.698662+00', '2025-02-11 15:10:09.698662'),
+('4', 'Ana', 'Martínez', 'ana.martinez@bci.cl', '+56934567890', '16', 4, '2025-02-11 15:10:09.698662+00', '2025-02-11 15:10:09.698662'),
+('5', 'Carlos', 'López', 'carlos.lopez@security.cl', '+56945678901', '17', 5, '2025-02-11 15:10:09.698662+00', '2025-02-11 15:10:09.698662'),
+('6', 'Laura', 'Sánchez', 'laura.sanchez@itau.cl', '+56956789012', '18', 6, '2025-02-11 15:10:09.698662+00', '2025-02-11 15:10:09.698662'),
+('7', 'Roberto', 'García', 'roberto.garcia@scotiabank.cl', '+56967890123', '19', 7, '2025-02-11 15:10:09.698662+00', '2025-02-11 15:10:09.698662'),
+('8', 'Sofía', 'Fernández', 'sofia.fernandez@falabella.cl', '+56978901234', '20', 8, '2025-02-11 15:10:09.698662+00', '2025-02-11 15:10:09.698662'),
+('9', 'Diego', 'Torres', 'diego.torres@consorcio.cl', '+56989012345', '21', 9, '2025-02-11 15:10:09.698662+00', '2025-02-11 15:10:09.698662'),
+('10', 'Valentina', 'Silva', 'valentina.silva@ripley.cl', '+56990123456', '22', 10, '2025-02-11 15:10:09.698662+00', '2025-02-11 15:10:09.698662'),
+('11', 'Cosme', 'Fulanito', 'cosme@falabella.com', '+56930303030', '12', 1, '2025-02-11 15:10:09.698662+00', '2025-02-11 15:10:09.698662'),
+('12', 'Andrés', 'Cortés', 'andres.cortes@cencosud.com', '+56911223344', '13', 2, '2025-02-11 15:10:09.698662+00', '2025-02-11 15:10:09.698662'),
+('13', 'Patricia', 'Muñoz', 'patricia.munoz@sonda.com', '+56922334455', '14', 3, '2025-02-11 15:10:09.698662+00', '2025-02-11 15:10:09.698662'),
+('14', 'Fernando', 'Rojas', 'fernando.rojas@bci.cl', '+56933445566', '15', 4, '2025-02-11 15:10:09.698662+00', '2025-02-11 15:10:09.698662'),
+('15', 'Carolina', 'Vargas', 'carolina.vargas@fidseguros.cl', '+56944556677', '16', 5, '2025-02-11 15:10:09.698662+00', '2025-02-11 15:10:09.698662'),
+('16', 'Ricardo', 'Mendoza', 'ricardo.mendoza@sodimac.com', '+56955667788', '17', 6, '2025-02-11 15:10:09.698662+00', '2025-02-11 15:10:09.698662'),
+('17', 'Daniela', 'Pino', 'daniela.pino@logisticainternacional.cl', '+56966778899', '18', 7, '2025-02-11 15:10:09.698662+00', '2025-02-11 15:10:09.698662'),
+('18', 'Javier', 'Silva', 'javier.silva@falabella.com', '+56977889900', '19', 8, '2025-02-11 15:10:09.698662+00', '2025-02-11 15:10:09.698662'),
+('19', 'Camila', 'Torres', 'camila.torres@falabella.com', '+56988990011', '20', 9, '2025-02-11 15:10:09.698662+00', '2025-02-11 15:10:09.698662'),
+('20', 'Felipe', 'Gómez', 'felipe.gomez@wom.cl', '+56999001122', '21', 10, '2025-02-11 15:10:09.698662+00', '2025-02-11 15:10:09.698662'),
+('21', 'María José', 'Ríos', 'mariajose.rios@ikea.cl', '+56900112233', '22', 1, '2025-02-11 15:10:09.698662+00', '2025-02-11 15:10:09.698662'),
+('22', 'Alejandro', 'Castro', 'alejandro.castro@smu.cl', '+56911223344', '23', 2, '2025-02-11 15:10:09.698662+00', '2025-02-11 15:10:09.698662'),
+('23', 'Valeria', 'Herrera', 'valeria.herrera@falabella.com', '+56922334455', '24', 3, '2025-02-11 15:10:09.698662+00', '2025-02-11 15:10:09.698662'),
+('24', 'Rodrigo', 'Navarro', 'rodrigo.navarro@bancointernacional.cl', '+56933445566', '25', 4, '2025-02-11 15:10:09.698662+00', '2025-02-11 15:10:09.698662'),
+('25', 'Isabel', 'Mora', 'isabel.mora@itau.cl', '+56944556677', '26', 5, '2025-02-11 15:10:09.698662+00', '2025-02-11 15:10:09.698662'),
+('26', 'Pablo', 'Fuentes', 'pablo.fuentes@ey.com', '+56955667788', '27', 6, '2025-02-11 15:10:09.698662+00', '2025-02-11 15:10:09.698662'),
+('27', 'Natalia', 'Espinoza', 'natalia.espinoza@copec.cl', '+56966778899', '28', 7, '2025-02-11 15:10:09.698662+00', '2025-02-11 15:10:09.698662'),
+('28', 'Gonzalo', 'Araya', 'gonzalo.araya@mallplaza.cl', '+56977889900', '29', 8, '2025-02-11 15:10:09.698662+00', '2025-02-11 15:10:09.698662');
 
 -- PreInvoice data
 INSERT INTO "public"."PreInvoice" ("id", "client_id", "contact_id", "total", "status", "oc_number", "hes_number", "invoice_number",
@@ -900,3 +901,4 @@ INSERT INTO public."CurrencyHistory" ("date","usd","uf","created_at","updated_at
 
 
 SELECT setval(pg_get_serial_sequence('"People"', 'id'), (SELECT MAX(id) FROM "People"));
+SELECT setval(pg_get_serial_sequence('"Contact"', 'id'), (SELECT MAX(id) FROM "Contact"));
