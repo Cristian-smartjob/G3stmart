@@ -259,12 +259,11 @@ const ImportContactsModal = ({ isOpen, onClose }: ImportContactsModalProps) => {
                 <div className="mt-2 text-sm text-green-700">
                   <ul className="list-disc pl-5 space-y-1">
                     <li>
-                      Se han procesado {importResult.processedCount} de{" "}
+                      Se han procesado ${importResult.processedCount} de $
                       {(importResult.total || 0) + (importResult.omittedCount || 0) - 1} contactos correctamente.
                     </li>
-                    {importResult.failedCount && importResult.failedCount > 0 && (
-                      <li>{importResult.failedCount} registros han fallado durante la importación.</li>
-                    )}
+                    <li>{importResult.failedCount || 0} registros han fallado durante la importación.</li>
+
                     {importResult.omittedCount && importResult.omittedCount > 0 && (
                       <li>
                         {importResult.omittedCount} registros han sido omitidos por tener cliente o jefatura vacíos.

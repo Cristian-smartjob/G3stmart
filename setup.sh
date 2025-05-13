@@ -36,6 +36,9 @@ docker exec -i g3smart-postgres psql -U admin -d g3stmart < init-db/01_setup_dat
 
 # 6. Install deps & generate Prisma client
 cd ../..
+rm -rf node_modules
+rm -rf prisma/generated
+rm -rf .prisma
 npm install
 npx prisma generate
 # npx tsc prisma/seed.ts --outDir dist
