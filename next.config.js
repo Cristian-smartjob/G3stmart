@@ -52,8 +52,7 @@ const nextConfig = {
   // Deshabilitar etags para evitar problemas de cache
   generateEtags: false,
 
-  // Configuración de compilación
-  swcMinify: true,
+  // swcMinify está habilitado por defecto en Next.js 13+
 
   redirects: async () => {
     return [
