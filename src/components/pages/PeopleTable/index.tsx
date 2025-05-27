@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState, useRef } from "react";
 import { PlusIcon, FunnelIcon, ArrowUpTrayIcon } from "@heroicons/react/24/outline";
 import PeopleItemRow from "../../Table/PeopleItemRow";
 import AddPeopleForm from "../../dialogForm/AddPeopleForm";
@@ -9,11 +9,13 @@ import GenericDialog from "../../dialog/GenericDialog";
 import FilterPeople from "../../dialog/FilterPeople";
 import GenericModal from "../../modals/GenericModal";
 import ImportExcelModal from "../../modals/ImportExcelModal";
+import ImportAbsencesModal from "../../modals/ImportAbsencesModal";
 import MainTable from "../../Table/MainTable";
 import TableSkeleton from "../../core/TableSkeleton";
 import { ScrollSection, ScrollToLink } from "../../ui/ScrollToSection";
 import styles from "./PeopleTable.module.css";
 import { usePeopleTable } from "./usePeopleTable";
+import AbsencesTable, { AbsencesTableRef } from "../absences/AbsencesTable";
 
 const header = [
   "Empresa",
@@ -26,16 +28,22 @@ const header = [
   "fecha de termino",
 ];
 
+type TabType = "smarters" | "absences";
+
 /**
  * Componente PeopleTable - Muestra una tabla de personas con funcionalidades de búsqueda, filtrado y paginación
  */
 export default function PeopleTable(): React.ReactElement {
+  const [activeTab, setActiveTab] = useState<TabType>("smarters");
+  const absencesTableRef = useRef<AbsencesTableRef>(null);
+
   const {
     isLoading,
     currentPage,
     showDialog,
     showFilterDialog,
     showImportModal,
+    showAbsencesModal,
     isOpen,
     setIsOpen,
     selectedSmarter,
@@ -46,12 +54,21 @@ export default function PeopleTable(): React.ReactElement {
     handleClick,
     handleClickFilter,
     handleClickImport,
+    handleClickImportAbsences,
     handlerClose,
     handlerCloseFilter,
     handlerCloseImport,
+    handlerCloseImportAbsences,
     handleActionPress,
     setCurrentPage,
   } = usePeopleTable();
+
+  const handleAbsencesImportSuccess = () => {
+    // Recargar la tabla de ausencias después de una importación exitosa
+    if (absencesTableRef.current) {
+      absencesTableRef.current.refreshData();
+    }
+  };
 
   return (
     <div className={styles.container}>
@@ -64,6 +81,12 @@ export default function PeopleTable(): React.ReactElement {
       </GenericDialog>
 
       <ImportExcelModal isOpen={showImportModal} onClose={handlerCloseImport} />
+
+      <ImportAbsencesModal
+        isOpen={showAbsencesModal}
+        onClose={handlerCloseImportAbsences}
+        onSuccess={handleAbsencesImportSuccess}
+      />
 
       <AssignProjectModal isOpen={isOpen} setIsOpen={setIsOpen} smarter={selectedSmarter} />
 
@@ -114,25 +137,39 @@ export default function PeopleTable(): React.ReactElement {
             </div>
             <div className={styles.actionContainer}>
               <div className={styles.buttonGroup}>
-                <button
-                  id="importExcelButton"
-                  onClick={handleClickImport}
-                  className={styles.actionButton}
-                  type="button"
-                >
-                  <ArrowUpTrayIcon className={styles.buttonIcon} />
-                  <span className={styles.buttonText}>Cargar Excel de Smarters</span>
-                </button>
-                <button
-                  id="actionsDropdownButton"
-                  onClick={handleClick}
-                  data-dropdown-toggle="actionsDropdown"
-                  className={styles.actionButton}
-                  type="button"
-                >
-                  <PlusIcon className={styles.buttonIcon} />
-                  <span className={styles.buttonText}>Agregar Smarter</span>
-                </button>
+                {activeTab === "smarters" ? (
+                  <>
+                    <button
+                      id="importExcelButton"
+                      onClick={handleClickImport}
+                      className={styles.actionButton}
+                      type="button"
+                    >
+                      <ArrowUpTrayIcon className={styles.buttonIcon} />
+                      <span className={styles.buttonText}>Cargar Excel de Smarters</span>
+                    </button>
+                    <button
+                      id="actionsDropdownButton"
+                      onClick={handleClick}
+                      data-dropdown-toggle="actionsDropdown"
+                      className={styles.actionButton}
+                      type="button"
+                    >
+                      <PlusIcon className={styles.buttonIcon} />
+                      <span className={styles.buttonText}>Agregar Smarter</span>
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    id="uploadAbsencesButton"
+                    onClick={handleClickImportAbsences}
+                    className={styles.actionButton}
+                    type="button"
+                  >
+                    <ArrowUpTrayIcon className={styles.buttonIcon} />
+                    <span className={styles.buttonText}>Cargar Excel de Ausencias</span>
+                  </button>
+                )}
               </div>
             </div>
           </div>
@@ -140,34 +177,68 @@ export default function PeopleTable(): React.ReactElement {
         </div>
       </ScrollSection>
 
-      <ScrollSection id="table-section">
-        <MainTable
-          title="Smarters"
-          count={filteredUsers.length}
-          page={currentPage}
-          header={header}
-          showCheckbox={false}
-          onChangeSelectAll={() => {}}
-          onSelectPage={(page) => {
-            setCurrentPage(page);
-          }}
-          onNext={() => {
-            const page = Math.min(Math.ceil(filteredUsers.length / 10), currentPage + 1);
-            setCurrentPage(page);
-          }}
-          onPrev={() => {
-            const page = Math.max(1, currentPage - 1);
-            setCurrentPage(page);
-          }}
-        >
-          <>
-            <TableSkeleton isLoading={isLoading && filteredUsers.length <= 0} size={7} />
+      {/* Tabs para cambiar entre Smarters y Ausencias */}
+      <div className="border-b border-gray-200 mb-4">
+        <ul className="flex flex-wrap -mb-px text-sm font-medium text-center">
+          <li className="mr-2">
+            <button
+              className={`inline-block p-4 border-b-2 rounded-t-lg ${
+                activeTab === "smarters"
+                  ? "text-blue-600 border-blue-600"
+                  : "border-transparent hover:text-gray-600 hover:border-gray-300"
+              }`}
+              onClick={() => setActiveTab("smarters")}
+            >
+              Smarters
+            </button>
+          </li>
+          <li className="mr-2">
+            <button
+              className={`inline-block p-4 border-b-2 rounded-t-lg ${
+                activeTab === "absences"
+                  ? "text-blue-600 border-blue-600"
+                  : "border-transparent hover:text-gray-600 hover:border-gray-300"
+              }`}
+              onClick={() => setActiveTab("absences")}
+            >
+              Ausencias
+            </button>
+          </li>
+        </ul>
+      </div>
 
-            {filteredUsers.slice(Math.max(0, currentPage - 1) * 10, currentPage * 10).map((item) => (
-              <PeopleItemRow key={item.id} item={item} onActionPress={handleActionPress} />
-            ))}
-          </>
-        </MainTable>
+      <ScrollSection id="table-section">
+        {activeTab === "smarters" ? (
+          <MainTable
+            title="Smarters"
+            count={filteredUsers.length}
+            page={currentPage}
+            header={header}
+            showCheckbox={false}
+            onChangeSelectAll={() => {}}
+            onSelectPage={(page) => {
+              setCurrentPage(page);
+            }}
+            onNext={() => {
+              const page = Math.min(Math.ceil(filteredUsers.length / 10), currentPage + 1);
+              setCurrentPage(page);
+            }}
+            onPrev={() => {
+              const page = Math.max(1, currentPage - 1);
+              setCurrentPage(page);
+            }}
+          >
+            <>
+              <TableSkeleton isLoading={isLoading && filteredUsers.length <= 0} size={7} />
+
+              {filteredUsers.slice(Math.max(0, currentPage - 1) * 10, currentPage * 10).map((item) => (
+                <PeopleItemRow key={item.id} item={item} onActionPress={handleActionPress} />
+              ))}
+            </>
+          </MainTable>
+        ) : (
+          <AbsencesTable ref={absencesTableRef} />
+        )}
       </ScrollSection>
 
       <div className="fixed bottom-5 right-5">

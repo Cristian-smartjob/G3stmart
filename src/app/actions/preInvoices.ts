@@ -387,7 +387,9 @@ export async function createPreInvoice(data: PreinvoiceForm): Promise<PreInvoice
     // Verificar si ya existe una prefactura para el mismo cliente, mes y año
     const isDuplicate = await checkDuplicatePreInvoice(clientId, month, year);
     if (isDuplicate) {
-      throw new Error("Ya existe una prefactura para este cliente en el período seleccionado. No se pueden crear prefacturas duplicadas.");
+      throw new Error(
+        "Ya existe una prefactura para este cliente en el período seleccionado. No se pueden crear prefacturas duplicadas."
+      );
     }
 
     // Obtener todos los smarters/people para agregarlos como detalles
@@ -592,7 +594,7 @@ export async function createPreInvoice(data: PreinvoiceForm): Promise<PreInvoice
       if (error.message.includes("no tiene smarters asociados")) {
         throw error; // Re-lanzar el error original
       }
-      
+
       // Caso 2: Error de prefactura duplicada
       if (error.message.includes("Ya existe una prefactura para este cliente en el período seleccionado")) {
         throw error; // Re-lanzar el error original
@@ -664,6 +666,8 @@ export async function updatePreInvoice(id: number, data: PreInvoiceUpdate): Prom
 
 export async function recalculatePreInvoice(id: number): Promise<PreInvoice> {
   try {
+    console.log(`[DEBUG] Iniciando recalculación de prefactura ${id}`);
+
     // Obtener la prefactura con su cliente para conocer el currency_type
     const preInvoice = await prisma.preInvoice.findUnique({
       where: { id },
@@ -679,7 +683,10 @@ export async function recalculatePreInvoice(id: number): Promise<PreInvoice> {
       },
     });
 
+    console.log(`[DEBUG] Prefactura recuperada:`, JSON.stringify(preInvoice, null, 2));
+
     if (!preInvoice || !preInvoice.client) {
+      console.error(`[ERROR] No se encontró la prefactura ${id} o su cliente asociado`);
       throw new Error("No se encontró la prefactura o su cliente asociado");
     }
 
@@ -688,7 +695,7 @@ export async function recalculatePreInvoice(id: number): Promise<PreInvoice> {
 
     // Logs de diagnóstico
     console.log(
-      `Recalculando prefactura ${id}, cliente: ${preInvoice.client.name}, mes/año: ${preInvoice.month}/${preInvoice.year}`
+      `[DEBUG] Recalculando prefactura ${id}, cliente: ${preInvoice.client.name}, mes/año: ${preInvoice.month}/${preInvoice.year}, moneda: ${clientCurrencyTypeId}`
     );
 
     // Obtener todos los detalles de la prefactura
@@ -703,6 +710,7 @@ export async function recalculatePreInvoice(id: number): Promise<PreInvoice> {
         leaveDays: true,
         totalConsumeDays: true,
         currency_type: true,
+        personId: true,
         person: {
           select: {
             id: true,
@@ -714,78 +722,167 @@ export async function recalculatePreInvoice(id: number): Promise<PreInvoice> {
       },
     });
 
-    // Obtener el valor de UF apropiado según la lógica requerida
-    const { uf: ufToCLPRate, date: ufDateUsed } = await getAppropriateUFValue(
-      preInvoice.month,
-      preInvoice.year,
-      preInvoice.client.billableDay ? Number(preInvoice.client.billableDay) : null
-    );
+    console.log(`[DEBUG] Detalles recuperados: ${details.length}`);
 
-    // Calcular el nuevo valor total
-    let totalValue = 0;
-
-    for (const detail of details) {
-      // Recuperar los valores del servicio del smarter
-      const serviceFee =
-        typeof detail.person?.serviceFee === "number"
-          ? detail.person.serviceFee
-          : Number(detail.person?.serviceFee || 0);
-
-      const feeCurrencyTypeId = detail.person?.feeCurrencyTypeId || 1; // Por defecto CLP
-
-      // Calcular días consumidos
-      const billableDays = Number(detail.billableDays || 0);
-      const leaveDays = Number(detail.leaveDays || 0);
-      const totalConsumeDays = billableDays - leaveDays;
-
-      // Convertir el valor si es necesario (del currency type del smarter al currency type del cliente)
-      let valueInClientCurrency = serviceFee;
-
-      // Si el cliente usa UF (3) y el smarter usa CLP (1), convertir CLP a UF
-      if (clientCurrencyTypeId === 3 && feeCurrencyTypeId === 1) {
-        valueInClientCurrency = serviceFee / ufToCLPRate;
-      }
-      // Si el cliente usa CLP (1) y el smarter usa UF (3), convertir UF a CLP
-      else if (clientCurrencyTypeId === 1 && feeCurrencyTypeId === 3) {
-        valueInClientCurrency = serviceFee * ufToCLPRate;
-      }
-
-      // Calcular el valor total por este detalle usando la fórmula correcta
-      const detailTotal = (Number(valueInClientCurrency) * Number(totalConsumeDays)) / Number(billableDays);
-
-      // Actualizar el detalle con los nuevos valores
-      await prisma.preInvoiceDetail.update({
-        where: { id: detail.id },
-        data: {
-          value: valueInClientCurrency,
-          totalConsumeDays: totalConsumeDays,
-          currency_type: clientCurrencyTypeId,
-        },
-      });
-
-      // Sumar al total
-      totalValue += detailTotal;
+    if (details.length === 0) {
+      console.log(`[DEBUG] No hay detalles para recalcular en la prefactura ${id}`);
     }
 
-    // Actualizar la prefactura con el nuevo valor total y la información de UF
-    const updatedPreInvoice = await prisma.preInvoice.update({
-      where: { id },
-      data: {
-        value: new Prisma.Decimal(totalValue),
-        total: new Prisma.Decimal(totalValue),
-        ufValueUsed: clientCurrencyTypeId === 3 ? ufToCLPRate : null,
-        ufDateUsed: clientCurrencyTypeId === 3 ? ufDateUsed : null,
-      },
-      include: {
-        client: true,
-        contact: true,
-      },
-    });
+    console.log(
+      `[DEBUG] Intentando obtener valor UF para mes: ${preInvoice.month}, año: ${preInvoice.year}, billableDay: ${preInvoice.client.billableDay}`
+    );
 
-    revalidatePath("/");
-    return await mapToDomainModel(updatedPreInvoice);
+    try {
+      // Consultar directamente el valor de UF más reciente para diagnóstico
+      const latestUF = await prisma.currencyHistory.findFirst({
+        where: {},
+        orderBy: { date: "desc" },
+        select: { uf: true, date: true },
+      });
+
+      console.log(`[DEBUG] Valor UF más reciente disponible:`, latestUF);
+    } catch (ufCheckError) {
+      console.error(`[ERROR] Error al verificar UF más reciente:`, ufCheckError);
+    }
+
+    // Obtener el valor de UF apropiado según la lógica requerida
+    try {
+      const { uf: ufToCLPRate, date: ufDateUsed } = await getAppropriateUFValue(
+        preInvoice.month,
+        preInvoice.year,
+        preInvoice.client.billableDay ? Number(preInvoice.client.billableDay) : null
+      );
+
+      console.log(`[DEBUG] UF obtenida: ${ufToCLPRate}, fecha: ${ufDateUsed}`);
+
+      // Calcular el primer y último día del mes de la prefactura
+      const inicioDeMes = new Date(preInvoice.year, preInvoice.month - 1, 1);
+      const finDeMes = new Date(preInvoice.year, preInvoice.month, 0); // El día 0 del mes siguiente es el último día del mes actual
+
+      // Obtener la lista de personIds para la consulta
+      const personIds = details.map((detail) => detail.personId).filter((id) => id !== null) as number[];
+
+      console.log(`[DEBUG] Consultando ausencias para personas:`, personIds);
+
+      // Consultar los días de ausencia para cada persona desde la tabla Absences
+      const absencesResults = await prisma.$queryRaw<Array<{ person_id: number; total_leave_days: number }>>`
+        SELECT
+          person_id,
+          SUM(DATE_PART('day', LEAST(end_date, ${finDeMes}) - GREATEST(start_date, ${inicioDeMes}) + 1)) AS total_leave_days
+        FROM "public"."Absences"
+        WHERE
+          start_date <= ${finDeMes}
+          AND end_date >= ${inicioDeMes}
+          AND person_id = ANY(${personIds})
+        GROUP BY person_id
+      `;
+
+      console.log(`[DEBUG] Días de ausencia encontrados:`, JSON.stringify(absencesResults, null, 2));
+
+      // Calcular el nuevo valor total
+      let totalValue = 0;
+
+      // Obtener el número de días del mes actual
+      const diasDelMes = finDeMes.getDate();
+      console.log(`[DEBUG] Días del mes: ${diasDelMes}`);
+
+      for (const detail of details) {
+        console.log(`[DEBUG] Procesando detalle ${detail.id}, personId: ${detail.personId}`);
+
+        // Recuperar los valores del servicio del smarter
+        const serviceFee =
+          typeof detail.person?.serviceFee === "number"
+            ? detail.person.serviceFee
+            : Number(detail.person?.serviceFee || 0);
+
+        const feeCurrencyTypeId = detail.person?.feeCurrencyTypeId || 1; // Por defecto CLP
+
+        console.log(`[DEBUG] Detalle ${detail.id}: serviceFee=${serviceFee}, moneda=${feeCurrencyTypeId}`);
+
+        // Buscar si hay días de ausencia para esta persona
+        const personAbsence = absencesResults.find((absence) => absence.person_id === detail.personId);
+        const leaveDays = personAbsence ? Number(personAbsence.total_leave_days) : 0;
+
+        // Calcular días facturables y consumidos
+        const billableDays = diasDelMes;
+        const totalConsumeDays = billableDays - leaveDays;
+
+        console.log(
+          `[DEBUG] Detalle ${detail.id}: billableDays=${billableDays}, leaveDays=${leaveDays}, totalConsumeDays=${totalConsumeDays}`
+        );
+
+        // Convertir el valor si es necesario (del currency type del smarter al currency type del cliente)
+        let valueInClientCurrency = serviceFee;
+
+        // Si el cliente usa UF (3) y el smarter usa CLP (1), convertir CLP a UF
+        if (clientCurrencyTypeId === 3 && feeCurrencyTypeId === 1) {
+          valueInClientCurrency = serviceFee / ufToCLPRate;
+          console.log(`[DEBUG] Conversión CLP a UF: ${serviceFee} / ${ufToCLPRate} = ${valueInClientCurrency}`);
+        }
+        // Si el cliente usa CLP (1) y el smarter usa UF (3), convertir UF a CLP
+        else if (clientCurrencyTypeId === 1 && feeCurrencyTypeId === 3) {
+          valueInClientCurrency = serviceFee * ufToCLPRate;
+          console.log(`[DEBUG] Conversión UF a CLP: ${serviceFee} * ${ufToCLPRate} = ${valueInClientCurrency}`);
+        }
+
+        // Calcular el valor total por este detalle usando la fórmula correcta
+        const detailTotal = (Number(valueInClientCurrency) * Number(totalConsumeDays)) / Number(billableDays);
+        console.log(`[DEBUG] Valor calculado para detalle ${detail.id}: ${detailTotal}`);
+
+        // Actualizar el detalle con los nuevos valores
+        try {
+          await prisma.preInvoiceDetail.update({
+            where: { id: detail.id },
+            data: {
+              value: valueInClientCurrency,
+              billableDays: billableDays,
+              leaveDays: leaveDays,
+              totalConsumeDays: totalConsumeDays,
+              currency_type: clientCurrencyTypeId,
+            },
+          });
+          console.log(`[DEBUG] Detalle ${detail.id} actualizado correctamente`);
+        } catch (updateDetailError) {
+          console.error(`[ERROR] Error al actualizar detalle ${detail.id}:`, updateDetailError);
+          throw updateDetailError;
+        }
+
+        // Sumar al total
+        totalValue += detailTotal;
+      }
+
+      console.log(`[DEBUG] Valor total calculado: ${totalValue}`);
+
+      // Actualizar la prefactura con el nuevo valor total y la información de UF
+      try {
+        const updatedPreInvoice = await prisma.preInvoice.update({
+          where: { id },
+          data: {
+            value: new Prisma.Decimal(totalValue),
+            total: new Prisma.Decimal(totalValue),
+            ufValueUsed: clientCurrencyTypeId === 3 ? ufToCLPRate : null,
+            ufDateUsed: clientCurrencyTypeId === 3 ? ufDateUsed : null,
+          },
+          include: {
+            client: true,
+            contact: true,
+          },
+        });
+
+        console.log(`[DEBUG] Prefactura ${id} actualizada correctamente`);
+
+        revalidatePath("/");
+        return await mapToDomainModel(updatedPreInvoice);
+      } catch (updateInvoiceError) {
+        console.error(`[ERROR] Error al actualizar prefactura ${id}:`, updateInvoiceError);
+        throw updateInvoiceError;
+      }
+    } catch (ufError) {
+      console.error(`[ERROR] Error al obtener valor UF:`, ufError);
+      throw ufError;
+    }
   } catch (error) {
-    console.error("Error recalculando prefactura:", error);
+    console.error("[ERROR] Error recalculando prefactura:", error);
     throw new Error("No se pudo recalcular la prefactura");
   }
 }
