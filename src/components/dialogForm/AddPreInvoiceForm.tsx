@@ -13,6 +13,7 @@ import { Field } from "formik";
 interface Client {
   id: number;
   name: string;
+  selectedContactIds?: number[];
 }
 
 interface Contact {
@@ -305,7 +306,7 @@ export default function AddPreInvoiceForm({ onSave }: Props) {
                         </svg>
                       </div>
                       <span className="text-red-600 font-medium">
-                        Este modal se cerrará automáticamente en {countdown} {countdown === 1 ? 'segundo' : 'segundos'}
+                        Este modal se cerrará automáticamente en {countdown} {countdown === 1 ? "segundo" : "segundos"}
                       </span>
                     </div>
                   </div>
@@ -427,11 +428,26 @@ export default function AddPreInvoiceForm({ onSave }: Props) {
                       name="contact_id"
                       component={AutocompleteField}
                       options={
-                        // Filtrar contactos por el cliente seleccionado
+                        // Filtrar contactos por el cliente seleccionado Y que estén en selectedContactIds
                         contacts
                           .filter((contact) => {
                             const cId = contact.client_id ?? contact.clientId;
-                            return values.client_id ? cId === values.client_id : false;
+                            if (!values.client_id || cId !== values.client_id) {
+                              return false;
+                            }
+
+                            // Buscar el cliente seleccionado para obtener sus selectedContactIds
+                            const selectedClient = clients.find((client) => client.id === values.client_id);
+                            if (
+                              !selectedClient ||
+                              !selectedClient.selectedContactIds ||
+                              selectedClient.selectedContactIds.length === 0
+                            ) {
+                              return false; // Si no hay contactos seleccionados, no mostrar ninguno
+                            }
+
+                            // Solo mostrar contactos que estén en la lista de selectedContactIds
+                            return selectedClient.selectedContactIds.includes(contact.id);
                           })
                           .map((contact) => ({
                             value: contact.id,

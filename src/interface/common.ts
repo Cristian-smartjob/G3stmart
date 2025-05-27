@@ -11,6 +11,7 @@ export interface Client {
   address?: string | null;
   companyName?: string | null;
   marginPercentage?: number | Decimal | null;
+  selectedContactIds?: number[];
   createdAt?: Date | null;
   updatedAt?: Date | null;
   currencyType?: {

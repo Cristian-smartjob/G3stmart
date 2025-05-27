@@ -44,6 +44,7 @@ model Client {
   address          String?
   companyName      String?       @map("company_name") @db.VarChar(255)
   marginPercentage Decimal?      @default(10.00) @map("margin_percentage") @db.Decimal(10, 2)
+  selectedContactIds Int[]         @default([]) @map("selected_contact_ids")
   createdAt        DateTime?     @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt        DateTime?     @default(now()) @map("updated_at") @db.Timestamptz(6)
   currencyType     CurrencyType? @relation(fields: [currencyTypeId], references: [id])

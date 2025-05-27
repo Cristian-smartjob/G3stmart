@@ -75,6 +75,7 @@ CREATE TABLE
 		"address" TEXT,
 		"company_name" VARCHAR(255),
 		"margin_percentage" DECIMAL(10, 2) DEFAULT 0.00,
+		"selected_contact_ids" INTEGER[] DEFAULT '{}',
 		"created_at" TIMESTAMP
 		WITH
 			TIME ZONE DEFAULT CURRENT_TIMESTAMP,
@@ -468,7 +469,8 @@ INSERT INTO
 		"rut",
 		"address",
 		"company_name",
-		"margin_percentage"
+		"margin_percentage",
+		"selected_contact_ids"
 	)
 VALUES
 	(
@@ -481,7 +483,8 @@ VALUES
 		'77.261.280-K',
 		'Av. Presidente Riesco 5435, piso 10, Las Condes, Santiago',
 		'Falabella Tecnología SpA',
-		10.00
+		10.00,
+		'{1,11}'
 	),
 	(
 		'13',
@@ -493,7 +496,8 @@ VALUES
 		'93.834.000-5',
 		'Av. Kennedy 9001, Las Condes, Santiago',
 		'Cencosud S.A.',
-		10.00
+		10.00,
+		'{12}'
 	),
 	(
 		'14',
@@ -505,7 +509,8 @@ VALUES
 		'83.628.100-4',
 		'Av. Providencia 1760, Providencia, Santiago',
 		'SONDA S.A.',
-		10.00
+		10.00,
+		'{3,13}'
 	),
 	(
 		'15',
@@ -517,7 +522,8 @@ VALUES
 		'97.006.000-6',
 		'Av. El Golf 125, Las Condes, Santiago',
 		'Banco de Crédito e Inversiones',
-		10.00
+		10.00,
+		'{2,14}'
 	),
 	(
 		'16',
@@ -529,7 +535,8 @@ VALUES
 		'76.732.306-8',
 		'Av. Apoquindo 3600, piso 12, Las Condes, Santiago',
 		'FID Chile Seguros Generales S.A.',
-		10.00
+		10.00,
+		'{4,15}'
 	),
 	(
 		'17',
@@ -541,7 +548,8 @@ VALUES
 		'96.792.430-K',
 		'Av. Presidente Eduardo Frei Montalva 3092, Renca, Santiago',
 		'Sodimac S.A.',
-		10.00
+		10.00,
+		'{5,16}'
 	),
 	(
 		'18',
@@ -553,7 +561,8 @@ VALUES
 		'76.344.250-0',
 		'Av. Américo Vespucio Norte 1561, Vitacura, Santiago',
 		'Logística Internacional Chile S.A.',
-		10.00
+		10.00,
+		'{6,17}'
 	),
 	(
 		'19',
@@ -565,7 +574,8 @@ VALUES
 		'76.046.822-5',
 		'Av. Isidora Goyenechea 2800, Las Condes, Santiago',
 		'Falabella Financiero S.A.',
-		10.00
+		10.00,
+		'{7}'
 	),
 	(
 		'20',
@@ -577,7 +587,8 @@ VALUES
 		'76.046.822-5',
 		'Av. Isidora Goyenechea 2800, Las Condes, Santiago',
 		'Falabella Financiero S.A.',
-		10.00
+		10.00,
+		'{8}'
 	),
 	(
 		'21',
@@ -589,7 +600,8 @@ VALUES
 		'78.921.690-8',
 		'Av. Apoquindo 4501, Las Condes, Santiago',
 		'WOM S.A.',
-		10.00
+		10.00,
+		'{9}'
 	),
 	(
 		'22',
@@ -601,7 +613,8 @@ VALUES
 		'77.176.958-K',
 		'Av. Presidente Riesco 5335, Las Condes, Santiago',
 		'IKEA Chile SpA',
-		10.00
+		10.00,
+		'{10}'
 	),
 	(
 		'23',
@@ -613,7 +626,8 @@ VALUES
 		'76.012.676-4',
 		'Av. Cerro Colorado 5240, Las Condes, Santiago',
 		'SMU S.A.',
-		10.00
+		10.00,
+		'{}'
 	),
 	(
 		'24',
@@ -625,7 +639,8 @@ VALUES
 		'77.261.280-K',
 		'Av. Presidente Riesco 5435, piso 10, Las Condes, Santiago',
 		'Falabella Tecnología SpA',
-		10.00
+		10.00,
+		'{}'
 	),
 	(
 		'25',
@@ -637,7 +652,8 @@ VALUES
 		'97.011.000-3',
 		'Av. Apoquindo 6550, Las Condes, Santiago',
 		'Banco Internacional',
-		10.00
+		10.00,
+		'{}'
 	),
 	(
 		'26',
@@ -649,7 +665,8 @@ VALUES
 		'76.645.030-K',
 		'Av. Apoquindo 3457, Las Condes, Santiago',
 		'Itaú Corpbanca',
-		10.00
+		10.00,
+		'{}'
 	),
 	(
 		'27',
@@ -661,7 +678,8 @@ VALUES
 		'77.802.430-6',
 		'Av. Isidora Goyenechea 2800, piso 2, Las Condes, Santiago',
 		'Ernst & Young Servicios Profesionales de Auditoría y Asesorías Limitada',
-		10.00
+		10.00,
+		'{}'
 	),
 	(
 		'28',
@@ -673,7 +691,8 @@ VALUES
 		'99.520.000-7',
 		'Av. Apoquindo 2929, Las Condes, Santiago',
 		'Compañía de Petróleos de Chile COPEC S.A.',
-		10.00
+		10.00,
+		'{}'
 	),
 	(
 		'29',
@@ -685,7 +704,8 @@ VALUES
 		'96.795.700-K',
 		'Av. Américo Vespucio Norte 1737, Huechuraba, Santiago',
 		'Plaza S.A.',
-		10.00
+		10.00,
+		'{}'
 	);
 
 -- HealthInstitution data
