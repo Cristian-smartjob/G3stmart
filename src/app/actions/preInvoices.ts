@@ -768,7 +768,7 @@ export async function recalculatePreInvoice(id: number): Promise<PreInvoice> {
       const absencesResults = await prisma.$queryRaw<Array<{ person_id: number; total_leave_days: number }>>`
         SELECT
           person_id,
-          SUM(DATE_PART('day', LEAST(end_date, ${finDeMes}) - GREATEST(start_date, ${inicioDeMes}) + 1)) AS total_leave_days
+          SUM(EXTRACT(day FROM (LEAST(end_date, ${finDeMes}) - GREATEST(start_date, ${inicioDeMes}) + INTERVAL '1 day'))) AS total_leave_days
         FROM "public"."Absences"
         WHERE
           start_date <= ${finDeMes}
@@ -884,5 +884,109 @@ export async function recalculatePreInvoice(id: number): Promise<PreInvoice> {
   } catch (error) {
     console.error("[ERROR] Error recalculando prefactura:", error);
     throw new Error("No se pudo recalcular la prefactura");
+  }
+}
+
+/**
+ * Valida si existe el valor UF para el día de facturación específico del mes
+ * Retorna true si existe, false si no existe
+ */
+export async function validateUFForBillingDay(
+  month: number,
+  year: number,
+  clientBillableDay: number | null
+): Promise<{ isValid: boolean; message: string; targetDate?: Date }> {
+  try {
+    const today = new Date();
+    const currentMonth = today.getMonth() + 1;
+    const currentYear = today.getFullYear();
+    const currentDay = today.getDate();
+
+    // Determinar el día de facturación (predeterminado: 25)
+    const billableDay = clientBillableDay || 25;
+
+    // Calcular último día del mes
+    const daysInMonth = new Date(year, month, 0).getDate();
+
+    // Si el día de facturación es mayor que los días del mes, usar el último día
+    const adjustedBillableDay = billableDay > daysInMonth ? daysInMonth : billableDay;
+
+    // Para meses futuros, no puede haber UF disponible
+    if (year > currentYear || (year === currentYear && month > currentMonth)) {
+      return {
+        isValid: false,
+        message: `No se puede facturar para meses futuros (${month}/${year}). La UF del día de facturación aún no existe.`,
+      };
+    }
+
+    // Para el mes actual, validar si ya pasó el día de facturación
+    if (year === currentYear && month === currentMonth) {
+      if (currentDay < adjustedBillableDay) {
+        return {
+          isValid: false,
+          message: `No se puede facturar antes del día de facturación. El día de facturación es el ${adjustedBillableDay} y estamos en el día ${currentDay} del mes ${month}/${year}. Debe esperar hasta el día de cierre del mes.`,
+        };
+      }
+    }
+
+    // Generar la fecha basada en el día de facturación EXACTO
+    const targetDate = new Date(Date.UTC(year, month - 1, adjustedBillableDay, 12, 0, 0));
+
+    // Verificar si es fin de semana y ajustar al día hábil anterior
+    const dayOfWeek = targetDate.getDay();
+    const finalTargetDate = new Date(targetDate);
+
+    if (dayOfWeek === 0) {
+      // Domingo - retroceder al viernes
+      finalTargetDate.setUTCDate(finalTargetDate.getUTCDate() - 2);
+    } else if (dayOfWeek === 6) {
+      // Sábado - retroceder al viernes
+      finalTargetDate.setUTCDate(finalTargetDate.getUTCDate() - 1);
+    }
+
+    // Buscar UF exacta para la fecha objetivo
+    const isoDate = fechaToISOString(finalTargetDate);
+
+    const result = await prisma.$queryRaw`
+      SELECT * FROM "CurrencyHistory" 
+      WHERE DATE(date) = ${isoDate}::date
+      AND uf IS NOT NULL
+      LIMIT 1
+    `;
+
+    if (result && Array.isArray(result) && result.length > 0) {
+      return {
+        isValid: true,
+        message: `UF encontrada para el día de facturación ${finalTargetDate.toLocaleDateString("es-CL")}`,
+        targetDate: finalTargetDate,
+      };
+    }
+
+    // Si no se encuentra la UF exacta, retornar error específico
+    const isCurrentMonthAfterBillingDay =
+      year === currentYear && month === currentMonth && currentDay >= adjustedBillableDay;
+    const isPastMonth = year < currentYear || (year === currentYear && month < currentMonth);
+
+    if (isCurrentMonthAfterBillingDay || isPastMonth) {
+      return {
+        isValid: false,
+        message: `No se encontró valor UF para el día de facturación ${finalTargetDate.toLocaleDateString(
+          "es-CL"
+        )} del mes ${month}/${year}. Es necesario cargar la UF específica para este día antes de continuar. Por favor actualice los valores de UF.`,
+        targetDate: finalTargetDate,
+      };
+    } else {
+      return {
+        isValid: false,
+        message: `Aún no es posible facturar. Debe esperar hasta el día de cierre del mes (${adjustedBillableDay}) para que esté disponible la UF correspondiente.`,
+        targetDate: finalTargetDate,
+      };
+    }
+  } catch (error) {
+    console.error("Error al validar UF para día de facturación:", error);
+    return {
+      isValid: false,
+      message: "Error interno al validar la UF. Contacte al administrador.",
+    };
   }
 }

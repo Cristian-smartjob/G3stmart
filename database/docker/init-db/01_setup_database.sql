@@ -5562,3 +5562,111 @@ VALUES
 		3,
 		'Vacaciones planificadas con anticipación'
 	);
+
+-- ============================================================================
+-- OPTIMIZACIONES PARA CURRENCY HISTORY
+-- ============================================================================
+
+-- Crear índices para optimizar búsquedas de valores UF y USD por fecha
+-- Estos índices mejoran significativamente el rendimiento de las consultas más comunes
+
+-- Índice compuesto para búsquedas por fecha (más común)
+CREATE INDEX IF NOT EXISTS idx_currency_history_date 
+  ON "public"."CurrencyHistory" ("date" DESC);
+
+-- Índice para búsquedas de UF específicamente
+CREATE INDEX IF NOT EXISTS idx_currency_history_uf_date 
+  ON "public"."CurrencyHistory" ("date" DESC) 
+  WHERE "uf" IS NOT NULL;
+
+-- Índice para búsquedas de USD específicamente  
+CREATE INDEX IF NOT EXISTS idx_currency_history_usd_date 
+  ON "public"."CurrencyHistory" ("date" DESC) 
+  WHERE "usd" IS NOT NULL;
+
+-- Índice para búsquedas de rangos de fechas (útil para reportes mensuales)
+CREATE INDEX IF NOT EXISTS idx_currency_history_date_range 
+  ON "public"."CurrencyHistory" ("date", "uf", "usd");
+
+-- ============================================================================
+-- COMENTARIOS SOBRE LA ESTRUCTURA ACTUAL
+-- ============================================================================
+
+-- NOTA: La tabla CurrencyHistory actual tiene la siguiente estructura optimizada:
+-- 
+-- 1. CAMPOS PRINCIPALES:
+--    - id: Clave primaria secuencial
+--    - date: Fecha única (constraint UNIQUE) - permite un solo registro por día
+--    - usd: Valor del dólar en CLP (NUMERIC para precisión)
+--    - uf: Valor de la UF en CLP (NUMERIC para precisión)
+--    - created_at/updated_at: Timestamps para auditoría
+--
+-- 2. VENTAJAS DE LA ESTRUCTURA ACTUAL:
+--    - Simplicidad: Un registro por día con ambos valores
+--    - Eficiencia: Consultas rápidas por fecha específica
+--    - Integridad: Constraint UNIQUE en date previene duplicados
+--    - Precisión: NUMERIC evita problemas de redondeo con FLOAT
+--
+-- 3. CASOS DE USO OPTIMIZADOS:
+--    - Obtener UF/USD de una fecha específica: O(1) con índice
+--    - Obtener último valor disponible: O(1) con índice DESC
+--    - Buscar valor anterior más cercano: O(log n) con índice
+--    - Rangos de fechas para reportes: Eficiente con índice compuesto
+--
+-- 4. CONSULTAS TÍPICAS OPTIMIZADAS:
+--    
+--    -- Valor UF de una fecha específica:
+--    SELECT uf FROM "CurrencyHistory" WHERE date = '2025-06-30';
+--    
+--    -- Último valor UF disponible:
+--    SELECT uf, date FROM "CurrencyHistory" ORDER BY date DESC LIMIT 1;
+--    
+--    -- Valor UF anterior más cercano a una fecha:
+--    SELECT uf, date FROM "CurrencyHistory" 
+--    WHERE date <= '2025-06-30' ORDER BY date DESC LIMIT 1;
+--    
+--    -- Valores UF de un mes completo:
+--    SELECT date, uf FROM "CurrencyHistory" 
+--    WHERE date >= '2025-06-01' AND date <= '2025-06-30' 
+--    ORDER BY date;
+
+-- ============================================================================
+-- CONSIDERACIONES PARA VALORES ANTICIPADOS
+-- ============================================================================
+
+-- NOTA: Para guardar múltiples valores por mes anticipadamente, la estructura
+-- actual es suficiente porque:
+--
+-- 1. GRANULARIDAD DIARIA: Permite un valor por día, cubriendo todo el mes
+-- 2. FLEXIBILIDAD: Se pueden insertar valores futuros sin restricciones
+-- 3. CONSULTAS EFICIENTES: Los índices optimizan búsquedas por rangos
+--
+-- EJEMPLO DE INSERCIÓN ANTICIPADA:
+-- INSERT INTO "CurrencyHistory" (date, uf, usd) VALUES 
+--   ('2025-07-01', 39500.00, 1020.00),
+--   ('2025-07-02', 39505.00, 1021.00),
+--   -- ... resto del mes
+--   ('2025-07-31', 39600.00, 1030.00);
+
+-- ============================================================================
+-- MANTENIMIENTO Y MONITOREO
+-- ============================================================================
+
+-- Función para verificar el estado de los índices
+-- SELECT schemaname, tablename, indexname, indexdef 
+-- FROM pg_indexes 
+-- WHERE tablename = 'CurrencyHistory';
+
+-- Función para verificar estadísticas de uso de índices
+-- SELECT schemaname, tablename, indexname, idx_scan, idx_tup_read, idx_tup_fetch
+-- FROM pg_stat_user_indexes 
+-- WHERE tablename = 'CurrencyHistory';
+
+-- ============================================================================
+-- INSTRUCCIONES POST-MODIFICACIÓN
+-- ============================================================================
+
+-- Después de aplicar estos cambios, ejecutar:
+-- 1. npx prisma generate
+-- 2. Verificar que los índices se crearon correctamente
+-- 3. Monitorear el rendimiento de las consultas existentes

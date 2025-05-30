@@ -10,6 +10,7 @@ import { useSelector } from "react-redux";
 import { RootState } from "@/lib/store";
 import { PreInvoice } from "@/interface/common";
 import { formatToMoneyString } from "@/utils/data";
+import { validateUFForBillingDay } from "@/app/actions/preInvoices";
 
 interface Props {
   isOpen: boolean;
@@ -216,6 +217,23 @@ export default function CompleteBillModal({ isOpen, setIsOpen, preinvoiceId }: P
     setIsLoading(true);
 
     try {
+      // NUEVA VALIDACIÓN: Verificar que existe UF para el día de facturación
+      if (invoiceData?.month && invoiceData?.year && invoiceData?.client?.billableDay) {
+        const ufValidation = await validateUFForBillingDay(
+          invoiceData.month,
+          invoiceData.year,
+          Number(invoiceData.client.billableDay)
+        );
+
+        if (!ufValidation.isValid) {
+          // Mostrar error y detener el proceso
+          alert(`❌ No se puede facturar: ${ufValidation.message}`);
+          setIsLoading(false);
+          return;
+        }
+      }
+
+      // Continuar con la facturación si la validación pasó
       // Usar solo la API REST para actualización
       const apiResponse = await fetch(`/api/preinvoices/${preinvoiceId}/status`, {
         method: "PUT",

@@ -28,7 +28,7 @@ import RejectPreinvoiceButton from "../buttons/RejectPreinvoiceButton";
 import CompleteBillButton from "../buttons/CompleteBillButton";
 import Link from "next/link";
 import { fetchPreInvoices as fetchPreInvoicesAction } from "@/app/actions/preInvoices";
-import { updatePreInvoice, recalculatePreInvoice } from "@/app/actions/preInvoices";
+import { updatePreInvoice, recalculatePreInvoice, validateUFForBillingDay } from "@/app/actions/preInvoices";
 import { getClientById } from "@/app/actions/clients";
 import { formatearFechaUFCorrecta } from "@/utils/date";
 
@@ -197,6 +197,32 @@ export default function PreinvoceDetail() {
     } finally {
       setIsLoadingClient(false);
     }
+  };
+
+  const handleDownloadPreInvoice = async () => {
+    // Validar que existe UF para el día de facturación antes de descargar
+    if (activePreInvoice?.month && activePreInvoice?.year && activePreInvoice?.client?.billableDay) {
+      try {
+        const ufValidation = await validateUFForBillingDay(
+          activePreInvoice.month,
+          activePreInvoice.year,
+          Number(activePreInvoice.client.billableDay)
+        );
+
+        if (!ufValidation.isValid) {
+          // Mostrar error y no proceder
+          alert(`❌ No se puede descargar la prefactura: ${ufValidation.message}`);
+          return;
+        }
+      } catch (error) {
+        console.error("Error al validar UF:", error);
+        alert("❌ Error al validar la UF. Contacte al administrador.");
+        return;
+      }
+    }
+
+    // Si la validación pasó, mostrar el modal de descarga
+    setShowModalDownload(true);
   };
 
   return (
@@ -374,9 +400,7 @@ export default function PreinvoceDetail() {
                     <a
                       href="#"
                       className="ml-auto flex items-center gap-x-1 rounded-md bg-green-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-green-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-                      onClick={() => {
-                        setShowModalDownload(true);
-                      }}
+                      onClick={handleDownloadPreInvoice}
                     >
                       <ArrowDownIcon aria-hidden="true" className="-ml-1.5 size-5" />
                       descargar prefactura
