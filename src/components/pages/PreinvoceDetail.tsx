@@ -9,7 +9,6 @@ import { RootState } from "@/lib/store";
 import { PreInvoice, PreInvoiceDetail } from "@/interface/common";
 import PreInvoiceDetailTable from "../Table/PreInvoiceDetailTable";
 import Badge from "../core/Badge";
-import PreInvoceStat from "../core/PreInvoiceStat";
 import TabSelector, { Selector } from "../core/TabSelector";
 import AssignToPreInvoceModal from "../modals/AssignToPreInvoceModal";
 import { assign } from "@/lib/features/preinvoicesdetail";
@@ -322,67 +321,13 @@ export default function PreinvoceDetail() {
               </Link>
 
               <div>
-                <div className="flex flex-col">
-                  <h1 className="text-xl font-semibold text-gray-900">Prefactura / Contraparte</h1>
-
-                  <div className="mt-2">
-                    <Badge status={activePreInvoice?.status || "PENDING"} />
-                  </div>
-                </div>
-
-                <div className="mt-6">
-                  <h2 className="text-lg font-medium text-gray-900">
-                    {activePreInvoice?.client?.name} {activePreInvoice?.month} / {activePreInvoice?.year}
-                  </h2>
-
-                  {activePreInvoice?.contact !== null ? (
-                    <p className="text-sm">
-                      Contraparte {activePreInvoice?.contact?.name} {activePreInvoice?.contact?.lastName}
-                    </p>
-                  ) : null}
-
-                  {/* Mostrar información de completedBy y completedAt cuando el estado es "COMPLETED" */}
-                  {activePreInvoice?.status === "COMPLETED" && (
-                    <div className="mt-2 text-sm text-gray-600">
-                      <p>
-                        Facturada por: <span className="font-medium">{activePreInvoice.completedBy || "Sistema"}</span>
-                      </p>
-                      <p>
-                        Fecha:{" "}
-                        <span className="font-medium">
-                          {activePreInvoice.completedAt
-                            ? new Date(activePreInvoice.completedAt).toLocaleString("es-ES", {
-                                day: "2-digit",
-                                month: "2-digit",
-                                year: "numeric",
-                                hour: "2-digit",
-                                minute: "2-digit",
-                              })
-                            : "No disponible"}
-                        </span>
-                      </p>
-                    </div>
-                  )}
+                <h1 className="text-xl font-semibold text-gray-900">Prefactura / Contraparte</h1>
+                <div className="mt-2">
+                  <Badge status={activePreInvoice?.status || "PENDING"} />
                 </div>
               </div>
 
-              <div className="ml-auto flex  gap-x-4">
-                {/* Botón para recargar detalles manualmente */}
-                {/* {activePreInvoice?.status === "PENDING" && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (id) {
-                        console.log("Recargando detalles manualmente");
-                        dispatch(fetchPreInvoiceDetails(Number(id)));
-                      }
-                    }}
-                    className="px-3 py-2 text-xs font-medium text-center inline-flex items-center text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
-                  >
-                    Recargar detalles
-                  </button>
-                )} */}
-
+              <div className="ml-auto flex gap-x-4">
                 {activePreInvoice?.status === "PENDING" ? (
                   <>
                     <button
@@ -420,133 +365,156 @@ export default function PreinvoceDetail() {
             </div>
           </header>
 
-          <div className="border-b border-b-gray-900/10 lg:border-t lg:border-t-gray-900/5">
-            <dl className="mx-auto grid max-w-7xl grid-cols-1 sm:grid-cols-3 lg:grid-cols-4 lg:px-2 xl:px-0">
-              <PreInvoceStat
-                name="Total a facturar"
-                value={
-                  details.some((item) => {
-                    const value = typeof item.value === "number" ? item.value : Number(item.value.toString());
-                    return value < 1000;
-                  })
-                    ? `${total.toFixed(2)} UF`
-                    : formatCurrency(total)
-                }
-                statIdx={0}
-              />
-              <PreInvoceStat
-                name="Número factura"
-                value={!activePreInvoice?.invoiceNumber ? "" : `${activePreInvoice?.invoiceNumber}`}
-                statIdx={1}
-              />
-              <PreInvoceStat
-                name="Número HES"
-                value={activePreInvoice?.hesNumber === null ? "" : `${activePreInvoice?.hesNumber}`}
-                statIdx={2}
-              />
-              <PreInvoceStat
-                name="Número OC"
-                value={activePreInvoice?.ocNumber === null ? "" : `${activePreInvoice?.ocNumber}`}
-                statIdx={3}
-              />
-              {/* <PreInvoceStat
-                name="Margen (%)"
-                value={
-                  activePreInvoice?.marginPercentage === null || activePreInvoice?.marginPercentage === undefined
-                    ? "0%"
-                    : `${Number(activePreInvoice.marginPercentage)}%`
-                }
-                statIdx={4}
-              /> */}
-            </dl>
-          </div>
+          {/* Información detallada de la prefactura */}
+          <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+            <div className="bg-white shadow overflow-hidden sm:rounded-lg">
+              <div className="px-4 py-5 sm:px-6">
+                <h3 className="text-lg leading-6 font-medium text-gray-900">
+                  {activePreInvoice?.client?.name} {activePreInvoice?.month} / {activePreInvoice?.year}
+                </h3>
+                {activePreInvoice?.contact !== null && (
+                  <p className="mt-1 max-w-2xl text-sm text-gray-500">
+                    Contraparte {activePreInvoice?.contact?.name} {activePreInvoice?.contact?.lastName}
+                  </p>
+                )}
+              </div>
 
-          {/* Información de UF utilizada */}
-          {activePreInvoice?.ufValueUsed && activePreInvoice?.ufDateUsed && (
-            <div className="mx-auto max-w-7xl px-4 py-2 sm:px-6 lg:px-2 xl:px-0">
-              <div className="flex items-center justify-end space-x-4">
-                <div className="flex items-center space-x-2">
-                  <span className="text-xs text-gray-500">Día de facturación:</span>
-                  <div className="inline-flex items-center rounded-md bg-gray-50 px-3 py-1 text-xs font-medium text-gray-700 ring-1 ring-inset ring-gray-700/10 shadow-sm">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      viewBox="0 0 20 20"
-                      fill="currentColor"
-                      className="mr-1.5 h-3.5 w-3.5"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M5.75 2a.75.75 0 0 1 .75.75V4h7V2.75a.75.75 0 0 1 1.5 0V4h.25A2.75 2.75 0 0 1 18 6.75v8.5A2.75 2.75 0 0 1 15.25 18H4.75A2.75 2.75 0 0 1 2 15.25v-8.5A2.75 2.75 0 0 1 4.75 4H5V2.75A.75.75 0 0 1 5.75 2Zm-1 5.5c-.69 0-1.25.56-1.25 1.25v6.5c0 .69.56 1.25 1.25 1.25h10.5c.69 0 1.25-.56 1.25-1.25v-6.5c0-.69-.56-1.25-1.25-1.25H4.75Z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                    <span className="font-semibold">
-                      {activePreInvoice?.client?.billableDay ? (
-                        Number(activePreInvoice.client.billableDay)
-                      ) : (
-                        <button
-                          onClick={loadClientInfo}
-                          className="text-blue-500 hover:text-blue-700 hover:underline flex items-center"
-                          title="Cargar información del cliente"
-                          disabled={isLoadingClient}
-                        >
-                          {isLoadingClient ? (
-                            <>
-                              <svg className="animate-spin h-3 w-3 mr-1" viewBox="0 0 24 24">
-                                <circle
-                                  className="opacity-25"
-                                  cx="12"
-                                  cy="12"
-                                  r="10"
-                                  stroke="currentColor"
-                                  strokeWidth="4"
-                                  fill="none"
-                                />
-                                <path
-                                  className="opacity-75"
-                                  fill="currentColor"
-                                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                                />
-                              </svg>
-                              Cargando...
-                            </>
-                          ) : (
-                            "Cargar día"
-                          )}
-                        </button>
-                      )}
-                    </span>
-                  </div>
+              {/* Layout principal con información a la izquierda y totales a la derecha */}
+              <div className="border-t border-gray-200 grid grid-cols-1 lg:grid-cols-2 gap-8 px-4 py-5 sm:p-6">
+                {/* Información básica - Izquierda */}
+                <div>
+                  <dl className="space-y-4">
+                    <div className="grid grid-cols-3 gap-4">
+                      <dt className="text-sm font-medium text-gray-500">Cliente:</dt>
+                      <dd className="text-sm text-blue-600 font-semibold col-span-2">
+                        {activePreInvoice?.client?.name || "N/A"}
+                      </dd>
+                    </div>
+                    <div className="grid grid-cols-3 gap-4">
+                      <dt className="text-sm font-medium text-gray-500">Contraparte:</dt>
+                      <dd className="text-sm text-gray-900 col-span-2">
+                        {activePreInvoice?.contact
+                          ? `${activePreInvoice.contact.name} ${activePreInvoice.contact.lastName}`
+                          : "N/A"}
+                      </dd>
+                    </div>
+                    <div className="grid grid-cols-3 gap-4">
+                      <dt className="text-sm font-medium text-gray-500">Creado por:</dt>
+                      <dd className="text-sm text-gray-900 col-span-2">Sistema</dd>
+                    </div>
+                    <div className="grid grid-cols-3 gap-4">
+                      <dt className="text-sm font-medium text-gray-500">Fecha creación:</dt>
+                      <dd className="text-sm text-gray-900 col-span-2">
+                        {activePreInvoice?.createdAt
+                          ? new Date(activePreInvoice.createdAt).toLocaleString("es-ES", {
+                              day: "2-digit",
+                              month: "2-digit",
+                              year: "numeric",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })
+                          : "N/A"}
+                      </dd>
+                    </div>
+                    <div className="grid grid-cols-3 gap-4">
+                      <dt className="text-sm font-medium text-gray-500">Día de facturación:</dt>
+                      <dd className="text-sm text-gray-900 col-span-2">
+                        {activePreInvoice?.client?.billableDay ? (
+                          Number(activePreInvoice.client.billableDay)
+                        ) : (
+                          <button
+                            onClick={loadClientInfo}
+                            className="text-blue-500 hover:text-blue-700 hover:underline flex items-center"
+                            title="Cargar información del cliente"
+                            disabled={isLoadingClient}
+                          >
+                            {isLoadingClient ? "Cargando..." : "Cargar día"}
+                          </button>
+                        )}
+                      </dd>
+                    </div>
+                    <div className="grid grid-cols-3 gap-4">
+                      <dt className="text-sm font-medium text-gray-500">Valor UF Utilizado:</dt>
+                      <dd className="text-sm text-gray-900 col-span-2">
+                        {activePreInvoice?.ufValueUsed
+                          ? `$${Number(activePreInvoice.ufValueUsed).toLocaleString("es-CL")} • ${
+                              activePreInvoice.ufDateUsed &&
+                              formatearFechaUFCorrecta(
+                                activePreInvoice.ufDateUsed,
+                                Number(activePreInvoice.ufValueUsed)
+                              )
+                            }`
+                          : "N/A"}
+                      </dd>
+                    </div>
+                  </dl>
                 </div>
 
-                <div className="flex items-center space-x-2">
-                  <span className="text-xs text-gray-500">Valor UF utilizado:</span>
-                  <div className="inline-flex items-center rounded-md bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10 shadow-sm">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      viewBox="0 0 20 20"
-                      fill="currentColor"
-                      className="mr-1.5 h-3.5 w-3.5"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16ZM8.732 6.232a2.5 2.5 0 0 1 3.536 0 .75.75 0 1 0 1.06-1.06A4 4 0 0 0 6.5 8v.165c0 .364.034.728.1 1.085h-.35a.75.75 0 0 0 0 1.5h.737a5.25 5.25 0 0 1-.367 3.072l-.055.123a.75.75 0 0 0 .848 1.037l1.272-.283a3.493 3.493 0 0 1 1.604.021 4.992 4.992 0 0 0 2.422 0l.97-.242a.75.75 0 0 0-.363-1.456l-.971.243a3.491 3.491 0 0 1-1.694 0 4.992 4.992 0 0 0-2.258-.038c.085-.314.154-.636.206-.963h2.74a.75.75 0 0 0 0-1.5h-2.845a4.835 4.835 0 0 1-.1-2.25A2.5 2.5 0 0 1 8.732 6.232Z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                    <span className="font-semibold">
-                      ${Number(activePreInvoice.ufValueUsed).toLocaleString("es-CL")}
-                    </span>
-                    <span className="mx-1 text-gray-500">•</span>
-                    <span className="text-gray-600">
-                      {activePreInvoice.ufDateUsed &&
-                        formatearFechaUFCorrecta(activePreInvoice.ufDateUsed, Number(activePreInvoice.ufValueUsed))}
-                    </span>
+                {/* Totales de facturación - Derecha */}
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <dt className="text-sm font-medium text-gray-500">Total a Facturar (UF):</dt>
+                    <dd className="text-l font-bold text-blue-600">
+                      {details.some((item) => {
+                        const value = typeof item.value === "number" ? item.value : Number(item.value.toString());
+                        return value < 1000;
+                      })
+                        ? `${total.toFixed(2)}`
+                        : formatCurrency(total).replace(/[^\d.,]/g, "")}
+                    </dd>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <dt className="text-sm font-medium text-gray-500">Total a Facturar (CLP):</dt>
+                    <dd className="text-l font-bold text-green-600">
+                      {activePreInvoice?.ufValueUsed
+                        ? `$${(total * Number(activePreInvoice.ufValueUsed)).toLocaleString("es-CL")}`
+                        : "Calculando..."}
+                    </dd>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <dt className="text-sm font-medium text-gray-500">N° Factura:</dt>
+                    <dd className="text-sm text-gray-900">{activePreInvoice?.invoiceNumber || "Pendiente"}</dd>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <dt className="text-sm font-medium text-gray-500">N° HES:</dt>
+                    <dd className="text-sm text-gray-900">{activePreInvoice?.hesNumber || "Pendiente"}</dd>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <dt className="text-sm font-medium text-gray-500">N° OC:</dt>
+                    <dd className="text-sm text-gray-900">{activePreInvoice?.ocNumber || "Pendiente"}</dd>
                   </div>
                 </div>
               </div>
             </div>
-          )}
+
+            {/* Mostrar información de completedBy y completedAt cuando el estado es "COMPLETED" */}
+            {/* {activePreInvoice?.status === "COMPLETED" && (
+              <div className="mt-6 bg-green-50 border border-green-200 rounded-lg p-4">
+                <h4 className="text-sm font-medium text-green-800 mb-2">Información de Facturación</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-green-700">
+                  <div>
+                    <span className="font-medium">Facturada por:</span> {activePreInvoice.completedBy || "Sistema"}
+                  </div>
+                  <div>
+                    <span className="font-medium">Fecha:</span>{" "}
+                    {activePreInvoice.completedAt
+                      ? new Date(activePreInvoice.completedAt).toLocaleString("es-ES", {
+                          day: "2-digit",
+                          month: "2-digit",
+                          year: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })
+                      : "No disponible"}
+                  </div>
+                </div>
+              </div>
+            )} */}
+          </div>
 
           <div
             aria-hidden="true"

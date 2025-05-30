@@ -152,34 +152,53 @@ export default function PreInvoiceDetailRow({
               </div>
             )}
           </div>
-        ) : formatCurrency(numValue, "es-ES", "CLP")}
+        ) : (
+          formatCurrency(numValue, "es-ES", "CLP")
+        )}
       </td>
 
-      {/* Día / mes facturable */}
-      <td className="px-4 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white" onClick={handlerClick}>
-        {numBillableDays}
-      </td>
-
-      {/* Días de ausencia */}
+      {/* AUSENCIAS - leave_days */}
       <td className="px-4 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white" onClick={handlerClick}>
         {numLeaveDays}
       </td>
 
-      {/* Total día mes consumidos */}
+      {/* DÍAS TRABAJADOS - total_consume_days - leave_days (días realmente trabajados) */}
       <td className="px-4 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white" onClick={handlerClick}>
-        {numTotalConsumeDays}
+        {numTotalConsumeDays - numLeaveDays}
       </td>
 
-      {/* HH mes consumidos */}
+      {/* EQUIVALENTE HORAS - (total_consume_days - leave_days) * 8 */}
       <td className="px-4 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white" onClick={handlerClick}>
-        {numTotalConsumeDays * 8}
+        {(numTotalConsumeDays - numLeaveDays) * 8}
       </td>
 
-      {/* Total por cobrar (UF) - con tooltip que muestra el valor de UF */}
+      {/* TARIFA HR - Nueva columna */}
       <td className="px-4 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white" onClick={handlerClick}>
         {numValue < 10000 ? (
           <div className="group relative flex items-center">
-            <span>{`${((numValue * numTotalConsumeDays) / numBillableDays).toFixed(2)} UF`}</span>
+            <span>{`${(numValue / (numBillableDays * 8)).toFixed(4)} UF`}</span>
+            {ufValue && (
+              <div className="ml-1.5 cursor-help">
+                <div className="relative">
+                  <span className="text-xs text-blue-500 cursor-help">ⓘ</span>
+                  <div className="absolute left-0 bottom-full mb-2 hidden whitespace-nowrap rounded-md bg-gray-800 px-2 py-1 text-xs text-white shadow-sm group-hover:block z-10">
+                    = {formatCurrency((numValue / (numBillableDays * 8)) * ufValue, "es-ES", "CLP")}
+                    <div className="absolute -bottom-1 left-1 h-2 w-2 rotate-45 bg-gray-800"></div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        ) : (
+          formatCurrency(numValue / (numBillableDays * 8), "es-ES", "CLP")
+        )}
+      </td>
+
+      {/* Total por cobrar (UF) - Proporción de días trabajados sobre días totales del mes */}
+      <td className="px-4 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white" onClick={handlerClick}>
+        {numValue < 10000 ? (
+          <div className="group relative flex items-center">
+            <span>{`${((numValue * (numTotalConsumeDays - numLeaveDays)) / numTotalConsumeDays).toFixed(2)} UF`}</span>
             {ufValue && (
               <div className="ml-1.5 cursor-help">
                 <div className="relative">
@@ -192,14 +211,20 @@ export default function PreInvoiceDetailRow({
               </div>
             )}
           </div>
-        ) : formatCurrency(numValue, "es-ES", "CLP")}
+        ) : (
+          formatCurrency(numValue, "es-ES", "CLP")
+        )}
       </td>
 
       {/* Total por cobrar (CLP) */}
       <td className="px-4 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white" onClick={handlerClick}>
-        {numValue < 10000 
-          ? formatCurrency(((numValue * numTotalConsumeDays) / numBillableDays) * (ufValue || 39127.41), "es-ES", "CLP")
-          : formatCurrency((numValue * numTotalConsumeDays) / numBillableDays, "es-ES", "CLP")}
+        {numValue < 10000
+          ? formatCurrency(
+              ((numValue * (numTotalConsumeDays - numLeaveDays)) / numTotalConsumeDays) * (ufValue || 39127.41),
+              "es-ES",
+              "CLP"
+            )
+          : formatCurrency((numValue * (numTotalConsumeDays - numLeaveDays)) / numTotalConsumeDays, "es-ES", "CLP")}
       </td>
     </tr>
   );

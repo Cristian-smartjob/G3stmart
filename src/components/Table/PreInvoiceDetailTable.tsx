@@ -98,18 +98,15 @@ const adaptToReduxDetail = (item: UIPreInvoiceDetail): ReduxPreInvoiceDetail => 
 };
 
 const header = [
-  "Smarter",
-  "Cargo",
-  /*
-  "Rut",
-  "Pais",*/
-  "Tarifa / mes",
-  "Día / mes facturable",
-  "Días de ausencia",
-  "Total día mes consumidos",
-  "HH mes consumidos",
-  "Total por cobrar (UF)",
-  "Total por cobrar (CLP)",
+  "SMARTER",
+  "CARGO",
+  "TARIFA",
+  "AUSENCIAS",
+  "DÍAS TRABAJADOS",
+  "EQUIVALENTE HORAS",
+  "TARIFA HR",
+  "MONTO TOTAL UF",
+  "MONTO TOTAL CLP",
 ];
 
 interface Props {
