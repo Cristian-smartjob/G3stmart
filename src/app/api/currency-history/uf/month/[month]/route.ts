@@ -40,9 +40,9 @@ function getMonthRange(year: number, month: number): { startDate: Date; endDate:
   return { startDate, endDate };
 }
 
-export async function GET(request: NextRequest, { params }: { params: UFMonthParams }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<UFMonthParams> }) {
   try {
-    const { month } = params;
+    const { month } = await params;
 
     console.log(`[UF Month] Consultando valores UF para ${month}`);
 
