@@ -3,8 +3,8 @@ import { prisma } from "@/infrastructure/database/connection/prisma";
 
 export async function GET(request: NextRequest) {
   try {
-    const id = request.url.split('/').pop();
-    
+    const id = request.url.split("/").pop();
+
     if (!id) {
       return NextResponse.json({ message: "Client ID is required" }, { status: 400 });
     }
@@ -25,6 +25,7 @@ export async function GET(request: NextRequest) {
       ...client,
       marginPercentage: client.marginPercentage ? Number(client.marginPercentage) : null,
       billableDay: client.billableDay ? Number(client.billableDay) : null,
+      selectedContactIds: client.selectedContactIds || [],
     };
 
     return NextResponse.json({ data: serializedClient }, { status: 200 });
@@ -36,7 +37,7 @@ export async function GET(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
-    const id = request.url.split('/').pop();
+    const id = request.url.split("/").pop();
     const clientData = await request.json();
 
     if (!id) {
@@ -51,6 +52,7 @@ export async function PUT(request: NextRequest) {
       billableDay: clientData.billable_day,
       currencyTypeId: clientData.currency_type_id,
       marginPercentage: clientData.margin_percentage,
+      selectedContactIds: clientData.selected_contact_ids || [],
     };
 
     const updatedClient = await prisma.client.update({
@@ -66,6 +68,7 @@ export async function PUT(request: NextRequest) {
       ...updatedClient,
       marginPercentage: updatedClient.marginPercentage ? Number(updatedClient.marginPercentage) : null,
       billableDay: updatedClient.billableDay ? Number(updatedClient.billableDay) : null,
+      selectedContactIds: updatedClient.selectedContactIds || [],
     };
 
     return NextResponse.json({ data: serializedClient }, { status: 200 });
@@ -77,7 +80,7 @@ export async function PUT(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
-    const id = request.url.split('/').pop();
+    const id = request.url.split("/").pop();
 
     if (!id) {
       return NextResponse.json({ message: "Client ID is required" }, { status: 400 });

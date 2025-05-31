@@ -44,6 +44,7 @@ model Client {
   address          String?
   companyName      String?       @map("company_name") @db.VarChar(255)
   marginPercentage Decimal?      @default(10.00) @map("margin_percentage") @db.Decimal(10, 2)
+  selectedContactIds Int[]         @default([]) @map("selected_contact_ids")
   createdAt        DateTime?     @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt        DateTime?     @default(now()) @map("updated_at") @db.Timestamptz(6)
   currencyType     CurrencyType? @relation(fields: [currencyTypeId], references: [id])
@@ -208,6 +209,7 @@ model People {
   createdAt            DateTime?          @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt            DateTime?          @default(now()) @map("updated_at") @db.Timestamptz(6)
   leaveDays            LeaveDays[]
+  absences             Absences[]
   afpInstitution       AFPInstitution?    @relation(fields: [afpInstitutionId], references: [id])
   client               Client?            @relation(fields: [clientId], references: [id])
   salaryCurrencyType   CurrencyType?      @relation("SalaryCurrencyType", fields: [salaryCurrencyTypeId], references: [id])
@@ -234,6 +236,24 @@ model LeaveDays {
   person    People?   @relation(fields: [personId], references: [id], onDelete: Cascade)
 
   @@map("LeaveDays")
+}
+
+model Absences {
+  id            Int      @id @default(autoincrement())
+  person_id     Int
+  person        People   @relation(fields: [person_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  start_date    DateTime @db.Date
+  end_date      DateTime @db.Date
+  reason        String?
+  leave_type    String?
+  total_days    Int?
+  business_days Int?
+  calendar_days Int?
+  observations  String?
+  created_at    DateTime @default(now())
+  updated_at    DateTime @default(now())
+
+  @@map("Absences")
 }
 
 model PreInvoice {

@@ -10,6 +10,7 @@ import { useSelector } from "react-redux";
 import { RootState } from "@/lib/store";
 import { PreInvoice } from "@/interface/common";
 import { formatToMoneyString } from "@/utils/data";
+import { validateUFForBillingDay } from "@/app/actions/preInvoices";
 
 interface Props {
   isOpen: boolean;
@@ -115,12 +116,7 @@ export default function CompleteBillModal({ isOpen, setIsOpen, preinvoiceId }: P
     }
 
     return isValid;
-  }, [
-    invoiceData,
-    formData.ocAmount,
-    isMarginValid,
-    validationError,
-  ]);
+  }, [invoiceData, formData.ocAmount, isMarginValid, validationError]);
 
   // Cargar los datos directamente de la API cuando se abre el modal
   useEffect(() => {
@@ -197,7 +193,7 @@ export default function CompleteBillModal({ isOpen, setIsOpen, preinvoiceId }: P
   // Agregar un useEffect para inicializar la validación
   useEffect(() => {
     // Validar el formulario completo, incluyendo número de factura y margen
-    const isValidNumberBill = formData.numberBill.length >= 8;
+    const isValidNumberBill = formData.numberBill.length > 0 && /^\d+$/.test(formData.numberBill);
     setIsFormValid(isValidNumberBill && isMarginValid);
   }, [formData.numberBill, isMarginValid]);
 
@@ -221,6 +217,23 @@ export default function CompleteBillModal({ isOpen, setIsOpen, preinvoiceId }: P
     setIsLoading(true);
 
     try {
+      // NUEVA VALIDACIÓN: Verificar que existe UF para el día de facturación
+      if (invoiceData?.month && invoiceData?.year && invoiceData?.client?.billableDay) {
+        const ufValidation = await validateUFForBillingDay(
+          invoiceData.month,
+          invoiceData.year,
+          Number(invoiceData.client.billableDay)
+        );
+
+        if (!ufValidation.isValid) {
+          // Mostrar error y detener el proceso
+          alert(`❌ No se puede facturar: ${ufValidation.message}`);
+          setIsLoading(false);
+          return;
+        }
+      }
+
+      // Continuar con la facturación si la validación pasó
       // Usar solo la API REST para actualización
       const apiResponse = await fetch(`/api/preinvoices/${preinvoiceId}/status`, {
         method: "PUT",
@@ -337,15 +350,13 @@ export default function CompleteBillModal({ isOpen, setIsOpen, preinvoiceId }: P
                           value={displayValues.numberBill}
                           onChange={handleInputChange}
                           className={`block w-full rounded-md bg-white px-3 py-2 text-base text-gray-900 outline outline-1 -outline-offset-1 ${
-                            formData.numberBill.length > 0 && formData.numberBill.length < 8
+                            formData.numberBill.length > 0 && !/^\d+$/.test(formData.numberBill)
                               ? "outline-red-500"
                               : "outline-gray-300"
                           } placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6`}
                         />
-                        {formData.numberBill.length > 0 && formData.numberBill.length < 8 && (
-                          <p className="mt-1 text-sm text-red-500">
-                            El número de factura debe tener al menos 8 caracteres
-                          </p>
+                        {formData.numberBill.length > 0 && !/^\d+$/.test(formData.numberBill) && (
+                          <p className="mt-1 text-sm text-red-500">El número de factura debe ser numérico</p>
                         )}
                       </div>
                     </div>

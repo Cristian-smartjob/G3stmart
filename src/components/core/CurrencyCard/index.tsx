@@ -1,147 +1,275 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import styles from "./CurrencyCard.module.css";
+import React, { useState } from "react";
 import { useCurrencyCard } from "./useCurrencyCard";
-import ErrorAlert from "../ErrorAlert";
-import LoadingBar from "./LoadingBar";
 
 /**
- * Componente CurrencyCard - Muestra información actual sobre tasas de cambio
- * @returns Componente con información de UF y USD
+ * Tipos de estado para las tarjetas de moneda
  */
-export default function CurrencyCard(): React.ReactElement {
-  const { currency, loading, error, updating, updateCurrency, isToday } = useCurrencyCard();
-  // Estado para controlar la visibilidad del mensaje de error
-  const [showError, setShowError] = useState<boolean>(true);
+type CurrencyState = "success" | "future" | "error" | "normal";
 
-  // Determinar clases de estilo según si los datos están actualizados
-  const todayStatus = isToday();
+/**
+ * Formatea una fecha ISO a formato legible
+ */
+const formatDate = (dateString: string | null): string => {
+  if (!dateString) return "Sin fecha";
 
-  // Calcular estilos condicionales
-  const cardStyle = {
-    backgroundColor: todayStatus ? "rgba(41, 217, 194, 0.4)" : "#fee2e2",
-    borderColor: todayStatus ? "rgba(41, 217, 194, 0.4)" : "#fca5a5",
-    opacity: updating ? 0.6 : 1,
-    cursor: !todayStatus && !updating && !loading ? "pointer" : "default",
+  // Extraer solo la parte de fecha (YYYY-MM-DD) sin conversión de zona horaria
+  const dateOnly = dateString.split("T")[0];
+  const [year, month, day] = dateOnly.split("-");
+
+  // Crear fecha local sin conversión UTC
+  const localDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+  return localDate.toLocaleDateString("es-CL");
+};
+
+/**
+ * Props para el componente CurrencyCard individual
+ */
+interface CurrencyCardProps {
+  type: "UF" | "USD";
+  value: string;
+  dateValue: string;
+  lastUpdated: string;
+  state: CurrencyState;
+  onClick: () => void;
+  loading: boolean;
+  lastRecordInfo?: string; // Información del último registro disponible
+  lastRecordDate?: string; // Última fecha cargada en la base de datos (solo para UF)
+  hasFutureData?: boolean; // Indica si hay datos desde hoy hacia adelante (solo para UF)
+}
+
+/**
+ * Componente de tarjeta individual para moneda
+ */
+const CurrencyCard: React.FC<CurrencyCardProps> = ({
+  type,
+  value,
+  dateValue,
+  lastUpdated,
+  state,
+  onClick,
+  loading,
+  lastRecordInfo,
+  lastRecordDate,
+  hasFutureData,
+}) => {
+  // Determinar colores dinámicos basados en datos futuros (para UF y USD)
+  const getDynamicColors = () => {
+    const hasData = hasFutureData;
+
+    return hasData
+      ? {
+          // Verde: hay datos futuros
+          badge: "bg-[#29D9C2] text-white",
+          border: "hover:border-[#29D9C2]",
+          spinner: "border-t-[#29D9C2]",
+          text: "text-[#29D9C2]",
+        }
+      : {
+          // Naranja: no hay datos futuros
+          badge: "bg-[#F99B06] text-white",
+          border: "hover:border-[#F99B06]",
+          spinner: "border-t-[#F99B06]",
+          text: "text-[#F99B06]",
+        };
   };
 
-  const valueTextClass = todayStatus ? styles.currencyValueToday : styles.currencyValueOutdated;
+  const dynamicColors = getDynamicColors();
 
-  // Manejador de clic para actualizar
-  const handleCardClick = () => {
-    if (!todayStatus && !updating && !loading) {
-      // Reiniciar el estado de showError cuando el usuario hace clic para actualizar
-      setShowError(true);
-      updateCurrency();
-    }
+  // Colores del logo SmartJob (mantenidos para estados específicos)
+  const colorMap = {
+    success: "bg-[#29D9C2] text-white", // Verde/turquesa del logo
+    future: dynamicColors.badge, // Dinámico para UF
+    error: "bg-[#dc2626] text-white", // Rojo para errores
+    normal: dynamicColors.badge, // Dinámico para UF
   };
 
-  // Comprobar si hay error por falta de datos o por ser día no hábil
-  const isNoDataError =
-    error && (error.includes("No hay datos") || error.includes("null") || error.includes("No es día hábil"));
-
-  // Función para ocultar el mensaje de error
-  const hideError = () => {
-    setShowError(false);
+  const borderColor = {
+    default: "border-[#e2e8f0]",
+    hover: `hover:shadow-md ${dynamicColors.border}`, // Dinámico
   };
 
-  // Determinar si mostrar la información de monedas aunque haya error
-  const showCurrencyData = currency && (currency.uf !== null || currency.usd !== null);
+  const statusText = {
+    success: "Actualizado correctamente",
+    future: "Valor actual cargado",
+    error: "Error al cargar valor",
+    normal: "Valor actual cargado",
+  };
 
-  // Reiniciar el estado de showError cuando cambia el error
-  useEffect(() => {
-    if (error) {
-      setShowError(true);
-    }
-  }, [error]);
-
-  // Renderizar el spinner para estados de carga
-  const renderSpinner = () => (
-    <div className={styles.spinnerContainer}>
-      <div className={styles.spinner}>
-        <svg
-          aria-hidden="true"
-          className="w-8 h-8 text-gray-200 animate-spin dark:text-gray-600 fill-blue-600"
-          viewBox="0 0 100 101"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <path
-            d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z"
-            fill="currentColor"
-          />
-          <path
-            d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0491C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z"
-            fill="currentFill"
-          />
-        </svg>
-        <span className="sr-only">Cargando...</span>
-      </div>
-      <p className={styles.spinnerText}>{updating ? "Actualizando..." : "Cargando..."}</p>
+  // Spinner inline para loading
+  const LoadingSpinner = () => (
+    <div className="flex items-center justify-center">
+      <div className={`w-6 h-6 border-2 border-[#e2e8f0] ${dynamicColors.spinner} rounded-full animate-spin`}></div>
     </div>
   );
 
   return (
-    <div
-      className={styles.card}
-      style={cardStyle}
-      title={currency ? `Última actualización: ${currency.date.substring(0, 10)}` : ""}
-      onClick={handleCardClick}
+    <button
+      onClick={onClick}
+      disabled={loading}
+      className={`w-full text-left rounded-2xl border p-4 mb-4 transition-all duration-150 
+                  ${borderColor.default} ${borderColor.hover} ${loading ? "opacity-50 cursor-not-allowed" : ""}`}
     >
-      <div className={styles.cardTitle}>
-        <span>Monedas</span>
-        {!todayStatus && !updating && !loading && (
-          <span title="Desactualizado" className={styles.outdatedWarning}>
-            ⚠️
-          </span>
-        )}
+      <div className="flex justify-between items-center mb-2">
+        <span className="text-sm text-[#6b7280] font-medium">
+          {type === "UF" ? "UF (Unidad de Fomento)" : "USD (Dólar)"}
+        </span>
+        <span className={`px-2 py-0.5 text-xs rounded-md ${colorMap[state]}`}>{statusText[state]}</span>
       </div>
 
-      {loading || updating ? (
-        renderSpinner()
-      ) : (
-        <>
-          {isNoDataError && showError && (
-            <>
-              <ErrorAlert message={error || "No hay datos disponibles para algunas monedas"} />
-              <LoadingBar duration={5000} onComplete={hideError} />
-            </>
-          )}
+      <div className="text-2xl font-bold text-[#1f2937] mb-1">{loading ? <LoadingSpinner /> : value}</div>
 
-          {!isNoDataError && error && <div className={styles.errorText}>{error}</div>}
+      <div className="text-xs text-[#6b7280]">Valor para: {dateValue}</div>
+      <div className="text-xs text-[#6b7280]">Última actualización: {lastUpdated}</div>
 
-          {showCurrencyData && (
-            <>
-              <div className={styles.currencyRow}>
-                <span className={styles.currencyLabel}>UF:</span>
-                <span className={`${styles.currencyValue} ${valueTextClass}`}>
-                  {currency.uf !== null
-                    ? `$${currency.uf.toLocaleString("es-CL", { maximumFractionDigits: 2 })}`
-                    : "No disponible"}
-                </span>
-              </div>
-              <div className={styles.currencyRow}>
-                <span className={styles.currencyLabel}>USD:</span>
-                <span className={`${styles.currencyValue} ${valueTextClass}`}>
-                  {currency.usd !== null
-                    ? `$${currency.usd.toLocaleString("es-CL", { maximumFractionDigits: 2 })}`
-                    : "No disponible"}
-                </span>
-              </div>
-              {currency.date && (
-                <div className={styles.updateInfo}>
-                  <span>Fecha actualización:</span>
-                  <span>{currency.date.substring(0, 10)}</span>
-                </div>
-              )}
-              {!todayStatus && !isNoDataError && (
-                <div className={styles.updateText}>Haz clic para actualizar manualmente</div>
-              )}
-            </>
-          )}
-        </>
+      {/* Mostrar última fecha cargada en BD para UF */}
+      {type === "UF" && lastRecordDate && (
+        <div className="text-xs text-[#6b7280]">Última fecha en BD: {formatDate(lastRecordDate)}</div>
       )}
+
+      {/* Mostrar última fecha cargada en BD para USD */}
+      {type === "USD" && lastRecordDate && (
+        <div className="text-xs text-[#6b7280]">Última fecha en BD: {formatDate(lastRecordDate)}</div>
+      )}
+
+      {/* Mostrar información del último registro si existe */}
+      {type === "UF" && lastRecordInfo && (
+        <div className={`text-xs ${dynamicColors.text} mt-1 font-medium`}>{lastRecordInfo}</div>
+      )}
+
+      {type === "UF" && !lastRecordInfo && (
+        <div className={`text-xs ${dynamicColors.text} mt-1 font-medium`}>Datos del año en curso y siguiente</div>
+      )}
+
+      {/* Mostrar información de fallback para USD si existe */}
+      {type === "USD" && lastRecordInfo && (
+        <div className={`text-xs ${dynamicColors.text} mt-1 font-medium`}>{lastRecordInfo}</div>
+      )}
+    </button>
+  );
+};
+
+/**
+ * Componente principal que contiene las dos tarjetas de moneda
+ */
+export default function CurrencyCards(): React.ReactElement {
+  const { uf, usd, initialLoading, updateUF, updateUSD } = useCurrencyCard();
+
+  // Estados de loading separados para cada tarjeta
+  const [ufLoading, setUfLoading] = useState(false);
+  const [usdLoading, setUsdLoading] = useState(false);
+  const [monthsForward] = useState(6); // Valor fijo más alto para aprovechar la nueva estrategia
+
+  /**
+   * Formatea un valor numérico a string con formato chileno
+   */
+  const formatValue = (value: number | null): string => {
+    if (value === null) return "No disponible";
+    return value.toLocaleString("es-CL", { maximumFractionDigits: 2 });
+  };
+
+  /**
+   * Formatea timestamp de última actualización
+   */
+  const formatLastUpdated = (dateString: string | null): string => {
+    if (!dateString) return "Nunca";
+    return new Date(dateString).toLocaleString("es-CL");
+  };
+
+  /**
+   * Determina el estado de la tarjeta UF
+   */
+  const getUFState = (): CurrencyState => {
+    if (uf.error) return "error";
+    if (uf.successMessage) return "success";
+    if (uf.isFuture) return "future";
+    return "normal";
+  };
+
+  /**
+   * Determina el estado de la tarjeta USD
+   */
+  const getUSDState = (): CurrencyState => {
+    if (usd.error) return "error";
+    if (usd.successMessage) return "success";
+    return "normal";
+  };
+
+  /**
+   * Maneja el click en la tarjeta UF
+   */
+  const handleUFClick = async () => {
+    if (ufLoading) return;
+
+    setUfLoading(true);
+    try {
+      await updateUF(monthsForward);
+    } catch (error) {
+      console.error("Error updating UF:", error);
+    } finally {
+      setUfLoading(false);
+    }
+  };
+
+  /**
+   * Maneja el click en la tarjeta USD
+   */
+  const handleUSDClick = async () => {
+    if (usdLoading) return;
+
+    setUsdLoading(true);
+    try {
+      // Cargar año completo para USD
+      await updateUSD(true);
+    } catch (error) {
+      console.error("Error updating USD:", error);
+    } finally {
+      setUsdLoading(false);
+    }
+  };
+
+  // Mostrar spinner de carga inicial
+  if (initialLoading) {
+    return (
+      <div className="w-full max-w-md mx-auto">
+        <div className="flex items-center justify-center p-8">
+          <div className="w-8 h-8 border-2 border-[#e2e8f0] border-t-[#F99B06] rounded-full animate-spin"></div>
+          <span className="ml-3 text-[#6b7280]">Cargando datos de monedas...</span>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="w-full max-w-md mx-auto">
+      {/* Tarjeta UF */}
+      <CurrencyCard
+        type="UF"
+        value={`$${formatValue(uf.value)}`}
+        dateValue={formatDate(uf.date)}
+        lastUpdated={formatLastUpdated(uf.lastUpdated)}
+        state={getUFState()}
+        onClick={handleUFClick}
+        loading={ufLoading || uf.updating}
+        lastRecordInfo={uf.lastRecordInfo || undefined}
+        lastRecordDate={uf.lastRecordDate || undefined}
+        hasFutureData={uf.hasFutureData}
+      />
+
+      {/* Tarjeta USD */}
+      <CurrencyCard
+        type="USD"
+        value={`$${formatValue(usd.value)}`}
+        dateValue={formatDate(usd.date)}
+        lastUpdated={formatLastUpdated(usd.lastUpdated)}
+        state={getUSDState()}
+        onClick={handleUSDClick}
+        loading={usdLoading || usd.updating}
+        lastRecordInfo={usd.fallbackInfo || undefined}
+        lastRecordDate={usd.lastRecordDate || undefined}
+        hasFutureData={usd.hasFutureData}
+      />
     </div>
   );
 }

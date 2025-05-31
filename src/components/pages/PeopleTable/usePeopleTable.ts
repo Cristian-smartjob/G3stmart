@@ -185,6 +185,7 @@ export const usePeopleTable = (): UsePeopleTableResult => {
     showDialog: false,
     showFilterDialog: false,
     showImportModal: false,
+    showAbsencesModal: false,
     isOpen: false,
     selectedSmarter: undefined,
     filters: {
@@ -216,6 +217,10 @@ export const usePeopleTable = (): UsePeopleTableResult => {
     setState((prev: PeopleTableState) => ({ ...prev, showImportModal: true }));
   };
 
+  const handleClickImportAbsences = () => {
+    setState((prev: PeopleTableState) => ({ ...prev, showAbsencesModal: true }));
+  };
+
   const handlerClose = () => {
     setState((prev: PeopleTableState) => ({ ...prev, showDialog: false }));
   };
@@ -226,6 +231,10 @@ export const usePeopleTable = (): UsePeopleTableResult => {
 
   const handlerCloseImport = () => {
     setState((prev: PeopleTableState) => ({ ...prev, showImportModal: false }));
+  };
+
+  const handlerCloseImportAbsences = () => {
+    setState((prev: PeopleTableState) => ({ ...prev, showAbsencesModal: false }));
   };
 
   const handleActionPress = (item: PeopleWithAllRelations) => {
@@ -277,6 +286,7 @@ export const usePeopleTable = (): UsePeopleTableResult => {
     showDialog: state.showDialog,
     showFilterDialog: state.showFilterDialog,
     showImportModal: state.showImportModal,
+    showAbsencesModal: state.showAbsencesModal,
     isOpen: state.isOpen,
     setIsOpen,
     selectedSmarter: state.selectedSmarter,
@@ -287,9 +297,11 @@ export const usePeopleTable = (): UsePeopleTableResult => {
     handleClick,
     handleClickFilter,
     handleClickImport,
+    handleClickImportAbsences,
     handlerClose,
     handlerCloseFilter,
     handlerCloseImport,
+    handlerCloseImportAbsences,
     handleActionPress,
     setCurrentPage,
   };

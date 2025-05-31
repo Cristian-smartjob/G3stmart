@@ -1,4 +1,5 @@
 import Selector from "../core/Selector";
+import MultipleSelector from "../core/MultipleSelector";
 import { useSelector } from "react-redux";
 import { DataTables, GenericDataMap } from "@/lib/features/data";
 import { RootState } from "@/lib/store";
@@ -6,6 +7,7 @@ import { useEffect, useState } from "react";
 import { useAppDispatch } from "@/lib/hook";
 import { fetch } from "@/lib/features/users";
 import { fetch as FetchData } from "@/lib/features/data";
+import { fetch as FetchContacts, Contact } from "@/lib/features/contacts";
 import { SelectorItem } from "@/interface/ui";
 import * as Yup from "yup";
 import { Formik, FormikProps } from "formik";
@@ -33,7 +35,9 @@ interface Props {
 export default function AddClientForm({ onSave, isEditMode = false, selectedClient = null }: Props) {
   const genericDataMap = useSelector<RootState, GenericDataMap>((state) => state.data.list);
   const currencies = (genericDataMap[DataTables.CurrencyType] ?? []) as { id: string | number; name: string }[];
+  const contacts = useSelector<RootState, Contact[]>((state) => state.contacts.list);
   const [selectedCurrency, setSelectedCurrency] = useState<SelectorItem | null>(null);
+  const [selectedContacts, setSelectedContacts] = useState<SelectorItem[]>([]);
   const [formikRef, setFormikRef] = useState<FormikProps<ClientForm> | null>(null);
   const [formInitialized, setFormInitialized] = useState(false);
 
@@ -49,6 +53,7 @@ export default function AddClientForm({ onSave, isEditMode = false, selectedClie
     currency_type_id: isEditMode && selectedClient ? selectedClient.currencyTypeId || undefined : undefined,
     margin_percentage:
       isEditMode && selectedClient && selectedClient.marginPercentage ? Number(selectedClient.marginPercentage) : null,
+    selected_contact_ids: isEditMode && selectedClient ? selectedClient.selectedContactIds || [] : [],
   };
 
   const dispatch = useAppDispatch();
@@ -61,6 +66,11 @@ export default function AddClientForm({ onSave, isEditMode = false, selectedClie
   // Cargar los tipos de moneda
   useEffect(() => {
     dispatch(FetchData(DataTables.CurrencyType));
+  }, [dispatch]);
+
+  // Cargar contactos
+  useEffect(() => {
+    dispatch(FetchContacts());
   }, [dispatch]);
 
   // Actualizar el objeto de moneda seleccionada cuando cambian los datos o se cargan las monedas
@@ -81,6 +91,27 @@ export default function AddClientForm({ onSave, isEditMode = false, selectedClie
       }
     }
   }, [isEditMode, selectedClient, currencies, formikRef, formInitialized]);
+
+  // Actualizar contactos seleccionados cuando cambian los datos o se cargan los contactos
+  useEffect(() => {
+    if (isEditMode && selectedClient && selectedClient.selectedContactIds && contacts.length > 0) {
+      const clientContacts = contacts.filter(
+        (contact) => contact.clientId === selectedClient.id && selectedClient.selectedContactIds?.includes(contact.id)
+      );
+
+      const contactItems = clientContacts.map((contact) => ({
+        id: contact.id,
+        label: contact.name,
+      }));
+
+      setSelectedContacts(contactItems);
+
+      // Si el formulario ya está inicializado, actualizar el valor
+      if (formikRef && formInitialized) {
+        formikRef.setFieldValue("selected_contact_ids", selectedClient.selectedContactIds);
+      }
+    }
+  }, [isEditMode, selectedClient, contacts, formikRef, formInitialized]);
 
   return (
     <div className="bg-white">
@@ -257,6 +288,30 @@ export default function AddClientForm({ onSave, isEditMode = false, selectedClie
 
                       <div className="w-1/2">{/* Espacio para otro campo si es necesario en el futuro */}</div>
                     </div>
+
+                    {/* Selector múltiple de contactos - solo en modo edición */}
+                    {isEditMode && (
+                      <div className="mt-6">
+                        <MultipleSelector
+                          title="Contactos seleccionados para facturación"
+                          items={contacts
+                            .filter((contact) => contact.clientId === selectedClient?.id)
+                            .map((contact) => ({
+                              id: contact.id,
+                              label: contact.name,
+                            }))}
+                          value={selectedContacts}
+                          onChange={(selectedItems: SelectorItem[]) => {
+                            setSelectedContacts(selectedItems);
+                            setFieldValue(
+                              "selected_contact_ids",
+                              selectedItems.map((item) => item.id)
+                            );
+                          }}
+                          placeholder="Buscar y seleccionar contactos..."
+                        />
+                      </div>
+                    )}
 
                     {Object.values(errors).length > 0 ? (
                       <div className="mt-4">

@@ -16,7 +16,8 @@ export async function getClientById(id: number): Promise<Client | null> {
         billableDay: true,
         currencyTypeId: true,
         marginPercentage: true,
-      }
+        selectedContactIds: true,
+      },
     });
 
     if (!client) {
@@ -32,9 +33,10 @@ export async function getClientById(id: number): Promise<Client | null> {
       billableDay: client.billableDay ? Number(client.billableDay) : null,
       currencyTypeId: client.currencyTypeId,
       marginPercentage: client.marginPercentage ? Number(client.marginPercentage) : null,
+      selectedContactIds: client.selectedContactIds,
     };
   } catch (error) {
     console.error("Error al obtener cliente:", error);
     throw new Error("No se pudo obtener la información del cliente");
   }
-} 
+}

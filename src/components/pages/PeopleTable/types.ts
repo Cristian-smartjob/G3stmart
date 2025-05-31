@@ -53,6 +53,8 @@ export interface PeopleTableState {
   showFilterDialog: boolean;
   /** Indica si se debe mostrar el modal de importación */
   showImportModal: boolean;
+  /** Indica si se debe mostrar el modal de importación de ausencias */
+  showAbsencesModal: boolean;
   /** Indica si se debe mostrar el modal de asignación de proyecto */
   isOpen: boolean;
   /** La persona seleccionada para alguna acción */
@@ -97,6 +99,8 @@ export interface UsePeopleTableResult {
   showFilterDialog: boolean;
   /** Indica si se debe mostrar el modal de importación */
   showImportModal: boolean;
+  /** Indica si se debe mostrar el modal de importación de ausencias */
+  showAbsencesModal: boolean;
   /** Indica si se debe mostrar el modal de asignación de proyecto */
   isOpen: boolean;
   /** Función para establecer si el modal de asignación debe mostrarse */
@@ -117,12 +121,16 @@ export interface UsePeopleTableResult {
   handleClickFilter: () => void;
   /** Función para manejar el clic en el botón de importación */
   handleClickImport: () => void;
+  /** Función para manejar el clic en el botón de importación de ausencias */
+  handleClickImportAbsences: () => void;
   /** Función para cerrar el diálogo de agregar */
   handlerClose: () => void;
   /** Función para cerrar el diálogo de filtros */
   handlerCloseFilter: () => void;
   /** Función para cerrar el diálogo de importación */
   handlerCloseImport: () => void;
+  /** Función para cerrar el diálogo de importación de ausencias */
+  handlerCloseImportAbsences: () => void;
   /** Función para manejar la acción sobre una persona */
   handleActionPress: (item: PeopleWithAllRelations) => void;
   /** Función para establecer la página actual */

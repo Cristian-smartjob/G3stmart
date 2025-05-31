@@ -12,6 +12,7 @@ export interface ClientForm {
   country?: string | null;
   billable_day?: number | null;
   margin_percentage?: number | null;
+  selected_contact_ids?: number[];
 }
 
 export interface PeopleForm {
