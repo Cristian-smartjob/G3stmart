@@ -4,6 +4,7 @@ import type { PreInvoice } from "../../../interface/common";
 import Link from "next/link";
 import { formatCurrency } from "@/utils/data";
 import Badge from "@/components/core/Badge";
+import PDFDownloadButton from "@/components/buttons/PDFDownloadButton";
 
 interface Props {
   item: PreInvoice;
@@ -46,13 +47,15 @@ export default function PreInvoiceItemRow({ item, selectedTabId = 1 }: Props) {
       </td>
 
       <td className="px-4 py-3">
-        {" "}
-        <Link
-          href={`/preInvocedetail/${item.id}?returnTabId=${selectedTabId}&detailTabId=1`}
-          className="rounded-full bg-indigo-600 px-2.5 py-1 text-xs font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-        >
-          Ver detalle
-        </Link>
+        <div className="flex items-center space-x-2">
+          <Link
+            href={`/preInvocedetail/${item.id}?returnTabId=${selectedTabId}&detailTabId=1`}
+            className="rounded-full bg-indigo-600 px-2.5 py-1 text-xs font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+          >
+            Ver detalle
+          </Link>
+          <PDFDownloadButton preInvoiceId={item.id} preInvoice={item} />
+        </div>
       </td>
       <td className="px-4 py-3">
         <Badge status={item.status} />

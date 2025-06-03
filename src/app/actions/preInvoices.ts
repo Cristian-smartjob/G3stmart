@@ -990,3 +990,101 @@ export async function validateUFForBillingDay(
     };
   }
 }
+
+export async function fetchPreInvoiceWithDetails(id: number) {
+  const preInvoice = await prisma.preInvoice.findUnique({
+    where: { id },
+    select: {
+      id: true,
+      status: true,
+      month: true,
+      year: true,
+      value: true,
+      total: true,
+      ufValueUsed: true,
+      ufDateUsed: true,
+      client: {
+        select: {
+          id: true,
+          name: true,
+          marginPercentage: true,
+          billableDay: true,
+        },
+      },
+      contact: {
+        select: {
+          id: true,
+          name: true,
+          lastName: true,
+        },
+      },
+      details: {
+        select: {
+          id: true,
+          value: true,
+          billableDays: true,
+          leaveDays: true,
+          totalConsumeDays: true,
+          person: {
+            select: {
+              id: true,
+              name: true,
+              lastName: true,
+              dni: true,
+              country: true,
+              seniority: true,
+              jobTitle: {
+                select: {
+                  name: true,
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  });
+
+  if (!preInvoice) {
+    throw new Error(`Prefactura con ID ${id} no encontrada`);
+  }
+
+  // Transformar los datos serializando todos los valores Decimal
+  return {
+    id: preInvoice.id,
+    status: preInvoice.status,
+    month: preInvoice.month,
+    year: preInvoice.year,
+    value: preInvoice.value ? Number(preInvoice.value) : undefined,
+    total: preInvoice.total ? Number(preInvoice.total) : undefined,
+    ufValueUsed: preInvoice.ufValueUsed ? Number(preInvoice.ufValueUsed) : null,
+    ufDateUsed: preInvoice.ufDateUsed,
+    client: preInvoice.client
+      ? {
+          id: preInvoice.client.id,
+          name: preInvoice.client.name,
+          marginPercentage: preInvoice.client.marginPercentage ? Number(preInvoice.client.marginPercentage) : null,
+          billableDay: preInvoice.client.billableDay ? Number(preInvoice.client.billableDay) : null,
+        }
+      : null,
+    contact: preInvoice.contact,
+    details: preInvoice.details.map((detail) => ({
+      id: detail.id,
+      value: detail.value ? Number(detail.value) : 0,
+      billableDays: detail.billableDays ? Number(detail.billableDays) : 0,
+      leaveDays: detail.leaveDays ? Number(detail.leaveDays) : 0,
+      totalConsumeDays: detail.totalConsumeDays ? Number(detail.totalConsumeDays) : 0,
+      person: detail.person
+        ? {
+            id: detail.person.id,
+            name: detail.person.name,
+            lastName: detail.person.lastName,
+            dni: detail.person.dni,
+            country: detail.person.country,
+            seniority: detail.person.seniority,
+            jobTitle: detail.person.jobTitle,
+          }
+        : null,
+    })),
+  };
+}

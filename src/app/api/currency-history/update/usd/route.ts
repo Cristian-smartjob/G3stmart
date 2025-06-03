@@ -17,13 +17,6 @@ const getTodayInSantiago = (): string => {
 
   const result = formatter.format(now); // Devuelve formato YYYY-MM-DD
 
-  console.log("🕐 [USD Endpoint] Debug fecha Santiago:", {
-    utcNow: now.toISOString(),
-    utcHour: now.getUTCHours(),
-    santiagResult: result,
-    method: "Intl.DateTimeFormat",
-  });
-
   return result;
 };
 
