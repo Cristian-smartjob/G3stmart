@@ -72,23 +72,49 @@ export default function PreinvoceDetail() {
 
   const haveASelected = detailsRoot.find((item) => item.isSelected);
 
-  const total = details.reduce((acc: number, item: PreInvoiceDetail) => {
+  // Añadir estado local para la prefactura actual
+  const [currentPreInvoice, setCurrentPreInvoice] = useState<PreInvoice | null>(null);
+
+  // Usar currentPreInvoice en lugar de preInvoice del store cuando renderizamos
+  const activePreInvoice = currentPreInvoice || preInvoice;
+
+  // Cambiar la lógica para sumar directamente los montos totales calculados
+  // como se muestran en la tabla (MONTO TOTAL UF y MONTO TOTAL CLP)
+  const totalUF = details.reduce((acc: number, item: PreInvoiceDetail) => {
     const value = typeof item.value === "number" ? item.value : Number(item.value.toString());
     const totalConsumeDays =
       typeof item.totalConsumeDays === "number" ? item.totalConsumeDays : Number(item.totalConsumeDays.toString());
-    const billableDays =
-      typeof item.billableDays === "number" ? item.billableDays : Number(item.billableDays.toString());
-    // Si hay al menos un ítem con un valor pequeño (UF), asumir que todos deberían sumarse como UF
-    // Esto mantiene consistencia con lo que se muestra en la UI
-    return acc + (value * totalConsumeDays) / billableDays;
+    const leaveDays = typeof item.leaveDays === "number" ? item.leaveDays : Number(item.leaveDays.toString());
+
+    // Usar la misma lógica que en PreInvoiceDetailRow.tsx
+    // MONTO TOTAL UF = (value * (totalConsumeDays - leaveDays)) / totalConsumeDays
+    const montoTotalUF = (value * (totalConsumeDays - leaveDays)) / totalConsumeDays;
+
+    return acc + montoTotalUF;
   }, 0);
+
+  const totalCLP = details.reduce((acc: number, item: PreInvoiceDetail) => {
+    const value = typeof item.value === "number" ? item.value : Number(item.value.toString());
+    const totalConsumeDays =
+      typeof item.totalConsumeDays === "number" ? item.totalConsumeDays : Number(item.totalConsumeDays.toString());
+    const leaveDays = typeof item.leaveDays === "number" ? item.leaveDays : Number(item.leaveDays.toString());
+
+    // Calcular MONTO TOTAL UF
+    const montoTotalUF = (value * (totalConsumeDays - leaveDays)) / totalConsumeDays;
+
+    // Convertir a CLP usando el valor UF
+    const ufValue = activePreInvoice?.ufValueUsed ? Number(activePreInvoice.ufValueUsed) : 39127.41;
+    const montoTotalCLP = value < 10000 ? montoTotalUF * ufValue : montoTotalUF;
+
+    return acc + montoTotalCLP;
+  }, 0);
+
+  // Mantener la variable 'total' para compatibilidad, pero ahora usa totalUF
+  const total = totalUF;
 
   const [showModal, setShowModal] = useState(false);
   const [showModalDownload, setShowModalDownload] = useState(false);
   const [showModalUnassign, setShowModalUnassign] = useState(false);
-
-  // Añadir estado local para la prefactura actual
-  const [currentPreInvoice, setCurrentPreInvoice] = useState<PreInvoice | null>(null);
 
   // Inicializar el estado al cargar el componente
   useEffect(() => {
@@ -140,9 +166,6 @@ export default function PreinvoceDetail() {
 
     loadPreInvoice();
   }, [id]); // Quitar la dependencia showModalDownload para evitar problemas de ciclo
-
-  // Usar currentPreInvoice en lugar de preInvoice del store cuando renderizamos
-  const activePreInvoice = currentPreInvoice || preInvoice;
 
   // Efecto para depuración
   useEffect(() => {
@@ -466,11 +489,9 @@ export default function PreinvoceDetail() {
 
                   <div className="grid grid-cols-2 gap-4">
                     <dt className="text-sm font-medium text-gray-500">Total a Facturar (CLP):</dt>
-                    <dd className="text-l font-bold text-green-600">
-                      {activePreInvoice?.ufValueUsed
-                        ? `$${(total * Number(activePreInvoice.ufValueUsed)).toLocaleString("es-CL")}`
-                        : "Calculando..."}
-                    </dd>
+                    <dd className="text-l font-bold text-green-600">{`$${Math.round(totalCLP).toLocaleString(
+                      "es-CL"
+                    )}`}</dd>
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
