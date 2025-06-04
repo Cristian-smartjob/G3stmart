@@ -3,6 +3,7 @@
 import { SidebarItem } from "@/interface/ui";
 import Link from "next/link";
 import Image from "next/image";
+import { usePathname } from "next/navigation";
 import { UserCircleIcon } from "@heroicons/react/24/outline";
 import CurrencyCard from "../core/CurrencyCard/index";
 
@@ -16,6 +17,9 @@ interface Props {
 }
 
 export default function Sidebar({ navigation, currentMenu }: Props) {
+  const pathname = usePathname();
+  const showCurrencyCards = pathname.startsWith("/preinvoice");
+
   return (
     <div className="hidden lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:w-72 lg:flex-col">
       <div className="flex grow flex-col gap-y-5 overflow-y-auto border-r border-gray-200 bg-white px-6">
@@ -62,9 +66,11 @@ export default function Sidebar({ navigation, currentMenu }: Props) {
               </ul>
             </li>
 
-            <li className="mt-auto mb-4">
-              <CurrencyCard />
-            </li>
+            {showCurrencyCards && (
+              <li className="mt-auto mb-4">
+                <CurrencyCard />
+              </li>
+            )}
 
             <li className="-mx-6">
               <Link
