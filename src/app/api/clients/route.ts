@@ -7,10 +7,13 @@ export async function GET() {
       include: {
         currencyType: true,
       },
+      orderBy: {
+        name: "asc",
+      },
     });
 
     // Convertir los valores Decimal a Number para evitar problemas de serialización
-    const serializedClients = clients.map(client => ({
+    const serializedClients = clients.map((client) => ({
       ...client,
       marginPercentage: client.marginPercentage ? Number(client.marginPercentage) : null,
       billableDay: client.billableDay ? Number(client.billableDay) : null,

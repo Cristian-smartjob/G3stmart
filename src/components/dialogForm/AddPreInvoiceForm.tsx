@@ -121,7 +121,11 @@ export default function AddPreInvoiceForm({ onSave }: Props) {
       try {
         const response = await fetch("/api/clients");
         const result = await response.json();
-        setClients(result.data || []);
+        // Ordenar clientes alfabéticamente por nombre
+        const sortedClients = (result.data || []).sort((a: Client, b: Client) =>
+          a.name.localeCompare(b.name, "es", { sensitivity: "base" })
+        );
+        setClients(sortedClients);
       } catch (error) {
         console.error("Error cargando clientes:", error);
         setClients([]);
@@ -132,7 +136,11 @@ export default function AddPreInvoiceForm({ onSave }: Props) {
       try {
         const response = await fetch("/api/contacts");
         const result = await response.json();
-        setContacts(result.data || []);
+        // Ordenar contactos alfabéticamente por nombre
+        const sortedContacts = (result.data || []).sort((a: Contact, b: Contact) =>
+          a.name.localeCompare(b.name, "es", { sensitivity: "base" })
+        );
+        setContacts(sortedContacts);
       } catch (error) {
         console.error("Error cargando contactos:", error);
         setContacts([]);

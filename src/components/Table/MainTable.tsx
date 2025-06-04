@@ -26,6 +26,7 @@ interface Props {
   onPrev: () => void;
   isLoading?: boolean;
   isPreInvoiceBlocked?: boolean;
+  showPagination?: boolean;
 }
 
 export default function MainTable({
@@ -48,6 +49,7 @@ export default function MainTable({
   onPrev,
   isLoading = false,
   isPreInvoiceBlocked = false,
+  showPagination = true,
 }: Props) {
   return (
     <section className="h-screen bg-gray-50 dark:bg-gray-900 py-3 sm:py-5">
@@ -138,6 +140,7 @@ export default function MainTable({
               }}
               onNext={onNext}
               onPrev={onPrev}
+              showPagination={showPagination}
             />
           </div>
         </div>

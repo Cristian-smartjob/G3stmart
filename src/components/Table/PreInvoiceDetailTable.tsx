@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import React from "react";
 import { useAppDispatch } from "@/lib/hook";
 import { useSelector } from "react-redux";
 import { RootState } from "@/lib/store";
@@ -126,8 +126,6 @@ export default function PreInvoiceDetailTable({
   isPreInvoiceBlocked = false,
   ufValue,
 }: Props) {
-  const [currentPage, setCurrentPage] = useState(1);
-
   const detailsRoot = useSelector<RootState, ReduxPreInvoiceDetail[]>((state) => state.preInvoicesDetail.list);
   const isLoading = useSelector<RootState, boolean>((state) => state.preInvoicesDetail.isLoading);
   const checkboxStatus = useSelector<RootState, CheckboxStatus>((state) => state.preInvoicesDetail.allSelectedStatus);
@@ -148,11 +146,6 @@ export default function PreInvoiceDetailTable({
 
   const dispatch = useAppDispatch();
 
-  // Restablecer la página actual cuando cambia el filtro
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [typeFilter]);
-
   const handlerChangeSelectAll = (value: CheckboxStatus) => {
     dispatch(selectAll(value));
   };
@@ -172,7 +165,8 @@ export default function PreInvoiceDetailTable({
       <MainTable
         title="Detalle"
         count={details.length}
-        page={currentPage}
+        page={1}
+        showPagination={false}
         header={header}
         showCheckbox={showCheckbox}
         checkboxStatus={checkboxStatus}
@@ -180,17 +174,9 @@ export default function PreInvoiceDetailTable({
         rightContent={rightContent}
         bottomContent={bottomContent}
         isPreInvoiceBlocked={isPreInvoiceBlocked}
-        onSelectPage={(page) => {
-          setCurrentPage(page);
-        }}
-        onNext={() => {
-          const page = Math.min(Math.ceil(details.length / 10), currentPage + 1);
-          setCurrentPage(page);
-        }}
-        onPrev={() => {
-          const page = Math.max(1, currentPage - 1);
-          setCurrentPage(page);
-        }}
+        onSelectPage={() => {}}
+        onNext={() => {}}
+        onPrev={() => {}}
       >
         <>
           <TableSkeleton isLoading={isLoading} size={6} />
@@ -203,19 +189,17 @@ export default function PreInvoiceDetailTable({
             </tr>
           ) : (
             !isLoading &&
-            details
-              .slice(Math.max(0, currentPage - 1) * 10, currentPage * 10)
-              .map((item) => (
-                <PreInvoiceDetailRow
-                  key={item.id}
-                  showCheckbox={showCheckbox}
-                  onChangeCheckBox={handlerChangeSelectItem}
-                  item={item}
-                  onClick={() => {}}
-                  isPreInvoiceBlocked={isPreInvoiceBlocked}
-                  ufValue={ufValue}
-                />
-              ))
+            details.map((item) => (
+              <PreInvoiceDetailRow
+                key={item.id}
+                showCheckbox={showCheckbox}
+                onChangeCheckBox={handlerChangeSelectItem}
+                item={item}
+                onClick={() => {}}
+                isPreInvoiceBlocked={isPreInvoiceBlocked}
+                ufValue={ufValue}
+              />
+            ))
           )}
         </>
       </MainTable>

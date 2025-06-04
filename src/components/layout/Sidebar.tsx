@@ -18,7 +18,7 @@ interface Props {
 
 export default function Sidebar({ navigation, currentMenu }: Props) {
   const pathname = usePathname();
-  const showCurrencyCards = pathname.startsWith("/preinvoice");
+  const showCurrencyCards = pathname.startsWith("/preinvoice") || pathname.startsWith("/preInvocedetail");
 
   return (
     <div className="hidden lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:w-72 lg:flex-col">
@@ -66,21 +66,23 @@ export default function Sidebar({ navigation, currentMenu }: Props) {
               </ul>
             </li>
 
-            {showCurrencyCards && (
-              <li className="mt-auto mb-4">
-                <CurrencyCard />
-              </li>
-            )}
+            <li className="mt-auto">
+              {showCurrencyCards && (
+                <div className="mb-4">
+                  <CurrencyCard />
+                </div>
+              )}
 
-            <li className="-mx-6">
-              <Link
-                href="#"
-                className="flex items-center gap-x-4 px-6 py-3 text-sm/6 font-semibold text-gray-900 hover:bg-gray-50"
-              >
-                <UserCircleIcon className="size-8 text-gray-400" />
-                <span className="sr-only">Tu perfil</span>
-                <span aria-hidden="true">Usuario</span>
-              </Link>
+              <div className="-mx-6">
+                <Link
+                  href="#"
+                  className="flex items-center gap-x-4 px-6 py-3 text-sm/6 font-semibold text-gray-900 hover:bg-gray-50"
+                >
+                  <UserCircleIcon className="size-8 text-gray-400" />
+                  <span className="sr-only">Tu perfil</span>
+                  <span aria-hidden="true">Usuario</span>
+                </Link>
+              </div>
             </li>
           </ul>
         </nav>
